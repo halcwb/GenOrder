@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Informedica.GenOrder.Lib", "src\Informedica.GenOrder.Lib\Informedica.GenOrder.Lib.fsproj", "{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7CF66E32-64FC-452F-B29D-73097E06C233}"
+	ProjectSection(SolutionItems) = preProject
+		build.fsx = build.fsx
+		LICENSE.txt = LICENSE.txt
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
+		README.md = README.md
+		RELEASE_NOTES.md = RELEASE_NOTES.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{80FD0F28-7510-4EE6-869A-A56861B6B236}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{3863CDD3-8D26-45D9-AD35-1725063B346A}"
+	ProjectSection(SolutionItems) = preProject
+		docs\content\index.fsx = docs\content\index.fsx
+		docs\content\tutorial.fsx = docs\content\tutorial.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{0D6559CE-9C92-4A56-9814-CC0B9D21F656}"
+	ProjectSection(SolutionItems) = preProject
+		docs\tools\generate.fsx = docs\tools\generate.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{B0FF5F4E-ED74-4C44-9BB9-B3410311F700}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\Settings.fsx = scripts\Settings.fsx
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3863CDD3-8D26-45D9-AD35-1725063B346A} = {80FD0F28-7510-4EE6-869A-A56861B6B236}
+		{0D6559CE-9C92-4A56-9814-CC0B9D21F656} = {80FD0F28-7510-4EE6-869A-A56861B6B236}
+	EndGlobalSection
+EndGlobal
