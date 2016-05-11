@@ -1,4 +1,10 @@
 type project
+authors
+	halcwb
+description
+	Library that models medical orders and allows calculation and planning of those orders.
+projectUrl
+	https://halcwb.github.io/GenOrder
 iconUrl
     https://raw.githubusercontent.com/halcwb/GenOrder/master/docs/files/img/logo.png
 licenseUrl
