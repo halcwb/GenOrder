@@ -13,25 +13,26 @@
 // referenceBinaries list below in order to generate documentation for the binaries.
 // (This is the original behaviour of ProjectScaffold prior to multi project support)
 let projectName = Settings.project
+let gitName = Settings.gitName
 let gitHome = Settings.gitOwner
-let gitLink = Settings.gitName
+let gitLink = Settings.reposName
 let summary = Settings.summary
 let author  = Settings.gitOwner
 
 
 let referenceBinaries = []
 // Web site location for the generated documentation
-let website = "/" + projectName
+let website = "/" + gitName
 
-let githubLink = sprintf "http://github.com/%s/%s" gitHome projectName
+let githubLink = sprintf "http://github.com/%s/%s" gitHome gitName
 
 // Specify more information about your project
 let info =
-  [ "project-name", projectName
+  [ "project-name", gitName
     "project-author", author
     "project-summary", summary
     "project-github", githubLink
-    "project-nuget", "http://nuget.org/packages/##ProjectName##" ]
+    "project-nuget", "http://nuget.org/packages/" + projectName ]
 
 // --------------------------------------------------------------------------------------
 // For typical project, no changes are needed below
