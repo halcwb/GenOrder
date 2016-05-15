@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{B0FF
 		scripts\Settings.fsx = scripts\Settings.fsx
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Informedica.GenOrder.Tests", "tests\Informedica.GenOrder.Tests\Informedica.GenOrder.Tests.fsproj", "{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

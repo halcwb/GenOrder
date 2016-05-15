@@ -12,7 +12,7 @@
 
 // The name of the project
 // (used by attributes in AssemblyInfo, name of a NuGet package and directory in 'src')
-let project = "GenOrder"
+let project = "Informedica.GenOrder.Lib"
 
 // Short summary of the project
 // (used as description in AssemblyInfo and as a short summary for NuGet package)
@@ -23,7 +23,7 @@ let summary = "A library that models medical orders allowing calculation and pla
 let description = ""
 
 // List of author names (for NuGet package)
-let authors = "halcwb"
+let authors = ["halcwb"]
 
 // Tags for your project (for NuGet package)
 let tags = "Informedica"
@@ -40,7 +40,9 @@ let gitOwner = "halcwb"
 let gitHome = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
-let gitName = project + ".git"
+let gitName = "GenOrder"
+
+let reposName = gitName + ".git"
 
 // --------------------------------------------------------------------------------------
 // END TODO: The rest of the file includes standard build steps

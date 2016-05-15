@@ -1,3 +1,4 @@
+redirects: on
 source https://nuget.org/api/v2
 
 // group build
@@ -8,10 +9,12 @@ nuget SourceLink.Fake
 nuget Newtonsoft.Json
 
 github fsharp/FAKE modules/Octokit/Octokit.fsx
-
 // group project
 
 nuget FSPowerPack.Community
+nuget Informedica.GenUtils.Lib
+nuget Informedica.GenSolver.Lib
+nuget Informedica.GenUnits.Lib
 
 // group test
 

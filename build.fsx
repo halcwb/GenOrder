@@ -59,13 +59,16 @@ let testAssemblies = Settings.testAssemblies
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
 let gitOwner = Settings.gitOwner 
-let gitHome = Settings.gitHome
+let gitHome  = Settings.gitHome
 
 // The name of the project on GitHub
 let gitName = Settings.gitName
 
+// The repos name of the project on GitHub
+let reposName = Settings.reposName
+
 // The url for the raw files hosted
-let gitRaw = environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner + "/" + gitName)
+let gitRaw = environVarOrDefault "gitRaw" ("https://raw.github.com/" + gitOwner + "/" + reposName)
 
 // --------------------------------------------------------------------------------------
 // END TODO: The rest of the file includes standard build steps
@@ -103,9 +106,9 @@ Target "Integrate" (fun _ ->
         failwith "Working copy is not clean, cannot integrate"
     else
         // Get the latest mono build
-        let lastTravisBuild   = Travis.getLatestBuild project
+        let lastTravisBuild   = Travis.getLatestBuild gitName
         // Get the latest .Net build
-        let lastAppVeyorBuild = AppVeyor.getLatestBuild project
+        let lastAppVeyorBuild = AppVeyor.getLatestBuild gitName
 
         // Check whether the builds passed
         match lastTravisBuild, lastAppVeyorBuild with
@@ -115,7 +118,7 @@ Target "Integrate" (fun _ ->
                 printfn "Last build was at %A and %s" dt st
                 // Update the master branch with the latest remote master
                 Git.Branches.checkoutBranch currDir master
-                Git.Branches.pull "" "origin" "master"
+                Git.Branches.pull "" remote master
                 // Merge the master with the current development branch
                 Git.Merge.merge currDir Git.Merge.FastForwardFlag develop
                 // Update the remote master branch
@@ -135,7 +138,7 @@ Target "AssemblyInfo" (fun _ ->
     let getAssemblyInfoAttributes projectName =
         [ Attribute.Title (projectName)
           Attribute.Product project
-          Attribute.Company authors
+          Attribute.Company (authors |> String.concat ",")
           Attribute.Description summary
           Attribute.Version release.AssemblyVersion
           Attribute.FileVersion release.AssemblyVersion ]
@@ -238,7 +241,7 @@ Target "PublishNuget" (fun _ ->
     Paket.Push(fun p -> 
         { p with
             WorkingDir = "bin"
-            ApiKey = key})
+            ApiKey = key })
 )
 
 
@@ -353,7 +356,7 @@ Target "ReleaseDocs" (fun _ ->
     CleanDir tempDocsDir
     
     if Branches.getAllBranches "" |> List.exists ((=) "remotes/origin/gh-pages") then
-        Repository.cloneSingleBranch "" (gitHome + "/" + gitName) "gh-pages" tempDocsDir
+        Repository.cloneSingleBranch "" (gitHome + "/" + reposName) "gh-pages" tempDocsDir
 
         CopyRecursive "docs/output" tempDocsDir true |> tracefn "%A"
         StageAll tempDocsDir
@@ -393,8 +396,8 @@ Target "Release" (fun _ ->
     let remote =
         Git.CommandHelper.getGitResult "" "remote -v"
         |> Seq.filter (fun (s: string) -> s.EndsWith("(push)"))
-        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-        |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + reposName))
+        |> function None -> gitHome + "/" + reposName | Some (s: string) -> s.Split().[0]
 
     StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
@@ -412,6 +415,7 @@ Target "Release" (fun _ ->
 )
 
 Target "BuildPackage" DoNothing
+
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
@@ -458,3 +462,4 @@ Target "All" DoNothing
 
 
 RunTargetOrDefault "All"
+

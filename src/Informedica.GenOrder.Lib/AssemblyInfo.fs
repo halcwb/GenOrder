@@ -2,7 +2,7 @@
 open System.Reflection
 
 [<assembly: AssemblyTitleAttribute("Informedica.GenOrder.Lib")>]
-[<assembly: AssemblyProductAttribute("GenOrder")>]
+[<assembly: AssemblyProductAttribute("Informedica.GenOrder.Lib")>]
 [<assembly: AssemblyCompanyAttribute("halcwb")>]
 [<assembly: AssemblyDescriptionAttribute("A library that models medical orders allowing calculation and planning")>]
 [<assembly: AssemblyVersionAttribute("0.0.1")>]
