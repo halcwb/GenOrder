@@ -81,11 +81,17 @@ module VariableUnit =
          
     let create n vsu minu incru maxu = 
         let var = VAR.createSucc n VR.unrestricted
-        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu }      
+        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
+        
+    let withVar vsu minu incru maxu var =    
+        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
 
     let apply f (qty: VariableUnit) = qty |> f
 
     let get = apply id
+
+    let getAll { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } =
+        var, vsu, minu, incru, maxu
 
     let getName vu = (vu |> get).Variable.Name 
 
@@ -125,6 +131,8 @@ module VariableUnit =
 
         type Frequency = Frequency of VariableUnit
 
+        let toVar (Frequency freq) = freq
+
         let frequency = 
             let u = Unit.freqUnit |> Some
             let n = name
@@ -139,6 +147,8 @@ module VariableUnit =
         let name = "Time" |> N.createExc
 
         type Time = Time of VariableUnit
+
+        let toVar (Time time) = time
 
         let time = 
             let u = Unit.timeUnit |> Some
@@ -155,6 +165,8 @@ module VariableUnit =
 
         type Quantity = Quantity of VariableUnit
 
+        let toVar (Quantity qty) = qty
+
         let quantity u = 
             let u = u |> Unit.qtyUnit |> Some
             let n = name
@@ -169,6 +181,8 @@ module VariableUnit =
         let name = "Total" |> N.createExc
 
         type Total = Total of VariableUnit
+
+        let toVar (Total tot) = tot
 
         let total u = 
             let u = u |> Unit.totalUnit |> Some
@@ -185,10 +199,97 @@ module VariableUnit =
 
         type Rate = Rate of VariableUnit
 
+        let toVar (Rate rate) = rate
+
         let rate u = 
             let u = u |> Unit.rateUnit |> Some
             let n = name
             create n u u u u |> Rate
+
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module Prescription =
+    
+    module VAR = Informedica.GenSolver.Lib.Variable
+    module EQ = Informedica.GenSolver.Lib.Equation
+    module VU = VariableUnit
+    module FR = VU.Frequency
+    module QT = VU.Quantity
+    module TM = VU.Time
+    module TL = VU.Total
+    module RT = VU.Rate
+
+    type Prescription = Prescription of FR.Frequency * QT.Quantity * TL.Total * TM.Time * RT.Rate
+
+    let newPrescr u = 
+        let freq = FR.frequency
+        let qty = QT.quantity u
+        let total = TL.total u
+        let time = TM.time 
+        let rate = RT.rate u
+        (freq, qty, total, time, rate) |> Prescription
+
+    let get (Prescription(freq, qty, total, time, rate)) = freq, qty, total, time, rate
+
+    let toEqs p = 
+        let freq, qty, total, time, rate = p |> get
+        let succ = id
+        let fail _ = failwith "Oops"
+        let toProd y xs = VU.toProdEq succ fail y xs |> EQ.nonZeroOrNegative
+
+        let freq, qty, total, time, rate = freq |> FR.toVar, qty |> QT.toVar, total |> TL.toVar, time |> TM.toVar, rate |> RT.toVar
+        [ toProd total [freq; qty ] 
+          toProd qty   [rate; time] ]
+
+    let find eqs p =
+        let freq, qty, total, time, rate = p |> get        
+        
+        let eqs = eqs |> List.map (fun eq -> match eq with | EQ.ProductEquation (y, xs) -> y::xs | EQ.SumEquation (y, xs) -> y::xs)
+
+        let find n v c p = 
+            let _, vsu, minu, incru, maxu = p |> v
+            eqs 
+            |> List.filter (fun eq -> eq |> List.exists (fun vu -> vu |> VAR.getName = n ))
+            |> List.head
+            |> List.find (fun vu -> vu |> VAR.getName = n )
+            |> VU.withVar vsu minu incru maxu
+            |> c
+
+        let freq  = freq  |> find FR.name (FR.toVar >> VU.getAll) FR.Frequency
+        let qty   = qty   |> find QT.name (QT.toVar >> VU.getAll) QT.Quantity
+        let total = total |> find TL.name (TL.toVar >> VU.getAll) TL.Total
+        let time  = time  |> find TM.name (TM.toVar >> VU.getAll) TM.Time
+        let rate  = rate  |> find RT.name (RT.toVar >> VU.getAll) RT.Rate
+
+        (freq, qty, total, time, rate) //|> Prescription
+
+    let fromEqs p eqs = find eqs p |> Prescription
+
+    let setFreq vs p = 
+        let eqs = p |> toEqs
+        let freq, _, _, _, _ = p |> find eqs
+        eqs 
+        |> VU.setVals (freq |> FR.toVar) vs
+        |> fromEqs p
+
+    let setQty vs p = 
+        let eqs = p |> toEqs
+        let _, qty, _, _, _ = p |> find eqs
+        eqs 
+        |> VU.setVals (qty |> QT.toVar) vs
+        |> fromEqs p
+
+    let setTotal vs p = 
+        let eqs = p |> toEqs
+        let _, _, total, _, _ = p |> find eqs
+        eqs 
+        |> VU.setVals (total |> TL.toVar) vs
+        |> fromEqs p
+
+
+Prescription.newPrescr "mL"
+|> Prescription.setFreq [2N]
+|> Prescription.setTotal [10N]
+|> ignore
 
 //
 //    module Concentration =
