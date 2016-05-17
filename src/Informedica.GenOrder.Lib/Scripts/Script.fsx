@@ -1,210 +1,34 @@
 ﻿#load "load-project-release.fsx"
 
-open Informedica.GenOrder.Lib
-
 #time
-
-module Solver =
-
-    open Informedica.GenUtils.Lib
-
-    module N = Informedica.GenSolver.Lib.Variable.Name
-    module SV = Informedica.GenSolver.Api
-    module UN = Informedica.GenUnits.Lib.CombiUnit
     
-    [<Literal>]
-    let vals = "vals"
-    [<Literal>]
-    let minincl = "minincl"
-    [<Literal>]
-    let minexcl = "minexcl"
-    [<Literal>]
-    let incr = "incr"
-    [<Literal>]
-    let maxincl = "maxincl"
-    [<Literal>]
-    let maxexcl = "maxexcl"
+ open Informedica.GenOrder.Lib
 
-    type Prop = 
-        | Vals
-        | MinIncl
-        | MinExcl
-        | Incr
-        | MaxIncl
-        | MaxExcl
+ module VU = VariableUnit
+ module FR = VU.Frequency
+ module TM = VU.Time
 
-    let propToString = function
-        | Vals -> vals
-        | MinIncl -> minincl
-        | MinExcl -> minexcl
-        | Incr -> incr
-        | MaxIncl -> maxincl
-        | MaxExcl -> maxexcl
+ type Item = Item of string
+ type Component = Component of string * Item * Item list
+ type Orderable = Orderable of string * Component * Component list 
 
-    let valsToString u vs = 
-        vs 
-        |> List.map (UN.toBase u)
-        |> List.map BigRational.toString 
-        |> String.concat ", "
-    
-    let solve (N.Name n) p vs u = SV.solve id n (p |> propToString) (vs |> valsToString u)
-    
- 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Unit = 
-    
-    module UN = Informedica.GenUnits.Lib.CombiUnit
+ type Prescription = 
+        | Process
+        | Continuous
+        | Discontinuous of FR.Frequency
+        | Timed of FR.Frequency * TM.Time
 
-    let freqUnit = "1 X/day" |> UN.fromString
-    let timeUnit = "1 hour"  |> UN.fromString
-    let qtyUnit s = s |> UN.fromString
-    let totalUnit s = s + "/day"  |> UN.fromString
-    let rateUnit s  = s + "/hour" |> UN.fromString
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module VariableUnit =
-
-
-    module VAR = Informedica.GenSolver.Lib.Variable
-    module VR = VAR.ValueRange
-    module UN = Informedica.GenUnits.Lib.CombiUnit
-    module EQ = Informedica.GenSolver.Lib.Equation
-
-    type VariableUnit =
-        {
-             Variable:   VAR.Variable
-             ValuesUnit: UN.CombiUnit option
-             MinUnit:    UN.CombiUnit option
-             IncrUnit:   UN.CombiUnit option
-             MaxUnit:    UN.CombiUnit option
-         }  
-         
-    let create n vsu minu incru maxu = 
-        let var = VAR.createSucc n VR.unrestricted
-        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
-        
-    let withVar vsu minu incru maxu var =    
-        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
-
-    let apply f (qty: VariableUnit) = qty |> f
-
-    let get = apply id
-
-    let getAll { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } =
-        var, vsu, minu, incru, maxu
-
-    let getName vu = (vu |> get).Variable.Name 
-
-    let getVar = apply (fun qty -> qty.Variable)
-
-    let toEq cr y xs = (y |> getVar, xs |> List.map getVar) |> cr
-
-    let toProdEq succ fail = toEq (EQ.createProductEq succ fail)
-
-    let toSumEq succ fail = toEq (EQ.createSumEq succ fail)
-
-    let setProp vu p vs u eqs = eqs |> Solver.solve (vu |> getName) p vs u
-
-    let setPropWithUnit p u vu vs eqs = 
-        match u with
-        | Some u' -> eqs |> setProp vu p vs u'
-        | None  ->  eqs
-
-    let setVals vu = setPropWithUnit Solver.Vals (vu |> get).ValuesUnit vu
-
-    let setMinIncl vu = setPropWithUnit Solver.MinIncl (vu |> get).MinUnit vu
-
-    let setMinExcl vu = setPropWithUnit Solver.MinExcl (vu |> get).MinUnit vu
-
-    let setIncr vu = setPropWithUnit Solver.Incr (vu |> get).IncrUnit vu
-
-    let setMaxIncl vu = setPropWithUnit Solver.MaxIncl (vu |> get).MaxUnit vu
-
-    let setMaxExcl vu = setPropWithUnit Solver.MaxExcl (vu |> get).MaxUnit vu
-
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Frequency =
-
-        module N = VAR.Name
-
-        let name = "Freq" |> N.createExc
-
-        type Frequency = Frequency of VariableUnit
-
-        let toVar (Frequency freq) = freq
-
-        let frequency = 
-            let u = Unit.freqUnit |> Some
-            let n = name
-            create n u u u u |> Frequency
-
-
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Time = 
-
-        module N = VAR.Name
-
-        let name = "Time" |> N.createExc
-
-        type Time = Time of VariableUnit
-
-        let toVar (Time time) = time
-
-        let time = 
-            let u = Unit.timeUnit |> Some
-            let n = name
-            create n u u u u |> Time
-
-
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Quantity =    
-    
-        module N = VAR.Name
-
-        let name = "Qty" |> N.createExc
-
-        type Quantity = Quantity of VariableUnit
-
-        let toVar (Quantity qty) = qty
-
-        let quantity u = 
-            let u = u |> Unit.qtyUnit |> Some
-            let n = name
-            create n u u u u |> Quantity
-
-
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Total =
-    
-        module N = VAR.Name
-
-        let name = "Total" |> N.createExc
-
-        type Total = Total of VariableUnit
-
-        let toVar (Total tot) = tot
-
-        let total u = 
-            let u = u |> Unit.totalUnit |> Some
-            let n = name
-            create n u u u u |> Total
-
-
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Rate =
-    
-        module N = VAR.Name
-
-        let name = "Rate" |> N.createExc
-
-        type Rate = Rate of VariableUnit
-
-        let toVar (Rate rate) = rate
-
-        let rate u = 
-            let u = u |> Unit.rateUnit |> Some
-            let n = name
-            create n u u u u |> Rate
+type Order = 
+    {
+        Id: string // OrderId.T
+        Patient: string // Patient Type
+        Indications: string * string list //Indication.T * Indication.T list
+        Orderable: Orderable
+        Prescription: Prescription
+        Route: string // Route.T
+        StartDate: System.DateTime // StartDate.T
+        StopDate: System.DateTime option // StopDate.T option
+    }
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Prescription =
@@ -264,31 +88,43 @@ module Prescription =
 
     let fromEqs p eqs = find eqs p |> Prescription
 
-    let setFreq vs p = 
-        let eqs = p |> toEqs
-        let freq, _, _, _, _ = p |> find eqs
-        eqs 
-        |> VU.setVals (freq |> FR.toVar) vs
-        |> fromEqs p
+    let setProp vu toVar eqs prop vs pres = 
+        let set = 
+            match prop with
+            | Solver.Vals    -> VU.setVals
+            | Solver.MinIncl -> VU.setMinIncl
+            | Solver.MinExcl -> VU.setMinExcl
+            | Solver.Incr    -> VU.setIncr
+            | Solver.MaxIncl -> VU.setMaxIncl
+            | Solver.MaxExcl -> VU.setMaxExcl
 
-    let setQty vs p = 
-        let eqs = p |> toEqs
-        let _, qty, _, _, _ = p |> find eqs
         eqs 
-        |> VU.setVals (qty |> QT.toVar) vs
-        |> fromEqs p
+        |> set (vu |> toVar) vs
+        |> fromEqs pres
 
-    let setTotal vs p = 
-        let eqs = p |> toEqs
-        let _, _, total, _, _ = p |> find eqs
-        eqs 
-        |> VU.setVals (total |> TL.toVar) vs
-        |> fromEqs p
+
+    let setFreq prop vs pres = 
+        let eqs = pres |> toEqs
+        let freq, _, _, _, _ = pres |> find eqs
+
+        setProp freq FR.toVar eqs prop vs pres
+
+    let setQty prop vs pres = 
+        let eqs = pres |> toEqs
+        let _, qty, _, _, _ = pres |> find eqs
+
+        setProp qty QT.toVar eqs prop vs pres
+
+    let setTotal prop vs pres = 
+        let eqs = pres |> toEqs
+        let _, _, total, _, _ = pres |> find eqs
+
+        setProp total TL.toVar eqs prop vs pres
 
 
 Prescription.newPrescr "mL"
-|> Prescription.setFreq [2N]
-|> Prescription.setTotal [10N]
+|> Prescription.setFreq Solver.Vals [1N..12N]
+|> Prescription.setTotal Solver.MaxIncl [10N]
 |> ignore
 
 //
