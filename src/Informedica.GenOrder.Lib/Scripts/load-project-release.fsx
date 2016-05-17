@@ -4,3 +4,4 @@
 #load "../Solver.fs"
       "../Unit.fs"
       "../VariableUnit.fs"
+      "../Orderable.fs"

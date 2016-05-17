@@ -146,3 +146,113 @@ module VariableUnit =
             create n u u u u |> Rate
 
 
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Concentration =
+    
+        module N = VAR.Name
+
+        let name = "Conc" |> N.createExc
+
+        type Concentration = Concentration of VariableUnit
+
+        let toVar (Concentration conc) = conc
+
+        let conc u1 u2 = 
+            let u = u1 |> Unit.perUnit u2 |> Some
+            let n = name
+            create n u u u u |> Concentration
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module QuantityAdjust =    
+    
+        module N = VAR.Name
+
+        let name = "Qty" |> N.createExc
+
+        type QuantityAdjust = QuantityAdjust of VariableUnit
+
+        let toVar (QuantityAdjust qty) = qty
+
+        let quantityAdjust u1 u2 = 
+            let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> Some
+            let n = name
+            create n u u u u |> QuantityAdjust
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module TotalAdjust =
+    
+        module N = VAR.Name
+
+        let name = "TotalAdjust" |> N.createExc
+
+        type TotalAdjust = TotalAdjust of VariableUnit
+
+        let toVar (TotalAdjust tot) = tot
+
+        let totalAdjust u1 u2 = 
+            let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> Some
+            let n = name
+            create n u u u u |> TotalAdjust
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module RateAdjust =
+    
+        module N = VAR.Name
+
+        let name = "RateAdjust" |> N.createExc
+
+        type RateAdjust = RateAdjust of VariableUnit
+
+        let toVar (RateAdjust rate) = rate
+
+        let rateAdjust u1 u2 = 
+            let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> Some
+            let n = name
+            create n u u u u |> RateAdjust
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module Dose =
+    
+        module N = VAR.Name
+
+        module QT = Quantity
+        module TL = Total
+        module RT = Rate
+
+        let name = "Dose" |> N.createExc
+
+        type Dose = Dose of QT.Quantity * TL.Total * RT.Rate
+
+        let toVar (Dose(qty, total, rate)) = qty, total, rate
+
+        let dose u = 
+            let qty = QT.quantity u
+            let total = TL.total u
+            let rate = RT.rate u
+            (qty, total, rate) |> Dose    
+
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module DoseAdjust =
+    
+        module N = VAR.Name
+
+        module QT = QuantityAdjust
+        module TL = TotalAdjust
+        module RT = RateAdjust
+
+        let name = "DoseAdjust" |> N.createExc
+
+        type DoseAdjust = DoseAdjust of QT.QuantityAdjust * TL.TotalAdjust * RT.RateAdjust
+
+        let toVar (DoseAdjust(qty, total, rate)) = qty, total, rate
+
+        let doseAdjust u1 u2 = 
+            let qty = QT.quantityAdjust u1 u2
+            let total = TL.totalAdjust u1 u2
+            let rate = RT.rateAdjust u1 u2
+            (qty, total, rate) |> DoseAdjust    
