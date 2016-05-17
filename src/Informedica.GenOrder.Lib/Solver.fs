@@ -44,3 +44,5 @@ module Solver =
         |> String.concat ", "
     
     let solve (N.Name n) p vs u = SV.solve id n (p |> propToString) (vs |> valsToString u)
+
+

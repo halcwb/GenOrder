@@ -61,6 +61,15 @@ module VariableUnit =
 
     let setMaxExcl vu = setPropWithUnit Solver.MaxExcl (vu |> get).MaxUnit vu
 
+    let toString vu = 
+        let (VAR.Name.Name n) = vu |> getName
+        let u = match vu.ValuesUnit with | Some u -> u |> UN.toString | None -> ""
+        n +
+        (vu.Variable 
+        |> VAR.getValueRange
+        |> VR.toString) + " " + u
+        
+
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Name =
         
@@ -83,6 +92,9 @@ module VariableUnit =
             let u = Unit.freqUnit |> Some
             let n = [name] |> N.create
             create n u u u u |> Frequency
+
+        let toString freq = 
+            freq |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -230,14 +242,15 @@ module VariableUnit =
 
         type Dose = Dose of QT.Quantity * TL.Total * RT.Rate
 
-        let toVar (Dose(qty, total, rate)) = qty, total, rate
+        let toVar (Dose(qty, total, rate)) = 
+            qty |> QT.toVar, total |> TL.toVar, rate |> RT.toVar
 
         let dose n u = 
             let qty   = QT.quantity n u
             let total = TL.total    n u
             let rate  = RT.rate     n u
 
-            (qty, total, rate) |> Dose    
+            (qty, total, rate) |> Dose
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -249,7 +262,8 @@ module VariableUnit =
 
         type DoseAdjust = DoseAdjust of QT.QuantityAdjust * TL.TotalAdjust * RT.RateAdjust
 
-        let toVar (DoseAdjust(qty, total, rate)) = qty, total, rate
+        let toVar (DoseAdjust(qty, total, rate)) = 
+            qty |> QT.toVar, total |> TL.toVar, rate |> RT.toVar
 
         let doseAdjust n u1 u2 = 
             let qty   = QT.quantityAdjust n u1 u2
