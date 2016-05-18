@@ -65,6 +65,18 @@
     <tbody>
         <tr>
           <td class="module-name">
+            <a href="informedica-genorder-lib-ordermodule-literals.html">Literals</a>
+          </td>
+          <td class="xmldoc"></td>
+        </tr>
+        <tr>
+          <td class="module-name">
+            <a href="informedica-genorder-lib-ordermodule-mapping.html">Mapping</a>
+          </td>
+          <td class="xmldoc"></td>
+        </tr>
+        <tr>
+          <td class="module-name">
             <a href="informedica-genorder-lib-ordermodule-startstop.html">StartStop</a>
           </td>
           <td class="xmldoc"></td>
@@ -87,11 +99,11 @@
             apply f o
           </code>
           <div class="tip" id="1">
-            <strong>Signature:</strong> f:(Order -&gt; &#39;?7028) -&gt; o:Order -&gt; &#39;?7028<br />
-                          <strong>Type parameters:</strong> '?7028          </div>
+            <strong>Signature:</strong> f:(Order -&gt; &#39;?7060) -&gt; o:Order -&gt; &#39;?7060<br />
+                          <strong>Type parameters:</strong> '?7060          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L35-35" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L111-111" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -102,14 +114,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '2', 2)" onmouseover="showTip(event, '2', 2)">
-            create (...)
+            create adj ord pre rte sts
           </code>
           <div class="tip" id="2">
-            <strong>Signature:</strong> pat:string -&gt; phd:string -&gt; (string * string list) -&gt; ord:Orderable -&gt; pre:Prescription -&gt; rte:string -&gt; sts:StartStop -&gt; Order<br />
+            <strong>Signature:</strong> adj:Quantity -&gt; ord:Orderable -&gt; pre:Prescription -&gt; rte:string -&gt; sts:StartStop -&gt; Order<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L39-39" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L115-115" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -120,14 +132,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '3', 3)" onmouseover="showTip(event, '3', 3)">
-            createNew (...)
+            createNew adju ord pre rte
           </code>
           <div class="tip" id="3">
-            <strong>Signature:</strong> pat:string -&gt; prs:string -&gt; (string * string list) -&gt; ord:Orderable -&gt; pre:Prescription -&gt; rte:string -&gt; Order<br />
+            <strong>Signature:</strong> adju:String -&gt; ord:Orderable -&gt; pre:Prescription -&gt; rte:string -&gt; Order<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L50-50" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L124-124" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -138,14 +150,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '4', 4)" onmouseover="showTip(event, '4', 4)">
-            get 
+            fromEqs o eqs
           </code>
           <div class="tip" id="4">
-            <strong>Signature:</strong> Order -&gt; Order<br />
+            <strong>Signature:</strong> o:Order -&gt; eqs:Equation list -&gt; Order<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L37-37" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L149-149" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -156,14 +168,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '5', 5)" onmouseover="showTip(event, '5', 5)">
-            toEqs o
+            get 
           </code>
           <div class="tip" id="5">
-            <strong>Signature:</strong> o:Order -&gt; &#39;?7035 list<br />
-                          <strong>Type parameters:</strong> '?7035          </div>
+            <strong>Signature:</strong> Order -&gt; Order<br />
+                      </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L59-59" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L113-113" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -174,14 +186,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '6', 6)" onmouseover="showTip(event, '6', 6)">
-            toProd y xs
+            solve n m p v u o
           </code>
           <div class="tip" id="6">
-            <strong>Signature:</strong> y:VariableUnit -&gt; xs:VariableUnit list -&gt; Equation<br />
+            <strong>Signature:</strong> n:string -&gt; m:Map -&gt; p:Prop -&gt; v:BigRational list -&gt; u:CombiUnit -&gt; o:Order -&gt; Order<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L55-55" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L178-178" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -192,14 +204,68 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '7', 7)" onmouseover="showTip(event, '7', 7)">
-            toSum y xs
+            toEqs o
           </code>
           <div class="tip" id="7">
-            <strong>Signature:</strong> y:VariableUnit -&gt; xs:VariableUnit list -&gt; Equation<br />
+            <strong>Signature:</strong> o:Order -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L57-57" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L139-139" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '8', 8)" onmouseover="showTip(event, '8', 8)">
+            toProd xs
+          </code>
+          <div class="tip" id="8">
+            <strong>Signature:</strong> xs:VariableUnit list -&gt; Equation<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L129-129" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '9', 9)" onmouseover="showTip(event, '9', 9)">
+            toString ord
+          </code>
+          <div class="tip" id="9">
+            <strong>Signature:</strong> ord:Order -&gt; string list<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L171-171" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '10', 10)" onmouseover="showTip(event, '10', 10)">
+            toSum xs
+          </code>
+          <div class="tip" id="10">
+            <strong>Signature:</strong> xs:VariableUnit list -&gt; Equation<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Order.fs#L134-134" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
