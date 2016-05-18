@@ -44,6 +44,19 @@ module VariableUnit =
 
     let setProp vu p vs u eqs = eqs |> Solver.solve (vu |> getName) p vs u
 
+    let fromVar toVar c eqs vu = 
+        let var, vsu, minu, incru, maxu = vu |> (toVar >> getAll)
+        let n = var |> VAR.getName
+        
+        match eqs |> List.filter (fun eq -> eq |> List.exists (fun vu -> vu |> VAR.getName = n )) with
+        | [] -> sprintf "Could not find: %A" n |> failwith //vu
+        | ft ->
+            ft
+            |> List.head
+            |> List.find (fun vu -> vu |> VAR.getName = n )
+            |> withVar vsu minu incru maxu
+            |> c
+
     let setPropWithUnit p u vu vs eqs = 
         match u with
         | Some u' -> eqs |> setProp vu p vs u'
@@ -88,6 +101,8 @@ module VariableUnit =
 
         let toVar (Frequency freq) = freq
 
+        let fromVar = fromVar toVar Frequency 
+        
         let frequency = 
             let u = Unit.freqUnit |> Some
             let n = [name] |> N.create
@@ -108,10 +123,15 @@ module VariableUnit =
 
         let toVar (Time time) = time
 
+        let fromVar = fromVar toVar Time 
+
         let time = 
             let u = Unit.timeUnit |> Some
             let n = [name] |> N.create
             create n u u u u |> Time
+
+        let toString tme = 
+            tme |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -125,10 +145,15 @@ module VariableUnit =
 
         let toVar (Quantity qty) = qty
 
+        let fromVar = fromVar toVar Quantity 
+
         let quantity n u = 
             let u = u |> Unit.qtyUnit |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> Quantity
+
+        let toString qty = 
+            qty |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -142,10 +167,15 @@ module VariableUnit =
 
         let toVar (Total tot) = tot
 
+        let fromVar = fromVar toVar Total 
+        
         let total n u = 
             let u = u |> Unit.totalUnit |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> Total
+
+        let toString tot = 
+            tot |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -159,10 +189,15 @@ module VariableUnit =
 
         let toVar (Rate rate) = rate
 
+        let fromVar = fromVar toVar Rate 
+        
         let rate n u = 
             let u = u |> Unit.rateUnit |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> Rate
+
+        let toString rte = 
+            rte |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -176,10 +211,15 @@ module VariableUnit =
 
         let toVar (Concentration conc) = conc
 
+        let fromVar = fromVar toVar Concentration 
+        
         let conc n u1 u2 = 
             let u = u1 |> Unit.perUnit u2 |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> Concentration
+
+        let toString cnc = 
+            cnc |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -193,10 +233,15 @@ module VariableUnit =
 
         let toVar (QuantityAdjust qty) = qty
 
+        let fromVar = fromVar toVar QuantityAdjust 
+        
         let quantityAdjust n u1 u2 = 
             let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> QuantityAdjust
+
+        let toString qta = 
+            qta |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -210,10 +255,15 @@ module VariableUnit =
 
         let toVar (TotalAdjust tot) = tot
 
+        let fromVar = fromVar toVar TotalAdjust 
+        
         let totalAdjust n u1 u2 = 
             let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> TotalAdjust
+
+        let toString toa = 
+            toa |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -227,10 +277,15 @@ module VariableUnit =
 
         let toVar (RateAdjust rate) = rate
 
+        let fromVar = fromVar toVar RateAdjust 
+        
         let rateAdjust n u1 u2 = 
             let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> Some
             let n = [name] |> List.append n |> N.create
             create n u u u u |> RateAdjust
+
+        let toString rta = 
+            rta |> toVar |> toString
 
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -245,6 +300,12 @@ module VariableUnit =
         let toVar (Dose(qty, total, rate)) = 
             qty |> QT.toVar, total |> TL.toVar, rate |> RT.toVar
 
+        let fromVar eqs (Dose(qty, tot, rte)) = 
+            let qty = fromVar QT.toVar QT.Quantity eqs qty
+            let tot = fromVar TL.toVar TL.Total    eqs tot
+            let rte = fromVar RT.toVar RT.Rate     eqs rte
+            (qty, tot, rte) |> Dose
+
         let dose n u = 
             let qty   = QT.quantity n u
             let total = TL.total    n u
@@ -252,6 +313,12 @@ module VariableUnit =
 
             (qty, total, rate) |> Dose
 
+        let toString (Dose(qty, tot, rte))  =
+            [
+                qty |> QT.toString
+                tot |> TL.toString
+                rte |> RT.toString
+            ]
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module DoseAdjust =
@@ -265,9 +332,23 @@ module VariableUnit =
         let toVar (DoseAdjust(qty, total, rate)) = 
             qty |> QT.toVar, total |> TL.toVar, rate |> RT.toVar
 
+        let fromVar eqs (DoseAdjust(qty, tot, rte)) = 
+            let qty = fromVar QT.toVar QT.QuantityAdjust eqs qty
+            let tot = fromVar TL.toVar TL.TotalAdjust    eqs tot
+            let rte = fromVar RT.toVar RT.RateAdjust     eqs rte
+            (qty, tot, rte) |> DoseAdjust
+
         let doseAdjust n u1 u2 = 
             let qty   = QT.quantityAdjust n u1 u2
             let total = TL.totalAdjust    n u1 u2
             let rate  = RT.rateAdjust     n u1 u2
 
             (qty, total, rate) |> DoseAdjust    
+
+        let toString (DoseAdjust(qty, tot, rte))  =
+            [
+                qty |> QT.toString
+                tot |> TL.toString
+                rte |> RT.toString
+            ]
+
