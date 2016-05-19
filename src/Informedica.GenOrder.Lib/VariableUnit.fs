@@ -1,5 +1,6 @@
 ﻿namespace Informedica.GenOrder.Lib
 
+/// Functions that deal with the `VariableUnit` type
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VariableUnit =
 
@@ -7,30 +8,33 @@ module VariableUnit =
     module VAR = Informedica.GenSolver.Lib.Variable
     module VR = VAR.ValueRange
     module UN = Informedica.GenUnits.Lib.CombiUnit
+    module GN = Informedica.GenUnits.Lib.Unit.Name
     module EQ = Informedica.GenSolver.Lib.Equation
 
+    /// A `VariableUnit` is the combination of 
+    /// an `Informedica.GenSolver.Lib.Variable` with
+    /// an `Informedica.GenUnits.Lib.CombiUnit`
+    /// The `Variable` stores the base values according
+    /// to the `UnitGroup`
     type VariableUnit =
         {
-             Variable:   VAR.Variable
-             ValuesUnit: UN.CombiUnit option
-             MinUnit:    UN.CombiUnit option
-             IncrUnit:   UN.CombiUnit option
-             MaxUnit:    UN.CombiUnit option
+             Variable:  VAR.Variable
+             UnitGroup: Unit.UnitGroup.UnitGroup
          }  
          
-    let create n vsu minu incru maxu = 
+    let create n ug = 
         let var = VAR.createSucc n VR.unrestricted
-        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
+        { Variable = var; UnitGroup = ug } 
         
-    let withVar vsu minu incru maxu var =    
-        { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } 
+    let withVar ug var =    
+        { Variable = var; UnitGroup = ug } 
 
     let apply f (qty: VariableUnit) = qty |> f
 
     let get = apply id
 
-    let getAll { Variable = var; ValuesUnit = vsu; MinUnit = minu; IncrUnit = incru; MaxUnit = maxu } =
-        var, vsu, minu, incru, maxu
+    let getAll { Variable = var; UnitGroup = ug } =
+        var, ug
 
     let getName vu = (vu |> get).Variable.Name 
 
@@ -45,7 +49,7 @@ module VariableUnit =
     let setProp vu p vs u eqs = eqs |> Solver.solve (vu |> getName) p vs u
 
     let fromVar toVar c eqs vu = 
-        let var, vsu, minu, incru, maxu = vu |> (toVar >> getAll)
+        let var, ug = vu |> (toVar >> getAll)
         let n = var |> VAR.getName
         
         match eqs |> List.filter (fun eq -> eq |> List.exists (fun vu -> vu |> VAR.getName = n )) with
@@ -54,7 +58,7 @@ module VariableUnit =
             ft
             |> List.head
             |> List.find (fun vu -> vu |> VAR.getName = n )
-            |> withVar vsu minu incru maxu
+            |> withVar ug
             |> c
 
     let setPropWithUnit p u vu vs eqs = 
@@ -62,25 +66,25 @@ module VariableUnit =
         | Some u' -> eqs |> setProp vu p vs u'
         | None  ->  eqs
 
-    let setVals vu = setPropWithUnit Solver.Vals (vu |> get).ValuesUnit vu
+    let setVals u vu =    setPropWithUnit Solver.Vals u vu
 
-    let setMinIncl vu = setPropWithUnit Solver.MinIncl (vu |> get).MinUnit vu
+    let setMinIncl u vu = setPropWithUnit Solver.MinIncl u vu
 
-    let setMinExcl vu = setPropWithUnit Solver.MinExcl (vu |> get).MinUnit vu
+    let setMinExcl u vu = setPropWithUnit Solver.MinExcl u vu
 
-    let setIncr vu = setPropWithUnit Solver.Incr (vu |> get).IncrUnit vu
+    let setIncr u vu =    setPropWithUnit Solver.Incr u vu
 
-    let setMaxIncl vu = setPropWithUnit Solver.MaxIncl (vu |> get).MaxUnit vu
+    let setMaxIncl u vu = setPropWithUnit Solver.MaxIncl u vu
 
-    let setMaxExcl vu = setPropWithUnit Solver.MaxExcl (vu |> get).MaxUnit vu
+    let setMaxExcl u vu = setPropWithUnit Solver.MaxExcl u vu
 
     let toString vu = 
         let (VAR.Name.Name n) = vu |> getName
-        let u = match vu.ValuesUnit with | Some u -> u |> UN.toString | None -> ""
+        let ug = vu.UnitGroup |> Unit.UnitGroup.toString
         n +
         (vu.Variable 
         |> VAR.getValueRange
-        |> VR.toString) + " " + u
+        |> VR.toString) + " " + ug
         
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -104,9 +108,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Frequency 
         
         let frequency = 
-            let u = Unit.freqUnit |> Some
+            let u = Unit.freqUnit |> Unit.UnitGroup.fromUnit
             let n = [name] |> N.create
-            create n u u u u |> Frequency
+            create n u |> Frequency
 
         let toString freq = 
             freq |> toVar |> toString
@@ -126,9 +130,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Time 
 
         let time = 
-            let u = Unit.timeUnit |> Some
+            let u = Unit.timeUnit |> Unit.UnitGroup.fromUnit
             let n = [name] |> N.create
-            create n u u u u |> Time
+            create n u |> Time
 
         let toString tme = 
             tme |> toVar |> toString
@@ -148,9 +152,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Quantity 
 
         let quantity n u = 
-            let u = u |> Unit.qtyUnit |> Some
+            let u = u |> Unit.qtyUnit |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> Quantity
+            create n u |> Quantity
 
         let toString qty = 
             qty |> toVar |> toString
@@ -170,9 +174,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Total 
         
         let total n u = 
-            let u = u |> Unit.totalUnit |> Some
+            let u = u |> Unit.totalUnit |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> Total
+            create n u |> Total
 
         let toString tot = 
             tot |> toVar |> toString
@@ -192,9 +196,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Rate 
         
         let rate n u = 
-            let u = u |> Unit.rateUnit |> Some
+            let u = u |> Unit.rateUnit |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> Rate
+            create n u |> Rate
 
         let toString rte = 
             rte |> toVar |> toString
@@ -214,9 +218,9 @@ module VariableUnit =
         let fromVar = fromVar toVar Concentration 
         
         let conc n u1 u2 = 
-            let u = u1 |> Unit.perUnit u2 |> Some
+            let u = u1 |> Unit.perUnit u2 |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> Concentration
+            create n u |> Concentration
 
         let toString cnc = 
             cnc |> toVar |> toString
@@ -236,9 +240,9 @@ module VariableUnit =
         let fromVar = fromVar toVar QuantityAdjust 
         
         let quantityAdjust n u1 u2 = 
-            let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> Some
+            let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> QuantityAdjust
+            create n u |> QuantityAdjust
 
         let toString qta = 
             qta |> toVar |> toString
@@ -258,9 +262,9 @@ module VariableUnit =
         let fromVar = fromVar toVar TotalAdjust 
         
         let totalAdjust n u1 u2 = 
-            let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> Some
+            let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> TotalAdjust
+            create n u |> TotalAdjust
 
         let toString toa = 
             toa |> toVar |> toString
@@ -280,9 +284,9 @@ module VariableUnit =
         let fromVar = fromVar toVar RateAdjust 
         
         let rateAdjust n u1 u2 = 
-            let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> Some
+            let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
             let n = [name] |> List.append n |> N.create
-            create n u u u u |> RateAdjust
+            create n u |> RateAdjust
 
         let toString rta = 
             rta |> toVar |> toString

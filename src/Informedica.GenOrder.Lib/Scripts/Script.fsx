@@ -2,6 +2,7 @@
 
 #time
     
+open Informedica.GenUtils.Lib.BCL
 open Informedica.GenOrder.Lib
 
 module VU = VariableUnit
@@ -15,6 +16,18 @@ module OD = Order
 module MP = OD.Mapping
 module SV = Solver
 module UN = Unit
+
+"mg/kg/min" |> Informedica.GenUnits.Lib.CombiUnit.fromString
+|> UN.UnitGroup.fromUnit
+|> UN.UnitGroup.getUnits
+|> List.map Informedica.GenUnits.Lib.CombiUnit.toString
+|> List.filter (fun s -> let b = (s |> String.split "/").[1] in b = "kg")
+|> List.iter (printfn "%s")
+
+"Mass/Weight/Time" |> UN.UnitGroup.fromString
+|> UN.UnitGroup.getUnits
+|> List.map Informedica.GenUnits.Lib.CombiUnit.toString
+|> List.iter (printfn "%s")
 
 let print ord =
     for s in ord |> OD.toString do
