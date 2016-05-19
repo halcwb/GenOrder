@@ -16,16 +16,16 @@ module OD = Order
 module MP = OD.Mapping
 module SV = Solver
 module UN = Unit
+module UG = Informedica.GenUnits.Lib.UnitGroup
 
-"mg/kg/min" |> Informedica.GenUnits.Lib.CombiUnit.fromString
-|> UN.UnitGroup.fromUnit
-|> UN.UnitGroup.getUnits
+"mg(Mass)/kg(Weight)/min(Time)" |> Informedica.GenUnits.Lib.CombiUnit.fromString
+|> UG.fromUnit
+|> UG.getUnits
 |> List.map Informedica.GenUnits.Lib.CombiUnit.toString
-|> List.filter (fun s -> let b = (s |> String.split "/").[1] in b = "kg")
 |> List.iter (printfn "%s")
 
-"Mass/Weight/Time" |> UN.UnitGroup.fromString
-|> UN.UnitGroup.getUnits
+"Mass/Weight/Time" |> UG.fromString
+|> UG.getUnits
 |> List.map Informedica.GenUnits.Lib.CombiUnit.toString
 |> List.iter (printfn "%s")
 
@@ -34,32 +34,32 @@ let print ord =
         printfn "%s" s
     ord
         
-for o in OR.createNew [["Genta"]] "mg" "ml" "kg" |> OR.toString do
+for o in OR.createNew [["Genta"]] "mg(Mass)" "ml(Volume)" "kg(Weight)" |> OR.toString do
     printfn "%s" o
 
-for o in OR.createNew [["dopamine"];["sodium";"chloride"]] "mg" "ml" "kg" |> OR.toString do
+for o in OR.createNew [["dopamine"];["sodium";"chloride"]] "mg(Mass)" "ml(Volume)" "kg(Weight)" |> OR.toString do
     printfn "%s" o
 
-let pcm = OR.createNew [["paracetamol"]] "mg" "tabl" "kg" 
+let pcm = OR.createNew [["paracetamol"]] "mg(Mass)" "tabl(Shape)" "kg(Weight)" 
 let pre = PR.discontinuous
 
-let ord = OD.createNew "kg" pcm pre "oral"
+let ord = OD.createNew "kg(Mass)" pcm pre "oral"
 
 
 ord |> print |> ignore
 ord
-|> OD.solve "paracetamol" MP.ItemComponentQty SV.Vals [240N; 300N; 500N] (UN.qtyUnit "mg")
+|> OD.solve "paracetamol" MP.ItemComponentQty SV.Vals [240N; 300N; 500N] (UN.qtyUnit "mg(Mass)")
 |> print
 |> OD.solve "" MP.Freq SV.Vals [2N;3N;4N;5N;6N] (UN.freqUnit)
 |> print
-|> OD.solve "paracetamol" MP.OrderableOrderableQty SV.Vals [1N] (UN.qtyUnit "tabl")
+|> OD.solve "paracetamol" MP.OrderableOrderableQty SV.Vals [1N] (UN.qtyUnit "tabl(Tablet)")
 |> print
-|> OD.solve "paracetamol" MP.OrderableDoseQty SV.Vals [1N] (UN.qtyUnit "tabl")
+|> OD.solve "paracetamol" MP.OrderableDoseQty SV.Vals [1N] (UN.qtyUnit "tabl(Tablet)")
 |> print
-|> OD.solve "paracetamol" MP.ItemDoseTotal SV.MaxIncl [4N] (UN.qtyUnit "gram")
+|> OD.solve "paracetamol" MP.ItemDoseTotal SV.MaxIncl [4N] (UN.qtyUnit "gram(Mass)")
 |> print
-|> OD.solve "paracetamol" MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] ("mg" |> UN.totalUnit |> UN.adjUnit "kg")
+|> OD.solve "paracetamol" MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] ("mg(Mass)" |> UN.totalUnit |> UN.adjUnit "kg(Weight)")
 |> print
-|> OD.solve "" MP.AdjustQty SV.Vals [10N] (UN.qtyUnit "kg")
+|> OD.solve "" MP.AdjustQty SV.Vals [10N] (UN.qtyUnit "kg(Weight)")
 |> print
 |> ignore

@@ -8,6 +8,7 @@ module VariableUnit =
     module VAR = Informedica.GenSolver.Lib.Variable
     module VR = VAR.ValueRange
     module UN = Informedica.GenUnits.Lib.CombiUnit
+    module UG = Informedica.GenUnits.Lib.UnitGroup
     module GN = Informedica.GenUnits.Lib.Unit.Name
     module EQ = Informedica.GenSolver.Lib.Equation
 
@@ -19,7 +20,7 @@ module VariableUnit =
     type VariableUnit =
         {
              Variable:  VAR.Variable
-             UnitGroup: Unit.UnitGroup.UnitGroup
+             UnitGroup: UG.UnitGroup
          }  
          
     let create n ug = 
@@ -80,7 +81,7 @@ module VariableUnit =
 
     let toString vu = 
         let (VAR.Name.Name n) = vu |> getName
-        let ug = vu.UnitGroup |> Unit.UnitGroup.toString
+        let ug = vu.UnitGroup |> UG.toString
         n +
         (vu.Variable 
         |> VAR.getValueRange
@@ -108,7 +109,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Frequency 
         
         let frequency = 
-            let u = Unit.freqUnit |> Unit.UnitGroup.fromUnit
+            let u = Unit.freqUnit |> UG.fromUnit
             let n = [name] |> N.create
             create n u |> Frequency
 
@@ -130,7 +131,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Time 
 
         let time = 
-            let u = Unit.timeUnit |> Unit.UnitGroup.fromUnit
+            let u = Unit.timeUnit |> UG.fromUnit
             let n = [name] |> N.create
             create n u |> Time
 
@@ -152,7 +153,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Quantity 
 
         let quantity n u = 
-            let u = u |> Unit.qtyUnit |> Unit.UnitGroup.fromUnit
+            let u = u |> Unit.qtyUnit |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> Quantity
 
@@ -174,7 +175,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Total 
         
         let total n u = 
-            let u = u |> Unit.totalUnit |> Unit.UnitGroup.fromUnit
+            let u = u |> Unit.totalUnit |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> Total
 
@@ -196,7 +197,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Rate 
         
         let rate n u = 
-            let u = u |> Unit.rateUnit |> Unit.UnitGroup.fromUnit
+            let u = u |> Unit.rateUnit |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> Rate
 
@@ -218,7 +219,7 @@ module VariableUnit =
         let fromVar = fromVar toVar Concentration 
         
         let conc n u1 u2 = 
-            let u = u1 |> Unit.perUnit u2 |> Unit.UnitGroup.fromUnit
+            let u = u1 |> Unit.perUnit u2 |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> Concentration
 
@@ -240,7 +241,7 @@ module VariableUnit =
         let fromVar = fromVar toVar QuantityAdjust 
         
         let quantityAdjust n u1 u2 = 
-            let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
+            let u = u1 |> Unit.qtyUnit |> Unit.adjUnit u2 |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> QuantityAdjust
 
@@ -262,7 +263,7 @@ module VariableUnit =
         let fromVar = fromVar toVar TotalAdjust 
         
         let totalAdjust n u1 u2 = 
-            let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
+            let u = u1 |> Unit.totalUnit |> Unit.adjUnit u2 |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> TotalAdjust
 
@@ -284,7 +285,7 @@ module VariableUnit =
         let fromVar = fromVar toVar RateAdjust 
         
         let rateAdjust n u1 u2 = 
-            let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> Unit.UnitGroup.fromUnit
+            let u = u1 |> Unit.rateUnit |> Unit.adjUnit u2 |> UG.fromUnit
             let n = [name] |> List.append n |> N.create
             create n u |> RateAdjust
 
