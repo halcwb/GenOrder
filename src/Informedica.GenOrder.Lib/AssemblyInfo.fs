@@ -5,10 +5,10 @@ open System.Reflection
 [<assembly: AssemblyProductAttribute("Informedica.GenOrder.Lib")>]
 [<assembly: AssemblyCompanyAttribute("halcwb")>]
 [<assembly: AssemblyDescriptionAttribute("A library that models medical orders allowing calculation and planning")>]
-[<assembly: AssemblyVersionAttribute("0.0.1")>]
-[<assembly: AssemblyFileVersionAttribute("0.0.1")>]
+[<assembly: AssemblyVersionAttribute("0.0.2")>]
+[<assembly: AssemblyFileVersionAttribute("0.0.2")>]
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] Version = "0.0.1"
-    let [<Literal>] InformationalVersion = "0.0.1"
+    let [<Literal>] Version = "0.0.2"
+    let [<Literal>] InformationalVersion = "0.0.2"
