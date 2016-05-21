@@ -34,17 +34,16 @@ let print ord =
         printfn "%s" s
     ord
         
-for o in OR.createNew [["Genta"]] "mg[Mass]" "ml[Volume]" "kg[Weight]" |> OR.toString do
+for o in OR.createNew [["Genta", "mg[Mass]"]] "ml[Volume]" "kg[Weight]" |> OR.toString do
     printfn "%s" o
 
-for o in OR.createNew [["dopamine"];["sodium";"chloride"]] "mg[Mass]" "ml[Volume]" "kg[Weight]" |> OR.toString do
+for o in OR.createNew [["dopamine", "mg[Mass]"];["sodium", "mmol[Molar]";"chloride", "mmol[Molar]"]] "ml[Volume]" "kg[Weight]" |> OR.toString do
     printfn "%s" o
 
-let pcm = OR.createNew [["paracetamol"]] "mg[Mass]" "tabl[Shape]" "kg[Weight]" 
+let pcm = OR.createNew [["paracetamol", "mg[Mass]"]] "tabl[Shape]" "kg[Weight]" 
 let pre = PR.discontinuous
 
 let ord = OD.createNew "kg[Weight]" pcm pre "oral"
-
 
 ord |> print |> ignore
 ord
