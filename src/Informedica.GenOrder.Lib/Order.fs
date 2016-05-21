@@ -124,10 +124,12 @@ module Order =
             StartStop = sts
         }
 
-    let createNew adju ord pre rte = 
-        let adj = adju |> QT.quantity [LT.adjust]
+    let createNew adju ord prs rte = 
+        let nm = ord |> OR.getName
+        let prs = [nm] |> prs
+        let adj = adju |> QT.quantity [nm; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
-        create adj ord pre rte sts
+        create adj ord prs rte sts
 
     let toProd xs = 
         match xs with
@@ -142,21 +144,17 @@ module Order =
     let toEqs (o: Order) =
         let ord = o.Orderable
         let adj = o.Adjust |> QT.toVar
-        let frq, tme = o.Prescription |> PR.toVarUns
+        let frq, tme = o.Prescription |> PR.toEqs
+        let hasRate = 
+            o.Prescription |> PR.isContinuous || 
+            o.Prescription |> PR.isTimed
         
-        ord |> OR.toVarUns adj frq tme
+        ord |> OR.toEqs hasRate adj frq tme
 
-    let fromEqs o vus =
-        let frq, tme =
-            match (o |> get).Prescription with
-            | PR.Process    -> FR.frequency, TM.time
-            | PR.Continuous -> FR.frequency, TM.time
-            | PR.Discontinuous (frq) -> frq, TM.time
-            | PR.Timed(frq, tme)     -> frq, tme
-        
-        let ord = o.Orderable |> OR.fromVarUns vus
+    let fromEqs o vus =        
+        let ord = o.Orderable |> OR.fromEqs vus
         let adj = o.Adjust |> QT.fromVar vus
-        let prs = o.Prescription |> PR.fromVarUns vus
+        let prs = o.Prescription |> PR.fromEqs vus
 
         {
             o with
@@ -183,16 +181,18 @@ module Order =
 
         let toUnit n u (p, s) = 
             let us = u |> String.split "/"
-            s::p 
-            |> VU.findVarUnit n 
-            |> VU.getUnitGroup 
-            |> UG.toString
-            |> String.split CS.divs
-            |> List.fold2 (fun s u ug -> 
-                if s = "" then u + CS.openBr + ug + CS.closBr
-                else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
-            |> (fun s -> printfn "Created: %s" s; s)
-            |> CU.fromString
+            match s::p |> VU.findVarUnit n with
+            | Some vu -> 
+                vu
+                |> VU.getUnitGroup 
+                |> UG.toString
+                |> String.split CS.divs
+                |> List.fold2 (fun s u ug -> 
+                    if s = "" then u + CS.openBr + ug + CS.closBr
+                    else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
+                |> (fun s -> printfn "Created: %s" s; s)
+                |> CU.fromString
+            | None -> sprintf "Cannot find VariableUnit %A" n |> failwith
 
         let dls = if n |> String.isNullOrWhiteSpace then "" else "."
         let n = [n + dls + (m |> Mapping.map)] |> NM.create

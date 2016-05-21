@@ -77,11 +77,14 @@ let pcm =
         "tabl[Shape]" 
         "kg[Weight]" 
 
-let pre = PR.discontinuous
-let ord = OD.createNew "kg[Weight]" pcm pre "oral"
+let prs = PR.discontinuous
+let ord = OD.createNew "kg[Weight]" pcm prs "oral"
 
 // Print out the order
 ord |> print |> ignore
+
+// Prints:
+
 // [fsi: Route]
 // [fsi: oral]
 // [fsi: Prescription]
@@ -119,16 +122,20 @@ ord |> print |> ignore
 
 // Start entering values for the order while solving
 // the calculation model the order at each step
+let solve = OD.solve "paracetamol"
 ord
-|> OD.solve "paracetamol" MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
-|> OD.solve "" MP.Freq SV.Vals [2N;3N;4N;5N;6N] "X/day"
-|> OD.solve "paracetamol" MP.OrderableOrderableQty SV.Vals [1N] "tabl"
-|> OD.solve "paracetamol" MP.OrderableDoseQty SV.Vals [1N] "tabl"
-|> OD.solve "paracetamol" MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
-|> OD.solve "paracetamol" MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] "mg/kg/day"
-|> OD.solve "" MP.AdjustQty SV.Vals [10N] "kg"
+|> solve MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
+|> solve MP.Freq SV.Vals [2N;3N;4N;5N;6N] "X/day"
+|> solve MP.OrderableOrderableQty SV.Vals [1N] "tabl"
+|> solve MP.OrderableDoseQty SV.Vals [1N] "tabl"
+|> solve MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
+|> solve MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] "mg/kg/day"
+|> solve MP.AdjustQty SV.Vals [10N] "kg"
 |> print
 |> ignore
+
+// Prints:
+
 // [fsi: Route]
 // [fsi: oral]
 // [fsi: Prescription]

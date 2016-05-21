@@ -53,11 +53,12 @@ module VariableUnit =
 
     let find getN n vull =
         match vull |> List.filter (fun vl -> vl |> List.exists (fun vu -> vu |> getN = n )) with
-        | [] -> sprintf "Could not find: %A" n |> failwith //vu
+        | [] -> None
         | ft ->
             ft
             |> List.head
-            |> List.find (fun vu -> vu |> getN = n )        
+            |> List.find (fun vu -> vu |> getN = n )
+            |> Some   
 
     let findVarUnit = find getName
 
@@ -66,10 +67,9 @@ module VariableUnit =
         let n = var |> VAR.getName
         let find = find VAR.getName
         
-        vrll
-        |> find n
-        |> withVar ug
-        |> c
+        match vrll |> find n with
+        | Some x -> x |> withVar ug |> c
+        | None   -> vu
 
     let setPropWithUnit p u vu vs eqs = 
         match u with
@@ -117,9 +117,9 @@ module VariableUnit =
 
         let fromVar = fromVar toVar Frequency 
         
-        let frequency = 
+        let frequency n = 
             let u = Unit.freqUnit |> UG.fromUnit
-            let n = [name] |> N.create
+            let n = [name] |> List.append n |> N.create
             create n u |> Frequency
 
         let toString freq = 
@@ -139,9 +139,9 @@ module VariableUnit =
 
         let fromVar = fromVar toVar Time 
 
-        let time = 
+        let time n = 
             let u = Unit.timeUnit |> UG.fromUnit
-            let n = [name] |> N.create
+            let n = [name] |> List.append n |> N.create
             create n u |> Time
 
         let toString tme = 

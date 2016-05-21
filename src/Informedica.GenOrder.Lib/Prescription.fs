@@ -15,21 +15,22 @@ module Prescription =
     
     let continuous = Continuous
 
-    let discontinuous = FR.frequency |> Discontinuous
+    let discontinuous n = n |> FR.frequency |> Discontinuous
     
-    let timed = (FR.frequency, TM.time) |> Timed
+    let timed n = (n |> FR.frequency, n |> TM.time) |> Timed
 
-    let toVarUns pres =
-        let frq, tme =
-            match pres with
-            | Process    -> FR.frequency, TM.time
-            | Continuous -> FR.frequency, TM.time
-            | Discontinuous (frq) -> frq, TM.time
-            | Timed(frq, tme)     -> frq, tme
-        
-        frq |> FR.toVar, tme |> TM.toVar
+    let isContinuous = function | Continuous -> true | _ -> false
 
-    let fromVarUns eqs pres =
+    let isTimed = function | Timed _ -> true | _ -> false
+
+    let toEqs pres =
+        match pres with
+        | Process    -> None, None
+        | Continuous -> None, None
+        | Discontinuous (frq) -> frq |> FR.toVar |> Some, None
+        | Timed(frq, tme)     -> frq |> FR.toVar |> Some, tme |> TM.toVar |> Some
+
+    let fromEqs eqs pres =
         match pres with
         | Process    -> Process
         | Continuous -> Continuous
