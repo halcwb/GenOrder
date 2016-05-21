@@ -10,8 +10,9 @@ module Order =
 
     module Mapping =
 
+        module UN = Unit
+
         type Map =
-            | Route
             | Freq
             | ItemComponentQty
             | ItemOrderableQty
@@ -43,14 +44,13 @@ module Order =
             | AdjustQty
 
         let map = function
-            | Route -> "Route"
             | Freq -> "Freq"
             | ItemComponentQty -> "Item.Component.Qty"
             | ItemOrderableQty -> "Item.Orderable.Qty"
             | ItemComponentConc -> "Item.Component.Conc"
             | ItemOrderableConc -> "Item.Orderable.Conc"
             | ItemDoseQty -> "Item.Dose.Qty"
-            | ItemDoseTotal -> "Item.Dose..Total"
+            | ItemDoseTotal -> "Item.Dose.Total"
             | ItemDoseRate -> "Item.Dose.Rate"
             | ItemDoseAdjustQtyAdjust -> "Item.DoseAdjust.QtyAdjust"
             | ItemDoseAdjustTotalAdjust -> "Item.DoseAdjust.TotalAdjust"
@@ -87,6 +87,9 @@ module Order =
     open Informedica.GenUtils.Lib.BCL
 
     module LT = Literals
+    module CS = Informedica.GenUnits.Lib.Constants
+    module CU = Informedica.GenUnits.Lib.CombiUnit
+    module UG = Informedica.GenUnits.Lib.UnitGroup
     module EQ = Informedica.GenSolver.Lib.Equation
     module OR = Orderable
     module PR = Prescription
@@ -139,17 +142,11 @@ module Order =
     let toEqs (o: Order) =
         let ord = o.Orderable
         let adj = o.Adjust |> QT.toVar
-        let frq, tme = o.Prescription |> PR.toVar
+        let frq, tme = o.Prescription |> PR.toVarUns
         
-        let prod, sum = OR.toEqs adj frq tme ord
-        prod 
-        |> List.map toProd
-        |> List.append [sum |> toSum]
+        ord |> OR.toVarUns adj frq tme
 
-    let fromEqs o eqs =
-        let vs = eqs |> List.map(fun e -> 
-            match e with | EQ.ProductEquation(y, xs) | EQ.SumEquation(y, xs) -> y::xs)
-
+    let fromEqs o vus =
         let frq, tme =
             match (o |> get).Prescription with
             | PR.Process    -> FR.frequency, TM.time
@@ -157,10 +154,10 @@ module Order =
             | PR.Discontinuous (frq) -> frq, TM.time
             | PR.Timed(frq, tme)     -> frq, tme
         
-        let ord = o.Orderable |> OR.fromEqs vs
-        let adj = o.Adjust |> QT.fromVar vs
-        let prs = o.Prescription |> PR.fromVar vs
-        
+        let ord = o.Orderable |> OR.fromVarUns vus
+        let adj = o.Adjust |> QT.fromVar vus
+        let prs = o.Prescription |> PR.fromVarUns vus
+
         {
             o with
                 Adjust = adj
@@ -176,9 +173,34 @@ module Order =
         
 
     let solve n m p v u o =
+        let toEql (prod, sum) =
+            prod 
+            |> List.map toProd
+            |> List.append [sum |> toSum]
+
+        let toVars eqs = eqs |> List.map(fun e -> 
+            match e with | EQ.ProductEquation(y, xs) | EQ.SumEquation(y, xs) -> y::xs)
+
+        let toUnit n u (p, s) = 
+            let us = u |> String.split "/"
+            s::p 
+            |> VU.findVarUnit n 
+            |> VU.getUnitGroup 
+            |> UG.toString
+            |> String.split CS.divs
+            |> List.fold2 (fun s u ug -> 
+                if s = "" then u + CS.openBr + ug + CS.closBr
+                else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
+            |> (fun s -> printfn "Created: %s" s; s)
+            |> CU.fromString
+
         let dls = if n |> String.isNullOrWhiteSpace then "" else "."
         let n = [n + dls + (m |> Mapping.map)] |> NM.create
-        o
-        |> toEqs
-        |> SV.solve n p v u
+        let vus = o |> toEqs
+        let cu = vus |> toUnit n u 
+
+        vus 
+        |> toEql
+        |> SV.solve n p v cu
+        |> toVars
         |> fromEqs o

@@ -19,7 +19,7 @@ module Prescription =
     
     let timed = (FR.frequency, TM.time) |> Timed
 
-    let toVar pres =
+    let toVarUns pres =
         let frq, tme =
             match pres with
             | Process    -> FR.frequency, TM.time
@@ -29,7 +29,7 @@ module Prescription =
         
         frq |> FR.toVar, tme |> TM.toVar
 
-    let fromVar eqs pres =
+    let fromVarUns eqs pres =
         match pres with
         | Process    -> Process
         | Continuous -> Continuous

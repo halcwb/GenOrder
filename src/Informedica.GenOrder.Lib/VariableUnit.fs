@@ -39,7 +39,9 @@ module VariableUnit =
 
     let getName vu = (vu |> get).Variable.Name 
 
-    let getVar = apply (fun qty -> qty.Variable)
+    let getVar = apply (fun vu -> vu.Variable)
+
+    let getUnitGroup = apply (fun vu -> vu.UnitGroup)
 
     let toEq cr y xs = (y |> getVar, xs |> List.map getVar) |> cr
 
@@ -49,18 +51,25 @@ module VariableUnit =
 
     let setProp vu p vs u eqs = eqs |> Solver.solve (vu |> getName) p vs u
 
-    let fromVar toVar c eqs vu = 
-        let var, ug = vu |> (toVar >> getAll)
-        let n = var |> VAR.getName
-        
-        match eqs |> List.filter (fun eq -> eq |> List.exists (fun vu -> vu |> VAR.getName = n )) with
+    let find getN n vull =
+        match vull |> List.filter (fun vl -> vl |> List.exists (fun vu -> vu |> getN = n )) with
         | [] -> sprintf "Could not find: %A" n |> failwith //vu
         | ft ->
             ft
             |> List.head
-            |> List.find (fun vu -> vu |> VAR.getName = n )
-            |> withVar ug
-            |> c
+            |> List.find (fun vu -> vu |> getN = n )        
+
+    let findVarUnit = find getName
+
+    let fromVar toVar c vrll vu = 
+        let var, ug = vu |> (toVar >> getAll)
+        let n = var |> VAR.getName
+        let find = find VAR.getName
+        
+        vrll
+        |> find n
+        |> withVar ug
+        |> c
 
     let setPropWithUnit p u vu vs eqs = 
         match u with

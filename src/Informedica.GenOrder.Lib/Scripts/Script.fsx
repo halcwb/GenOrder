@@ -43,23 +43,23 @@ for o in OR.createNew [["dopamine"];["sodium";"chloride"]] "mg[Mass]" "ml[Volume
 let pcm = OR.createNew [["paracetamol"]] "mg[Mass]" "tabl[Shape]" "kg[Weight]" 
 let pre = PR.discontinuous
 
-let ord = OD.createNew "kg[Mass]" pcm pre "oral"
+let ord = OD.createNew "kg[Weight]" pcm pre "oral"
 
 
 ord |> print |> ignore
 ord
-|> OD.solve "paracetamol" MP.ItemComponentQty SV.Vals [240N; 300N; 500N] (UN.qtyUnit "mg[Mass]")
+|> OD.solve "paracetamol" MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
 |> print
-|> OD.solve "" MP.Freq SV.Vals [2N;3N;4N;5N;6N] (UN.freqUnit)
+|> OD.solve "" MP.Freq SV.Vals [2N;3N;4N;5N;6N] "X/day"
 |> print
-|> OD.solve "paracetamol" MP.OrderableOrderableQty SV.Vals [1N] (UN.qtyUnit "tabl[Tablet]")
+|> OD.solve "paracetamol" MP.OrderableOrderableQty SV.Vals [1N] "tabl"
 |> print
-|> OD.solve "paracetamol" MP.OrderableDoseQty SV.Vals [1N] (UN.qtyUnit "tabl[Tablet]")
+|> OD.solve "paracetamol" MP.OrderableDoseQty SV.Vals [1N] "tabl"
 |> print
-|> OD.solve "paracetamol" MP.ItemDoseTotal SV.MaxIncl [4N] (UN.qtyUnit "gram[Mass]")
+|> OD.solve "paracetamol" MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
 |> print
-|> OD.solve "paracetamol" MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] ("mg[Mass]" |> UN.totalUnit |> UN.adjUnit "kg[Weight]")
+|> OD.solve "paracetamol" MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] "mg/kg/day"
 |> print
-|> OD.solve "" MP.AdjustQty SV.Vals [10N] (UN.qtyUnit "kg[Weight]")
+|> OD.solve "" MP.AdjustQty SV.Vals [10N] "kg"
 |> print
 |> ignore

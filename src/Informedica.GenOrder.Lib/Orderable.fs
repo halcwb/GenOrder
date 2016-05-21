@@ -3,6 +3,8 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Orderable =
 
+    /// Contains string constants
+    /// to create `Variable` names
     module Literals =
 
         [<Literal>]
@@ -18,6 +20,8 @@ module Orderable =
         [<Literal>]
         let doseAdjust = "DoseAdjust"
 
+    /// Type and functions that models an
+    /// `Order` `Item`
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Item =
 
@@ -31,9 +35,12 @@ module Orderable =
         module DS = VU.Dose
         module DA = VU.DoseAdjust
 
+        /// Models an `Item` in a `Component`
         type Item = 
             {
+                /// The quantity of an `Item` in a `Component`
                 ComponentQuantity: QT.Quantity 
+                /// The quantity of an `Item` in an `Orderable`
                 OrderableQuantity: QT.Quantity
                 ComponentConcentration: CN.Concentration 
                 OrderableConcentration: CN.Concentration 
@@ -90,7 +97,7 @@ module Orderable =
         /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj
         /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
-        let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_ord_qty ord_ord_qty item =
+        let toVarUns adj frq qty tot tme rte cmp_cmp_qty cmp_ord_qty ord_ord_qty item =
             let itm_cmp_qty = (item |> get).ComponentQuantity |> QT.toVar
             let itm_ord_qty = item.OrderableQuantity          |> QT.toVar
             let itm_cmp_cnc = item.ComponentConcentration     |> CN.toVar
@@ -112,7 +119,7 @@ module Orderable =
                 [ itm_dos_rte; itm_dos_rte_adj; adj ]
             ]
 
-        let fromEqs eqs (item: Item) =
+        let fromVarUns eqs (item: Item) =
             {
                 item with
                     ComponentQuantity = QT.fromVar eqs item.ComponentQuantity
@@ -202,7 +209,7 @@ module Orderable =
         /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
         /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
-        let toEqs adj frq qty tot tme rte ord_ord_qty cmp =
+        let toVarUns adj frq qty tot tme rte ord_ord_qty cmp =
             let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
             let cmp_ord_qty = cmp.OrderableQuantity          |> QT.toVar
             let cmp_ord_cnc = cmp.OrderableConcentration     |> CN.toVar
@@ -210,7 +217,7 @@ module Orderable =
             let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVar
             let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVar
 
-            let map = IT.toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_ord_qty ord_ord_qty
+            let map = IT.toVarUns adj frq qty tot tme rte cmp_cmp_qty cmp_ord_qty ord_ord_qty
             let i, ii = cmp.Items
 
             [
@@ -227,10 +234,10 @@ module Orderable =
             ] 
             |> List.append (i::ii |> List.collect map)
 
-        let fromEqs eqs (cmp: Component) =
+        let fromVarUns eqs (cmp: Component) =
             let items = 
                 (cmp.Items |> fst)::(cmp.Items |> snd)
-                |> List.map (IT.fromEqs eqs)
+                |> List.map (IT.fromVarUns eqs)
             {
                 cmp with
                     ComponentQuantity = QT.fromVar eqs cmp.ComponentQuantity
@@ -314,7 +321,7 @@ module Orderable =
     /// * ord\_dos\_qty = ord\_dos\_qty\_adj \* adj
     /// * ord\_dos\_tot = ord\_dos\_tot\_adj \* adj
     /// * ord\_dos\_rte = ord\_dos\_rte\_adj \* adj
-    let toEqs adj frq tme ord =
+    let toVarUns adj frq tme ord =
         let ord_der_qty = (ord |> get).OrderQuantity |> QT.toVar
         let ord_ord_qty = ord.OrderableQuantity      |> QT.toVar
 
@@ -329,7 +336,7 @@ module Orderable =
         let tot_adj = ord_dos_tot_adj
         let rte_adj = ord_dos_rte_adj
 
-        let map = CM.toEqs adj frq qty tot tme rte ord_ord_qty
+        let map = CM.toVarUns adj frq qty tot tme rte ord_ord_qty
         let c, cc = ord.Components
 
         [
@@ -343,10 +350,10 @@ module Orderable =
         , ord_ord_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVar))
 
 
-    let fromEqs eqs (ord: Orderable) =
+    let fromVarUns eqs (ord: Orderable) =
         let cmps = 
             (ord.Components |> fst)::(ord.Components |> snd)
-            |> List.map (CM.fromEqs eqs)
+            |> List.map (CM.fromVarUns eqs)
         {
             ord with
                 OrderableQuantity = QT.fromVar eqs ord.OrderableQuantity             
