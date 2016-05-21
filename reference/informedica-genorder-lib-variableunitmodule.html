@@ -40,6 +40,8 @@
   <span>Namespace: Informedica.GenOrder.Lib</span><br />
 </p>
 <div class="xmldoc">
+<p>Functions that deal with the <a href="informedica-genorder-lib-variableunitmodule-variableunit.html" title="VariableUnit"><code>VariableUnit</code></a> type</p>
+
 </div>
 
 <!-- Render nested types and modules, if there are any -->
@@ -54,7 +56,13 @@
           <td class="type-name">
             <a href="informedica-genorder-lib-variableunitmodule-variableunit.html">VariableUnit</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>A <a href="informedica-genorder-lib-variableunitmodule-variableunit.html" title="VariableUnit"><code>VariableUnit</code></a> is the combination of
+an <code>Informedica.GenSolver.Lib.Variable</code> with
+an <code>Informedica.GenUnits.Lib.CombiUnit</code>
+The <code>Variable</code> stores the base values according
+to the <code>UnitGroup</code></p>
+
+</td>
         </tr>
     </tbody>
   </table>
@@ -157,7 +165,7 @@
                           <strong>Type parameters:</strong> '?6723          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L28-28" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L33-33" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -168,14 +176,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '64', 64)" onmouseover="showTip(event, '64', 64)">
-            create n vsu minu incru maxu
+            create n ug
           </code>
           <div class="tip" id="64">
-            <strong>Signature:</strong> n:Name -&gt; vsu:CombiUnit option -&gt; minu:CombiUnit option -&gt; incru:CombiUnit option -&gt; maxu:CombiUnit option -&gt; VariableUnit<br />
+            <strong>Signature:</strong> n:Name -&gt; ug:UnitGroup -&gt; VariableUnit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L21-21" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L26-26" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -186,14 +194,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '65', 65)" onmouseover="showTip(event, '65', 65)">
-            fromVar toVar c eqs vu
+            find getN n vull
           </code>
           <div class="tip" id="65">
-            <strong>Signature:</strong> toVar:(&#39;?6734 -&gt; VariableUnit) -&gt; c:(VariableUnit -&gt; &#39;?6735) -&gt; eqs:Variable list list -&gt; vu:&#39;?6734 -&gt; &#39;?6735<br />
-                          <strong>Type parameters:</strong> '?6734, '?6735          </div>
+            <strong>Signature:</strong> getN:(&#39;?6735 -&gt; &#39;?6736) -&gt; n:&#39;?6736 -&gt; vull:&#39;?6735 list list -&gt; &#39;?6735<br />
+                          <strong>Type parameters:</strong> '?6735, '?6736          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L47-47" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L54-54" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -204,14 +212,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '66', 66)" onmouseover="showTip(event, '66', 66)">
-            get 
+            findVarUnit 
           </code>
           <div class="tip" id="66">
-            <strong>Signature:</strong> VariableUnit -&gt; VariableUnit<br />
+            <strong>Signature:</strong> Name -&gt; VariableUnit list list -&gt; VariableUnit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L30-30" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L62-62" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -222,14 +230,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '67', 67)" onmouseover="showTip(event, '67', 67)">
-            getAll arg1
+            fromVar toVar c vrll vu
           </code>
           <div class="tip" id="67">
-            <strong>Signature:</strong> VariableUnit -&gt; Variable * CombiUnit option * CombiUnit option * CombiUnit option * CombiUnit option<br />
-                      </div>
+            <strong>Signature:</strong> toVar:(&#39;?6739 -&gt; VariableUnit) -&gt; c:(VariableUnit -&gt; &#39;?6740) -&gt; vrll:Variable list list -&gt; vu:&#39;?6739 -&gt; &#39;?6740<br />
+                          <strong>Type parameters:</strong> '?6739, '?6740          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L32-32" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L64-64" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -240,10 +248,10 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '68', 68)" onmouseover="showTip(event, '68', 68)">
-            getName vu
+            get 
           </code>
           <div class="tip" id="68">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; Name<br />
+            <strong>Signature:</strong> VariableUnit -&gt; VariableUnit<br />
                       </div>
         </td>
         <td class="xmldoc">
@@ -258,10 +266,10 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '69', 69)" onmouseover="showTip(event, '69', 69)">
-            getVar 
+            getAll arg1
           </code>
           <div class="tip" id="69">
-            <strong>Signature:</strong> VariableUnit -&gt; Variable<br />
+            <strong>Signature:</strong> VariableUnit -&gt; Variable * UnitGroup<br />
                       </div>
         </td>
         <td class="xmldoc">
@@ -276,14 +284,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '70', 70)" onmouseover="showTip(event, '70', 70)">
-            setIncr vu
+            getName vu
           </code>
           <div class="tip" id="70">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> vu:VariableUnit -&gt; Name<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L71-71" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L40-40" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -294,14 +302,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '71', 71)" onmouseover="showTip(event, '71', 71)">
-            setMaxExcl vu
+            getUnitGroup 
           </code>
           <div class="tip" id="71">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> VariableUnit -&gt; UnitGroup<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L75-75" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L44-44" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -312,14 +320,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '72', 72)" onmouseover="showTip(event, '72', 72)">
-            setMaxIncl vu
+            getVar 
           </code>
           <div class="tip" id="72">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> VariableUnit -&gt; Variable<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L73-73" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L42-42" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -330,14 +338,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '73', 73)" onmouseover="showTip(event, '73', 73)">
-            setMinExcl vu
+            setIncr u vu
           </code>
           <div class="tip" id="73">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L69-69" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L85-85" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -348,14 +356,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '74', 74)" onmouseover="showTip(event, '74', 74)">
-            setMinIncl vu
+            setMaxExcl u vu
           </code>
           <div class="tip" id="74">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L67-67" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L89-89" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -366,14 +374,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '75', 75)" onmouseover="showTip(event, '75', 75)">
-            setProp vu p vs u eqs
+            setMaxIncl u vu
           </code>
           <div class="tip" id="75">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; p:Prop -&gt; vs:BigRational list -&gt; u:CombiUnit -&gt; eqs:Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L45-45" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L87-87" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -384,14 +392,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '76', 76)" onmouseover="showTip(event, '76', 76)">
-            setPropWithUnit p u vu vs eqs
+            setMinExcl u vu
           </code>
           <div class="tip" id="76">
-            <strong>Signature:</strong> p:Prop -&gt; u:CombiUnit option -&gt; vu:VariableUnit -&gt; vs:BigRational list -&gt; eqs:Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L60-60" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L83-83" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -402,14 +410,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '77', 77)" onmouseover="showTip(event, '77', 77)">
-            setVals vu
+            setMinIncl u vu
           </code>
           <div class="tip" id="77">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L65-65" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L81-81" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -420,14 +428,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '78', 78)" onmouseover="showTip(event, '78', 78)">
-            toEq cr y xs
+            setProp vu p vs u eqs
           </code>
           <div class="tip" id="78">
-            <strong>Signature:</strong> cr:(Variable * Variable list -&gt; &#39;?6729) -&gt; y:VariableUnit -&gt; xs:VariableUnit list -&gt; &#39;?6729<br />
-                          <strong>Type parameters:</strong> '?6729          </div>
+            <strong>Signature:</strong> vu:VariableUnit -&gt; p:Prop -&gt; vs:BigRational list -&gt; u:CombiUnit -&gt; eqs:Equation list -&gt; Equation list<br />
+                      </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L39-39" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L52-52" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -438,14 +446,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '79', 79)" onmouseover="showTip(event, '79', 79)">
-            toProdEq succ fail
+            setPropWithUnit p u vu vs eqs
           </code>
           <div class="tip" id="79">
-            <strong>Signature:</strong> succ:(Equation -&gt; Equation) -&gt; fail:(Message -&gt; Equation) -&gt; VariableUnit -&gt; VariableUnit list -&gt; Equation<br />
+            <strong>Signature:</strong> p:Prop -&gt; u:CombiUnit option -&gt; vu:VariableUnit -&gt; vs:BigRational list -&gt; eqs:Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L41-41" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L74-74" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -456,14 +464,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '80', 80)" onmouseover="showTip(event, '80', 80)">
-            toString vu
+            setVals u vu
           </code>
           <div class="tip" id="80">
-            <strong>Signature:</strong> vu:VariableUnit -&gt; string<br />
+            <strong>Signature:</strong> u:CombiUnit option -&gt; vu:VariableUnit -&gt; BigRational list -&gt; Equation list -&gt; Equation list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L77-77" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L79-79" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -474,14 +482,14 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '81', 81)" onmouseover="showTip(event, '81', 81)">
-            toSumEq succ fail
+            toEq cr y xs
           </code>
           <div class="tip" id="81">
-            <strong>Signature:</strong> succ:(Equation -&gt; Equation) -&gt; fail:(Message -&gt; Equation) -&gt; VariableUnit -&gt; VariableUnit list -&gt; Equation<br />
-                      </div>
+            <strong>Signature:</strong> cr:(Variable * Variable list -&gt; &#39;?6730) -&gt; y:VariableUnit -&gt; xs:VariableUnit list -&gt; &#39;?6730<br />
+                          <strong>Type parameters:</strong> '?6730          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L43-43" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L46-46" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -492,14 +500,68 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '82', 82)" onmouseover="showTip(event, '82', 82)">
-            withVar vsu minu incru maxu var
+            toProdEq succ fail
           </code>
           <div class="tip" id="82">
-            <strong>Signature:</strong> vsu:CombiUnit option -&gt; minu:CombiUnit option -&gt; incru:CombiUnit option -&gt; maxu:CombiUnit option -&gt; var:Variable -&gt; VariableUnit<br />
+            <strong>Signature:</strong> succ:(Equation -&gt; Equation) -&gt; fail:(Message -&gt; Equation) -&gt; VariableUnit -&gt; VariableUnit list -&gt; Equation<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L25-25" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L48-48" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '83', 83)" onmouseover="showTip(event, '83', 83)">
+            toString vu
+          </code>
+          <div class="tip" id="83">
+            <strong>Signature:</strong> vu:VariableUnit -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L91-91" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '84', 84)" onmouseover="showTip(event, '84', 84)">
+            toSumEq succ fail
+          </code>
+          <div class="tip" id="84">
+            <strong>Signature:</strong> succ:(Equation -&gt; Equation) -&gt; fail:(Message -&gt; Equation) -&gt; VariableUnit -&gt; VariableUnit list -&gt; Equation<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L50-50" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '85', 85)" onmouseover="showTip(event, '85', 85)">
+            withVar ug var
+          </code>
+          <div class="tip" id="85">
+            <strong>Signature:</strong> ug:UnitGroup -&gt; var:Variable -&gt; VariableUnit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L30-30" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>

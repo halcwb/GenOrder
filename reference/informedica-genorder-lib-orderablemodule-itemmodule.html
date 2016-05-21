@@ -41,6 +41,9 @@
   <span>Parent Module: <a href="informedica-genorder-lib-orderablemodule.html">Orderable</a></span>
 </p>
 <div class="xmldoc">
+<p>Type and functions that models an
+<a href="informedica-genorder-lib-ordermodule-order.html" title="Order"><code>Order</code></a> <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a></p>
+
 </div>
 
 <!-- Render nested types and modules, if there are any -->
@@ -55,7 +58,9 @@
           <td class="type-name">
             <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html">Item</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Models an <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a> in a <a href="informedica-genorder-lib-orderablemodule-componentmodule-component.html" title="Component"><code>Component</code></a></p>
+
+</td>
         </tr>
     </tbody>
   </table>
@@ -75,11 +80,11 @@
             apply f item
           </code>
           <div class="tip" id="27">
-            <strong>Signature:</strong> f:(Item -&gt; &#39;?7019) -&gt; item:Item -&gt; &#39;?7019<br />
-                          <strong>Type parameters:</strong> '?7019          </div>
+            <strong>Signature:</strong> f:(Item -&gt; &#39;?7024) -&gt; item:Item -&gt; &#39;?7024<br />
+                          <strong>Type parameters:</strong> '?7024          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L65-65" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L90-90" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -90,50 +95,66 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '28', 28)" onmouseover="showTip(event, '28', 28)">
-            create cq oq cc oc ds da
+            create (...)
           </code>
           <div class="tip" id="28">
-            <strong>Signature:</strong> cq:Quantity -&gt; oq:Quantity -&gt; cc:Concentration -&gt; oc:Concentration -&gt; ds:Dose -&gt; da:DoseAdjust -&gt; Item<br />
+            <strong>Signature:</strong> cmp_qty:Quantity -&gt; orb_qty:Quantity -&gt; cmp_cnc:Concentration -&gt; orb_cnc:Concentration -&gt; dos:Dose -&gt; dos_adj:DoseAdjust -&gt; Item<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L44-44" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L63-63" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Create an item with</p>
+<ul>
+<li><code>cmp_qty</code>: the quantity of the item in a component</li>
+<li><code>orb_qty</code>: the quantity of the item in an orderable</li>
+<li><code>cmp_cnc</code>: the item concentration in a component</li>
+<li><code>orb_cnc</code>: the item concentration in an orderable</li>
+<li><code>dos</code>: the item dose</li>
+<li><code>dos_adj</code>: the adjusted item dose</li>
+</ul>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '29', 29)" onmouseover="showTip(event, '29', 29)">
-            createNew s u1 u2 adj
+            createNew (s, u1) u2 adj
           </code>
           <div class="tip" id="29">
-            <strong>Signature:</strong> s:string -&gt; u1:String -&gt; u2:string -&gt; adj:string -&gt; Item<br />
+            <strong>Signature:</strong> (s:string * u1:String) -&gt; u2:string -&gt; adj:string -&gt; Item<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L54-54" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L79-79" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Create a new item with</p>
+<p><code>s</code>: the name of the item
+<code>u1</code>: the unit of the item
+<code>u2</code>: the unit of the component that contains the item
+<code>adj</code>: the unit to adjust the item dose</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '30', 30)" onmouseover="showTip(event, '30', 30)">
-            fromEqs eqs item
+            fromVarUns eqs item
           </code>
           <div class="tip" id="30">
             <strong>Signature:</strong> eqs:Variable list list -&gt; item:Item -&gt; Item<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L115-115" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L141-141" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -151,7 +172,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L67-67" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L92-92" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -162,51 +183,51 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '32', 32)" onmouseover="showTip(event, '32', 32)">
-            toEqs (...)
+            toString item
           </code>
           <div class="tip" id="32">
-            <strong>Signature:</strong> adj:VariableUnit -&gt; frq:VariableUnit -&gt; qty:VariableUnit -&gt; tot:VariableUnit -&gt; tme:VariableUnit -&gt; rte:VariableUnit -&gt; cmp_cmp_qty:VariableUnit -&gt; cmp_ord_qty:VariableUnit -&gt; ord_ord_qty:VariableUnit -&gt; item:Item -&gt; VariableUnit list list<br />
+            <strong>Signature:</strong> item:Item -&gt; string list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L93-93" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L94-94" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>The following equations are generated:</p>
-<ul>
-<li>itm_cmp_qty = itm_cmp_cnc * cmp_cmp_qty</li>
-<li>itm_ord_qty = itm_ord_cnc * ord_ord_qty</li>
-<li>itm_ord_qty = itm_cmp_cnc * cmp_ord_qty</li>
-<li>itm_dos_tot = itm_dos_qty * frq</li>
-<li>itm_dos_qty = itm_dos_rte * tme</li>
-<li>itm_dos_qty = itm_ord_cnc * qty</li>
-<li>itm_dos_tot = itm_ord_cnc * tot</li>
-<li>itm_dos_rte = itm_ord_cnc * rte</li>
-<li>itm_dos_qty = itm_dos_qty_adj * adj</li>
-<li>itm_dos_tot = itm_dos_tot_adj * adj</li>
-<li>itm_dos_rte = itm_dos_rte_adj * adj</li>
-</ul>
-
-
+          
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '33', 33)" onmouseover="showTip(event, '33', 33)">
-            toString item
+            toVarUns (...)
           </code>
           <div class="tip" id="33">
-            <strong>Signature:</strong> item:Item -&gt; string list<br />
+            <strong>Signature:</strong> adj:VariableUnit -&gt; frq:VariableUnit -&gt; qty:VariableUnit -&gt; tot:VariableUnit -&gt; tme:VariableUnit -&gt; rte:VariableUnit -&gt; cmp_cmp_qty:VariableUnit -&gt; cmp_orb_qty:VariableUnit -&gt; orb_orb_qty:VariableUnit -&gt; item:Item -&gt; VariableUnit list list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L69-69" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L118-118" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>The following equations are generated:</p>
+<ul>
+<li>itm_cmp_qty = itm_cmp_cnc * cmp_cmp_qty</li>
+<li>itm_orb_qty = itm_orb_cnc * orb_orb_qty</li>
+<li>itm_orb_qty = itm_cmp_cnc * cmp_orb_qty</li>
+<li>itm_dos_tot = itm_dos_qty * frq</li>
+<li>itm_dos_qty = itm_dos_rte * tme</li>
+<li>itm_dos_qty = itm_orb_cnc * qty</li>
+<li>itm_dos_tot = itm_orb_cnc * tot</li>
+<li>itm_dos_rte = itm_orb_cnc * rte</li>
+<li>itm_dos_qty = itm_dos_qty_adj * adj</li>
+<li>itm_dos_tot = itm_dos_tot_adj * adj</li>
+<li>itm_dos_rte = itm_dos_rte_adj * adj</li>
+</ul>
+
+
         </td>
       </tr>
     </tbody>

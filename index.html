@@ -47,6 +47,208 @@
 </div>
 <h2><a name="Example" class="anchor" href="#Example">Example</a></h2>
 <p>This example demonstrates using a function defined in this sample library.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+<span class="l">20: </span>
+<span class="l">21: </span>
+<span class="l">22: </span>
+<span class="l">23: </span>
+<span class="l">24: </span>
+<span class="l">25: </span>
+<span class="l">26: </span>
+<span class="l">27: </span>
+<span class="l">28: </span>
+<span class="l">29: </span>
+<span class="l">30: </span>
+<span class="l">31: </span>
+<span class="l">32: </span>
+<span class="l">33: </span>
+<span class="l">34: </span>
+<span class="l">35: </span>
+<span class="l">36: </span>
+<span class="l">37: </span>
+<span class="l">38: </span>
+<span class="l">39: </span>
+<span class="l">40: </span>
+<span class="l">41: </span>
+<span class="l">42: </span>
+<span class="l">43: </span>
+<span class="l">44: </span>
+<span class="l">45: </span>
+<span class="l">46: </span>
+<span class="l">47: </span>
+<span class="l">48: </span>
+<span class="l">49: </span>
+<span class="l">50: </span>
+<span class="l">51: </span>
+<span class="l">52: </span>
+<span class="l">53: </span>
+<span class="l">54: </span>
+<span class="l">55: </span>
+<span class="l">56: </span>
+<span class="l">57: </span>
+<span class="l">58: </span>
+<span class="l">59: </span>
+<span class="l">60: </span>
+<span class="l">61: </span>
+<span class="l">62: </span>
+<span class="l">63: </span>
+<span class="l">64: </span>
+<span class="l">65: </span>
+<span class="l">66: </span>
+<span class="l">67: </span>
+<span class="l">68: </span>
+<span class="l">69: </span>
+<span class="l">70: </span>
+<span class="l">71: </span>
+<span class="l">72: </span>
+<span class="l">73: </span>
+<span class="l">74: </span>
+<span class="l">75: </span>
+<span class="l">76: </span>
+<span class="l">77: </span>
+<span class="l">78: </span>
+<span class="l">79: </span>
+<span class="l">80: </span>
+<span class="l">81: </span>
+<span class="l">82: </span>
+<span class="l">83: </span>
+<span class="l">84: </span>
+<span class="l">85: </span>
+<span class="l">86: </span>
+<span class="l">87: </span>
+<span class="l">88: </span>
+<span class="l">89: </span>
+<span class="l">90: </span>
+<span class="l">91: </span>
+<span class="l">92: </span>
+<span class="l">93: </span>
+<span class="l">94: </span>
+<span class="l">95: </span>
+<span class="l">96: </span>
+<span class="l">97: </span>
+<span class="l">98: </span>
+<span class="l">99: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// Create an orderable with two components</span>
+<span class="c">// dopamine and sodium/chloride</span>
+<span class="c">// dopamine component contains item dopamine</span>
+<span class="c">// sodium/chloride component (is saline) contains sodium and chloride</span>
+<span class="c">// dopamine is measured in mass units, sodium and chloride in molar units</span>
+<span class="c">// the components are measured in volume units</span>
+<span class="c">// Dose is adjusteded in weight units        </span>
+<span class="k">for</span> <span onmouseout="hideTip(event, 'fs26', 31)" onmouseover="showTip(event, 'fs26', 31)" class="i">o</span> <span class="k">in</span> <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 32)" onmouseover="showTip(event, 'fs27', 32)" class="f">createNew</span> [[<span class="s">&quot;dopamine&quot;</span>, <span class="s">&quot;mg[Mass]&quot;</span>];[<span class="s">&quot;sodium&quot;</span>, <span class="s">&quot;mmol[Molar]&quot;</span>;<span class="s">&quot;chloride&quot;</span>, <span class="s">&quot;mmol[Molar]&quot;</span>]] <span class="s">&quot;ml[Volume]&quot;</span> <span class="s">&quot;kg[Weight]&quot;</span> <span class="o">|&gt;</span> <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 33)" onmouseover="showTip(event, 'fs28', 33)" class="f">toString</span> <span class="k">do</span>
+    <span onmouseout="hideTip(event, 'fs25', 34)" onmouseover="showTip(event, 'fs25', 34)" class="f">printfn</span> <span class="s">&quot;</span><span class="pf">%s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs26', 35)" onmouseover="showTip(event, 'fs26', 35)" class="i">o</span>
+
+<span class="c">// Create a paracetamol order with an paracetamol orderable</span>
+<span class="c">// and how to prescribe this</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs29', 36)" onmouseover="showTip(event, 'fs29', 36)" class="i">pcm</span> <span class="o">=</span> <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 37)" onmouseover="showTip(event, 'fs27', 37)" class="f">createNew</span> [[<span class="s">&quot;paracetamol&quot;</span>, <span class="s">&quot;mg[Mass]&quot;</span>]] <span class="s">&quot;tabl[Shape]&quot;</span> <span class="s">&quot;kg[Weight]&quot;</span> 
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs30', 38)" onmouseover="showTip(event, 'fs30', 38)" class="i">pre</span> <span class="o">=</span> <span class="t">PR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs31', 39)" onmouseover="showTip(event, 'fs31', 39)" class="i">discontinuous</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs32', 40)" onmouseover="showTip(event, 'fs32', 40)" class="i">ord</span> <span class="o">=</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs33', 41)" onmouseover="showTip(event, 'fs33', 41)" class="f">createNew</span> <span class="s">&quot;kg[Weight]&quot;</span> <span onmouseout="hideTip(event, 'fs29', 42)" onmouseover="showTip(event, 'fs29', 42)" class="i">pcm</span> <span onmouseout="hideTip(event, 'fs30', 43)" onmouseover="showTip(event, 'fs30', 43)" class="i">pre</span> <span class="s">&quot;oral&quot;</span>
+
+<span class="c">// Print out the order</span>
+<span onmouseout="hideTip(event, 'fs32', 44)" onmouseover="showTip(event, 'fs32', 44)" class="i">ord</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs21', 45)" onmouseover="showTip(event, 'fs21', 45)" class="f">print</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs34', 46)" onmouseover="showTip(event, 'fs34', 46)" class="f">ignore</span>
+<span class="c">//fsi:[Route]</span>
+<span class="c">//fsi:[oral]</span>
+<span class="c">//fsi:[Prescription]</span>
+<span class="c">//fsi:[Freq&lt;..&gt; Count/Time]</span>
+<span class="c">//fsi:[Orderable]</span>
+<span class="c">//fsi:[paracetamol.Item.Component.Qty&lt;..&gt; Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Orderable.Qty&lt;..&gt; Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Component.Conc&lt;..&gt; Mass/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Item.Orderable.Conc&lt;..&gt; Mass/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Qty&lt;..&gt; Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Total&lt;..&gt; Mass/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Rate&lt;..&gt; Mass/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.QtyAdjust&lt;..&gt; Mass/Weight]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.TotalAdjust&lt;..&gt; Mass/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.RateAdjust&lt;..&gt; Mass/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.Component.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Orderable.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Orderable.Conc&lt;..&gt; Tabl/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Total&lt;..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Rate&lt;..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.QtyAdjust&lt;..&gt; Tabl/Weight]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.TotalAdjust&lt;..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.RateAdjust&lt;..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Orderable.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Order.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Qty&lt;..&gt; Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Total&lt;..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Rate&lt;..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.QtyAdjust&lt;..&gt; Tabl/Weight]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.TotalAdjust&lt;..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.RateAdjust&lt;..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[Adjust]</span>
+<span class="c">//fsi:[Adjust.Qty&lt;..&gt; Weight]</span>
+
+<span class="c">// Start entering values for the order while solving</span>
+<span class="c">// the calculation model the order at each step</span>
+<span onmouseout="hideTip(event, 'fs32', 47)" onmouseover="showTip(event, 'fs32', 47)" class="i">ord</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 48)" onmouseover="showTip(event, 'fs35', 48)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs36', 49)" onmouseover="showTip(event, 'fs36', 49)" class="p">ItemComponentQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 50)" onmouseover="showTip(event, 'fs37', 50)" class="p">Vals</span> [<span class="n">240N</span>; <span class="n">300N</span>; <span class="n">500N</span>] <span class="s">&quot;mg&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 51)" onmouseover="showTip(event, 'fs35', 51)" class="f">solve</span> <span class="s">&quot;&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 52)" onmouseover="showTip(event, 'fs38', 52)" class="p">Freq</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 53)" onmouseover="showTip(event, 'fs37', 53)" class="p">Vals</span> [<span class="n">2N</span>;<span class="n">3N</span>;<span class="n">4N</span>;<span class="n">5N</span>;<span class="n">6N</span>] <span class="s">&quot;X/day&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 54)" onmouseover="showTip(event, 'fs35', 54)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs39', 55)" onmouseover="showTip(event, 'fs39', 55)" class="p">OrderableOrderableQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 56)" onmouseover="showTip(event, 'fs37', 56)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 57)" onmouseover="showTip(event, 'fs35', 57)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs40', 58)" onmouseover="showTip(event, 'fs40', 58)" class="p">OrderableDoseQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 59)" onmouseover="showTip(event, 'fs37', 59)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 60)" onmouseover="showTip(event, 'fs35', 60)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs41', 61)" onmouseover="showTip(event, 'fs41', 61)" class="p">ItemDoseTotal</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 62)" onmouseover="showTip(event, 'fs42', 62)" class="p">MaxIncl</span> [<span class="n">4N</span>] <span class="s">&quot;gram/day&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 63)" onmouseover="showTip(event, 'fs35', 63)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs43', 64)" onmouseover="showTip(event, 'fs43', 64)" class="p">ItemDoseAdjustTotalAdjust</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 65)" onmouseover="showTip(event, 'fs42', 65)" class="p">MaxIncl</span> [<span class="n">90N</span>] <span class="s">&quot;mg/kg/day&quot;</span>
+<span class="o">|&gt;</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 66)" onmouseover="showTip(event, 'fs35', 66)" class="f">solve</span> <span class="s">&quot;&quot;</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs44', 67)" onmouseover="showTip(event, 'fs44', 67)" class="p">AdjustQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 68)" onmouseover="showTip(event, 'fs37', 68)" class="p">Vals</span> [<span class="n">10N</span>] <span class="s">&quot;kg&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs21', 69)" onmouseover="showTip(event, 'fs21', 69)" class="f">print</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs34', 70)" onmouseover="showTip(event, 'fs34', 70)" class="f">ignore</span>
+<span class="c">//fsi:[Route]</span>
+<span class="c">//fsi:[oral]</span>
+<span class="c">//fsi:[Prescription]</span>
+<span class="c">//fsi:[Freq[1/43200, 1/28800] Count/Time]</span>
+<span class="c">//fsi:[Orderable]</span>
+<span class="c">//fsi:[paracetamol.Item.Component.Qty[6/25, 3/10] Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Orderable.Qty[6/25, 3/10] Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Component.Conc[6/25, 3/10] Mass/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Item.Orderable.Conc[6/25, 3/10] Mass/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Qty[6/25, 3/10] Mass]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Total[1/180000, 1/144000, 1/120000, 1/96000] Mass/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.Dose.Rate&lt;0..&gt; Mass/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.QtyAdjust[3/125000, 3/100000] Mass/Weight]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.TotalAdjust[1/1800000000, 1/1440000000, 1/1200000000, 1/960000000] Mass/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Item.DoseAdjust.RateAdjust&lt;0..&gt; Mass/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.Component.Qty[1] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Orderable.Qty[1] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Orderable.Conc[1] Tabl/Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Qty[1] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Total[1/43200, 1/28800] Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.Dose.Rate&lt;0..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.QtyAdjust[1/10000] Tabl/Weight]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000] Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Component.DoseAdjust.RateAdjust&lt;0..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Orderable.Qty[1] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Order.Qty[1/43200, 1/28800] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Qty[1] Tabl]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Total[1/43200, 1/28800] Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.Dose.Rate&lt;0..&gt; Tabl/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.QtyAdjust&lt;0..&gt; Tabl/Weight]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.TotalAdjust&lt;0..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[paracetamol.Orderable.DoseAdjust.RateAdjust&lt;0..&gt; Tabl/Weight/Time]</span>
+<span class="c">//fsi:[Adjust]</span>
+<span class="c">//fsi:[Adjust.Qty[10000] Weight]</span>
+</code></pre></td>
+</tr>
+</table>
 <p>Some more info</p>
 <h2><a name="Samples-amp-documentation" class="anchor" href="#Samples-amp-documentation">Samples &amp; documentation</a></h2>
 <p>The library comes with comprehensible documentation.
@@ -69,6 +271,50 @@ also want to read the <a href="https://github.com/halcwb/GenOrder/blob/master/RE
 redistribution for both commercial and non-commercial purposes. For more information see the
 <a href="https://github.com/halcwb/GenOrder/blob/master/LICENSE.txt">License file</a> in the GitHub repository.</p>
 
+<div class="tip" id="fs1">namespace Informedica</div>
+<div class="tip" id="fs2">namespace Informedica.GenUtils</div>
+<div class="tip" id="fs3">namespace Informedica.GenUtils.Lib</div>
+<div class="tip" id="fs4">namespace Informedica.GenUtils.Lib.BCL</div>
+<div class="tip" id="fs5">namespace Informedica.GenOrder</div>
+<div class="tip" id="fs6">namespace Informedica.GenOrder.Lib</div>
+<div class="tip" id="fs7">module VariableUnit<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Functions that deal with the `VariableUnit` type</em></div>
+<div class="tip" id="fs8">module Name<br /><br />from Informedica.GenOrder.Lib.VariableUnitModule</div>
+<div class="tip" id="fs9">module Frequency<br /><br />from Informedica.GenOrder.Lib.VariableUnitModule</div>
+<div class="tip" id="fs10">module Orderable<br /><br />from Informedica.GenOrder.Lib</div>
+<div class="tip" id="fs11">module Item<br /><br />from Informedica.GenOrder.Lib.OrderableModule<br /><em><br /><br />&#160;Type and functions that models an<br />&#160;`Order` `Item`</em></div>
+<div class="tip" id="fs12">module Component<br /><br />from Informedica.GenOrder.Lib.OrderableModule</div>
+<div class="tip" id="fs13">module Prescription<br /><br />from Informedica.GenOrder.Lib</div>
+<div class="tip" id="fs14">module Order<br /><br />from Informedica.GenOrder.Lib</div>
+<div class="tip" id="fs15">module Mapping<br /><br />from Informedica.GenOrder.Lib.OrderModule</div>
+<div class="tip" id="fs16">module Solver<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Helper functions to <br />&#160;facilitate the use of the<br />&#160;`Informedica.GenSolver.Lib`</em></div>
+<div class="tip" id="fs17">module Unit<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Helper functions to facilitate the use <br />&#160;of `Informedica.GenUnits.Lib`</em></div>
+<div class="tip" id="fs18">namespace Informedica.GenUnits</div>
+<div class="tip" id="fs19">namespace Informedica.GenUnits.Lib</div>
+<div class="tip" id="fs20">module UnitGroup<br /><br />from Informedica.GenUnits.Lib</div>
+<div class="tip" id="fs21">val print : ord:Order.Order -&gt; Order.Order<br /><br />Full name: Index.print</div>
+<div class="tip" id="fs22">val ord : Order.Order</div>
+<div class="tip" id="fs23">val s : string</div>
+<div class="tip" id="fs24">val toString : ord:Order.Order -&gt; string list<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.toString</div>
+<div class="tip" id="fs25">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="fs26">val o : string</div>
+<div class="tip" id="fs27">val createNew : cl:(string * System.String) list list -&gt; u:System.String -&gt; adj:string -&gt; Orderable.Orderable<br /><br />Full name: Informedica.GenOrder.Lib.OrderableModule.createNew</div>
+<div class="tip" id="fs28">val toString : ord:Orderable.Orderable -&gt; string list<br /><br />Full name: Informedica.GenOrder.Lib.OrderableModule.toString</div>
+<div class="tip" id="fs29">val pcm : Orderable.Orderable<br /><br />Full name: Index.pcm</div>
+<div class="tip" id="fs30">val pre : Prescription.Prescription<br /><br />Full name: Index.pre</div>
+<div class="tip" id="fs31">val discontinuous : Prescription.Prescription<br /><br />Full name: Informedica.GenOrder.Lib.Prescription.discontinuous</div>
+<div class="tip" id="fs32">val ord : Order.Order<br /><br />Full name: Index.ord</div>
+<div class="tip" id="fs33">val createNew : adju:System.String -&gt; ord:Orderable.Orderable -&gt; pre:Prescription.Prescription -&gt; rte:string -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.createNew</div>
+<div class="tip" id="fs34">val ignore : value:&#39;T -&gt; unit<br /><br />Full name: Microsoft.FSharp.Core.Operators.ignore</div>
+<div class="tip" id="fs35">val solve : n:string -&gt; m:Order.Mapping.Map -&gt; p:Solver.Prop -&gt; v:BigRational list -&gt; u:string -&gt; o:Order.Order -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.solve</div>
+<div class="tip" id="fs36">union case Order.Mapping.Map.ItemComponentQty: Order.Mapping.Map</div>
+<div class="tip" id="fs37">union case Solver.Prop.Vals: Solver.Prop</div>
+<div class="tip" id="fs38">union case Order.Mapping.Map.Freq: Order.Mapping.Map</div>
+<div class="tip" id="fs39">union case Order.Mapping.Map.OrderableOrderableQty: Order.Mapping.Map</div>
+<div class="tip" id="fs40">union case Order.Mapping.Map.OrderableDoseQty: Order.Mapping.Map</div>
+<div class="tip" id="fs41">union case Order.Mapping.Map.ItemDoseTotal: Order.Mapping.Map</div>
+<div class="tip" id="fs42">union case Solver.Prop.MaxIncl: Solver.Prop</div>
+<div class="tip" id="fs43">union case Order.Mapping.Map.ItemDoseAdjustTotalAdjust: Order.Mapping.Map</div>
+<div class="tip" id="fs44">union case Order.Mapping.Map.AdjustQty: Order.Mapping.Map</div>
 
         </div>
         <div class="span3">
