@@ -113,7 +113,7 @@ Target "Integrate" (fun _ ->
         // Check whether the builds passed
         match lastTravisBuild, lastAppVeyorBuild with
         | Some (id, dt, br, st), Some (id', dt', br', st') -> 
-            if id = currId && id = id' && st = traVsucc &&   st' = appVsucc then
+            if id = currId && id = id' && st = traVsucc && st' = appVsucc then
                 printfn "Last build was at %A and %s" dt st
                 // Update the master branch with the latest remote master
                 Git.Branches.checkoutBranch currDir master
