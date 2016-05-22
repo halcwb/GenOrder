@@ -1,5 +1,9 @@
 ﻿namespace Informedica.GenOrder.Lib
 
+
+/// Types and functions to deal 
+/// with an `Orderable`, i.e. something
+/// that can be ordered.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Orderable =
 
@@ -23,7 +27,8 @@ module Orderable =
         let doseAdjust = "DoseAdjust"
 
     /// Type and functions that models an
-    /// `Order` `Item`
+    /// `Order` `Item` that is contained in 
+    /// a `Component`
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Item =
 
@@ -89,10 +94,13 @@ module Orderable =
 
             create cq oq cc oc ds da
 
-        let apply f (item: Item) = item |> f
+        /// Aply `f` to an `item`
+        let apply f (itm: Item) = itm |> f
 
+        /// Utility method to facilitaite type inference
         let get = apply id
 
+        /// Turn an item to a list of string fields
         let toString item = 
             let cq = (item |> get).ComponentQuantity
             let oq = item.OrderableQuantity
@@ -107,12 +115,14 @@ module Orderable =
         /// The following equations are generated
         /// depending on prescription type
         ///
-        /// ** Process **
+        /// *Process*
+        ///
         /// * itm\_cmp\_qty = itm\_cmp\_cnc \* cmp\_cmp\_qty
         /// * itm\_orb\_qty = itm\_orb\_cnc \* orb\_orb\_qty
         /// * itm\_orb\_qty = itm\_cmp\_cnc \* cmp\_orb\_qty
         ///
-        /// ** Discontinuous timed
+        /// *Discontinuous Timed*
+        ///
         /// * itm\_dos\_tot = itm\_dos\_qty \* frq 
         /// * itm\_dos\_qty = itm\_dos\_rte \* tme
         /// * itm\_dos\_qty = itm\_orb\_cnc \* qty
@@ -122,16 +132,16 @@ module Orderable =
         /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
         ///
-        /// ** Discontinuous
+        /// *Discontinuous*
+        ///
         /// * itm\_dos\_tot = itm\_dos\_qty \* frq 
         /// * itm\_dos\_qty = itm\_orb\_cnc \* qty
         /// * itm\_dos\_tot = itm\_orb\_cnc \* tot
         /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj
         /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj
-        /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
         ///
-        /// ** Continuous
-        /// * itm\_dos\_tot = itm\_orb\_cnc \* tot
+        /// *Continuous*
+        ///
         /// * itm\_dos\_rte = itm\_orb\_cnc \* rte
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
         let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty item =
@@ -145,9 +155,9 @@ module Orderable =
 
             let eqs =
                 [
-                    [ itm_cmp_qty; itm_cmp_cnc;     cmp_cmp_qty ]
-                    [ itm_orb_qty; itm_orb_cnc;     orb_orb_qty ]
-                    [ itm_orb_qty; itm_cmp_cnc;     cmp_orb_qty ]
+                    [ itm_cmp_qty; itm_cmp_cnc; cmp_cmp_qty ]
+                    [ itm_orb_qty; itm_orb_cnc; orb_orb_qty ]
+                    [ itm_orb_qty; itm_cmp_cnc; cmp_orb_qty ]
                 ]
 
             match rte, frq, tme with
@@ -175,25 +185,29 @@ module Orderable =
             // Continuous
             | Some rte, _, _ ->
                 [
-                    [ itm_dos_tot; itm_orb_cnc;     tot ]
                     [ itm_dos_rte; itm_orb_cnc;     rte ]
-                    [ itm_dos_tot; itm_dos_tot_adj; adj ]
                     [ itm_dos_rte; itm_dos_rte_adj; adj ]
                 ] |> List.append eqs   
             // Process             
             | _ -> eqs
 
-        let fromEqs eqs (item: Item) =
+        /// create an item from `eqs`, a list of
+        /// variable lists
+        let fromEqs eqs (itm: Item) =
             {
-                item with
-                    ComponentQuantity = QT.fromVar eqs item.ComponentQuantity
-                    OrderableQuantity = QT.fromVar eqs item.OrderableQuantity             
-                    ComponentConcentration = CN.fromVar eqs item.ComponentConcentration
-                    OrderableConcentration = CN.fromVar eqs item.OrderableConcentration
-                    Dose = DS.fromVar eqs item.Dose
-                    DoseAdjust = DA.fromVar eqs item.DoseAdjust
+                itm with
+                    ComponentQuantity = QT.fromVar eqs itm.ComponentQuantity
+                    OrderableQuantity = QT.fromVar eqs itm.OrderableQuantity             
+                    ComponentConcentration = CN.fromVar eqs itm.ComponentConcentration
+                    OrderableConcentration = CN.fromVar eqs itm.OrderableConcentration
+                    Dose = DS.fromVar eqs itm.Dose
+                    DoseAdjust = DA.fromVar eqs itm.DoseAdjust
             }    
 
+    /// Types and functions to model a 
+    /// `Component` in an `Orderable`. 
+    /// A `Component` contains a list 
+    /// of `Item`s
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Component =
 
@@ -207,6 +221,7 @@ module Orderable =
         module DA = VU.DoseAdjust
         module IT = Item
 
+        /// Models in a `Component` in and `Orderable`
         type Component = 
             {
                 /// The quantity of a `Component`
@@ -268,10 +283,14 @@ module Orderable =
 
             create cq oq rq oc ds da ii
 
+        /// Apply `f` to a `Component` `comp` 
         let apply f (comp: Component) = comp |> f
 
+        /// Utility to facilitate type inference
         let get = apply id
 
+        /// Create a string list from a 
+        /// component
         let toString comp = 
             let cq = (comp |> get).ComponentQuantity
             let oq = comp.OrderableQuantity
@@ -288,8 +307,13 @@ module Orderable =
 
         /// The following equations are generated:
         ///
+        /// *Process*
+        ///
         /// * orb\_orb\_qty = cmp\_cmp\_qty \* cmp\_orb\_qty
         /// * cmp\_orb\_qty = cmp\_orb\_cnc \* orb\_orb\_qty
+        ///
+        /// *Discontinuous Timed*
+        ///
         /// * cmp\_dos\_tot = cmp\_dos\_qty \* frq 
         /// * cmp\_dos\_qty = cmp\_dos\_rte \* tme
         /// * cmp\_dos\_qty = cmp\_orb\_cnc \* qty
@@ -297,6 +321,19 @@ module Orderable =
         /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
         /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
         /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
+        /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
+        ///
+        /// *Discontinuous*
+        ///
+        /// * cmp\_dos\_tot = cmp\_dos\_qty \* frq 
+        /// * cmp\_dos\_qty = cmp\_orb\_cnc \* qty
+        /// * cmp\_dos\_tot = cmp\_orb\_cnc \* tot
+        /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
+        /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
+        ///
+        /// *Continuous*
+        ///
+        /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
         let toEqs adj frq qty tot tme rte orb_orb_qty cmp =
             let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
@@ -311,8 +348,8 @@ module Orderable =
 
             let eqs =
                 [
-                    [ orb_orb_qty; cmp_cmp_qty;     cmp_orb_qty ]
-                    [ cmp_orb_qty; cmp_orb_cnc;     orb_orb_qty ]
+                    [ orb_orb_qty; cmp_cmp_qty; cmp_orb_qty ]
+                    [ cmp_orb_qty; cmp_orb_cnc; orb_orb_qty ]
                 ] 
 
             match rte, frq, tme with
@@ -331,8 +368,6 @@ module Orderable =
             // Discontinuous
             | None, Some frq, None   ->
                 [
-                    [ orb_orb_qty; cmp_cmp_qty;     cmp_orb_qty ]
-                    [ cmp_orb_qty; cmp_orb_cnc;     orb_orb_qty ]
                     [ cmp_dos_tot; cmp_dos_qty;     frq ]
                     [ cmp_dos_qty; cmp_orb_cnc;     qty ]
                     [ cmp_dos_tot; cmp_orb_cnc;     tot ]
@@ -342,18 +377,15 @@ module Orderable =
             // Continuous
             | Some rte, _, _ ->
                 [
-                    [ orb_orb_qty; cmp_cmp_qty;     cmp_orb_qty ]
-                    [ cmp_orb_qty; cmp_orb_cnc;     orb_orb_qty ]
-                    [ cmp_dos_tot; cmp_orb_cnc;     tot ]
                     [ cmp_dos_rte; cmp_orb_cnc;     rte ]
-                    [ cmp_dos_tot; cmp_dos_tot_adj; adj ]
                     [ cmp_dos_rte; cmp_dos_rte_adj; adj ]
                 ] |> List.append eqs
             // Process
             | _ -> eqs
             |> List.append (i::ii |> List.collect map)
 
-
+        /// Create a `Component` from a list
+        /// of variable list eqs 
         let fromEqs eqs (cmp: Component) =
             let items = 
                 (cmp.Items |> fst)::(cmp.Items |> snd)
@@ -380,6 +412,7 @@ module Orderable =
     module DA = VU.DoseAdjust
     module CM = Component
 
+    /// Models an `Orderable` 
     type Orderable = 
         {
             OrderableQuantity: QT.Quantity
@@ -389,7 +422,11 @@ module Orderable =
             Components: CM.Component * CM.Component list
         }
         
-        
+    /// Create an `Orderable` with an 
+    /// `OrderableQuantity` `oq`, an 
+    /// `OrderQuantity` `rq`, `Dose` `ds` 
+    /// and `DoseAdjust` `da`, with a list
+    /// of `Component`s
     let create oq rq ds da cc = 
         match cc with
         | h::tail ->
