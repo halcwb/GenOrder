@@ -30,7 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{0D6559CE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{B0FF5F4E-ED74-4C44-9BB9-B3410311F700}"
 	ProjectSection(SolutionItems) = preProject
-		scripts\Settings.fsx = scripts\Settings.fsx
+		scripts\settings.fsx = scripts\settings.fsx
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Informedica.GenOrder.Tests", "tests\Informedica.GenOrder.Tests\Informedica.GenOrder.Tests.fsproj", "{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}"

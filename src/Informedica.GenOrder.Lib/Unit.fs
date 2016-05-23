@@ -29,3 +29,26 @@ module Unit =
         | _ -> failwith "Not suported"
         |> UN.fromString
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module UnitGroups =
+    
+    open Informedica.GenUnits.Lib.UnitGroup
+
+    module CS = Informedica.GenUnits.Lib.Constants
+
+    let mass = CS.massGroup |> fromString
+
+    let bsa = CS.bsaGroup |> fromString
+
+    let count = CS.countGroup |> fromString
+
+    let distance = CS.distanceGroup |> fromString
+
+    let molar = CS.molarGroup |> fromString
+
+    let time = CS.timeGroup |> fromString
+
+    let volume = CS.volumeGroup |> fromString
+
+    let weight = CS.weightGroup |> fromString
+    

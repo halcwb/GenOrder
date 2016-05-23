@@ -74,7 +74,7 @@ module Orderable =
                 ComponentConcentration = cmp_cnc
                 OrderableConcentration = orb_cnc
                 Dose = dos
-                DoseAdjust = dos_adj 
+                DoseAdjust = dos_adj
             }
 
         /// Create a new item with
@@ -85,14 +85,14 @@ module Orderable =
         /// `adj`: the unit to adjust the item dose
         let createNew (s, u1) u2 adj =
             let s = [LT.item] |> List.append [s]
-            let cq = let s = [LT.``component``] |> List.append s in QT.quantity s u1
-            let oq = let s = [LT.orderable]     |> List.append s in QT.quantity s u1
-            let cc = let s = [LT.``component``] |> List.append s in CN.conc s u1 u2
-            let oc = let s = [LT.orderable]     |> List.append s in CN.conc s u1 u2
-            let ds = let s = [LT.dose]          |> List.append s in DS.dose s u1
-            let da = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u1 adj
+            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u1
+            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u1
+            let cmp_cnc = let s = [LT.``component``] |> List.append s in CN.conc s u1 u2
+            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s u1 u2
+            let dos     = let s = [LT.dose]          |> List.append s in DS.dose s u1
+            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u1 adj
 
-            create cq oq cc oc ds da
+            create cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj
 
         /// Aply `f` to an `item`
         let apply f (itm: Item) = itm |> f
@@ -112,7 +112,29 @@ module Orderable =
             [cq |> QT.toVar; oq |> QT.toVar; cc |> CN.toVar; oc |> CN.toVar; dq; dt; dr; aq; at; ar ]
             |> List.map VU.toString
 
-        /// The following equations are generated
+        
+        /// The following variables are used
+        ///
+        /// * itm\_cmp\_qty: the quantity of item in a component
+        /// * itm\_orb\_qty: the quantity of item in an orderable
+        /// * itm\_cmp\_cnc: the concentration of an item in a component
+        /// * itm\_orb\_cnc: the concentration of an item in an orderable
+        /// * cmp\_cmp\_qty: the component quantity
+        /// * orb\_orb\_qty: the orderable quantity
+        /// * cmp\_orb\_qty: the quantity of component in an orderable
+        /// * itm\_dos\_qty: the item dose quantity
+        /// * itm\_dos\_tot: the item dose total
+        /// * itm\_dos\_rte: the item dose rate
+        /// * itm\_dos\_qty\_adj: the adjusted item dose quantity
+        /// * itm\_dos\_tot\_adj: the adjusted item dose total
+        /// * itm\_dos\_rte\_adj: the adjusted item dose rate
+        /// * frq: the prescription frequency
+        /// * tme: the prescription time
+        /// * qty: the orderable dose quantity
+        /// * tot: the orderable dose total
+        /// * rte: the orderable dose rate
+        ///
+        /// With these variables the following equations are generated
         /// depending on prescription type
         ///
         /// *Process*
@@ -214,6 +236,7 @@ module Orderable =
         module LT = Literals
         module VU = VariableUnit
         module QT = VU.Quantity
+        module CT = VU.Count
         module CN = VU.Concentration
         module TL = VU.Total
         module RT = VU.Rate
@@ -228,8 +251,12 @@ module Orderable =
                 ComponentQuantity: QT.Quantity
                 /// The quantity of a `Component` in an `Orderable`
                 OrderableQuantity: QT.Quantity
+                /// The count of a `Component` in an `Orderable`
+                OrderableCount: CT.Count
                 /// The quantity of a `Component` in an `Order`
                 OrderQuantity: QT.Quantity
+                /// The count of a `Component` in an `Order`
+                OrderCount: CT.Count
                 /// The concentration of a `Component` in an `Orderable`
                 OrderableConcentration: CN.Concentration
                 // The `Component` `Dose`,  
@@ -246,18 +273,22 @@ module Orderable =
         ///
         /// * `cmp_qty`: quantity of component
         /// * `orb_qty`: quantity of component in orderable
+        /// * `orb_cnt`: count of component in orderable
         /// * `ord_qty`: quantity of component in order
+        /// * `ord_cnt`: count of component in order
         /// * `orb_cnc`: concentration of component in orderble
         /// * `dos`: component dose
         /// * `dos_adj`: adjusted dose of component
         /// * `ii`: list of `Item`s in a component
-        let create cmp_qty orb_qty ord_qty orb_cnc dos dos_adj ii = 
+        let create cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii = 
             match ii with
             | h::tail ->
                 { 
                     ComponentQuantity = cmp_qty
                     OrderableQuantity = orb_qty
+                    OrderableCount = orb_cnt
                     OrderQuantity = ord_qty
+                    OrderCount = ord_cnt
                     OrderableConcentration = orb_cnc
                     Dose = dos
                     DoseAdjust = dos_adj 
@@ -272,16 +303,18 @@ module Orderable =
         /// * `adj`: adjust unit to adjust the dose
         let createNew sl u adj =
             let s = [LT.``component``] |> List.append [sl |> List.map fst |> String.concat "/"] 
-            let cq = let s = [LT.``component``] |> List.append s in QT.quantity s u
-            let oq = let s = [LT.orderable]     |> List.append s in QT.quantity s u
-            let rq = let s = [LT.order]         |> List.append s in QT.quantity s u
-            let oc = let s = [LT.orderable]     |> List.append s in CN.conc s u u
-            let ds = let s = [LT.dose]          |> List.append s in DS.dose s u
-            let da = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u adj
+            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u
+            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u
+            let orb_cnt = let s = [LT.orderable]     |> List.append s in CT.count s
+            let ord_qty = let s = [LT.order]         |> List.append s in QT.quantity s u
+            let ord_cnt = let s = [LT.order]         |> List.append s in CT.count s
+            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s u u
+            let dos = let s = [LT.dose]              |> List.append s in DS.dose s u
+            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u adj
 
             let ii = sl |> List.map (fun s -> IT.createNew s u adj)
 
-            create cq oq rq oc ds da ii
+            create cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii
 
         /// Apply `f` to a `Component` `comp` 
         let apply f (comp: Component) = comp |> f
@@ -305,12 +338,34 @@ module Orderable =
             |> List.append (i::ii |> List.collect IT.toString )
 
 
+        /// The following variables are used
+        ///
+        /// * orb\_orb\_qty: the orderable quantity
+        /// * cmp\_cmp\_qty: the component quantity
+        /// * cmp\_orb\_qty: the quantity of component in an orderable
+        /// * cmp\_orb\_cnt: the count of component in an orderable
+        /// * cmp\_ord\_qty: the quantity of component in an order
+        /// * cmp\_ord\_cnt: the count of component in an order
+        /// * cmp\_orb\_cnc: the concentration of an component in an orderable
+        /// * cmp\_dos\_qty: the component dose quantity
+        /// * cmp\_dos\_tot: the component dose total
+        /// * cmp\_dos\_rte: the component dose rate
+        /// * cmp\_dos\_qty\_adj: the adjusted component dose quantity
+        /// * cmp\_dos\_tot\_adj: the adjusted component dose total
+        /// * cmp\_dos\_rte\_adj: the adjusted component dose rate
+        /// * frq: the prescription frequency
+        /// * tme: the prescription time
+        /// * qty: the orderable dose quantity
+        /// * tot: the orderable dose total
+        /// * rte: the orderable dose rate
+        ///
         /// The following equations are generated:
         ///
         /// *Process*
         ///
-        /// * orb\_orb\_qty = cmp\_cmp\_qty \* cmp\_orb\_qty
         /// * cmp\_orb\_qty = cmp\_orb\_cnc \* orb\_orb\_qty
+        /// * orb\_orb\_qty = cmp\_cmp\_qty \* cmp\_orb\_cnt
+        /// * orb\_ord\_qty = cmp\_cmp\_qty \* cmp\_ord\_cnt
         ///
         /// *Discontinuous Timed*
         ///
@@ -338,6 +393,7 @@ module Orderable =
         let toEqs adj frq qty tot tme rte orb_orb_qty cmp =
             let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
             let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVar
+            let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVar
             let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVar
 
             let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVar
@@ -348,8 +404,9 @@ module Orderable =
 
             let eqs =
                 [
-                    [ orb_orb_qty; cmp_cmp_qty; cmp_orb_qty ]
                     [ cmp_orb_qty; cmp_orb_cnc; orb_orb_qty ]
+                    [ orb_orb_qty; cmp_cmp_qty; cmp_orb_cnt ]
+//                    [ orb_ord_qty; cmp_cmp_qty; cmp_ord_cnt ]
                 ] 
 
             match rte, frq, tme with
@@ -405,6 +462,7 @@ module Orderable =
     module LT = Literals
     module VU = VariableUnit
     module QT = VU.Quantity
+    module CT = VU.Count
     module CN = VU.Concentration
     module TL = VU.Total
     module RT = VU.Rate
@@ -415,30 +473,43 @@ module Orderable =
     /// Models an `Orderable` 
     type Orderable = 
         {
+            /// The quantity of an orderable
             OrderableQuantity: QT.Quantity
+            /// The quantity of an orderable in an order
             OrderQuantity: QT.Quantity
+            /// The orderable count in an order
+            OrderCount: CT.Count
+            /// The dose of an orderable
             Dose: DS.Dose
+            /// The adjusted dose of an orderable
             DoseAdjust: DA.DoseAdjust
+            /// The list of components in an orderable
             Components: CM.Component * CM.Component list
         }
         
-    /// Create an `Orderable` with an 
-    /// `OrderableQuantity` `oq`, an 
-    /// `OrderQuantity` `rq`, `Dose` `ds` 
-    /// and `DoseAdjust` `da`, with a list
-    /// of `Component`s
-    let create oq rq ds da cc = 
+    /// Create an `Orderable` with
+    ///
+    /// * orb\_qty: quantity of the orderable
+    /// * ord\_qty: quantity of orderable in the order
+    /// * orb\_cnt: the count of orderable in the order 
+    /// * dos: the orderable dose
+    /// * dos\_adj: the adjusted orderable dose
+    ///
+    let create orb_qty ord_qty orb_cnt dos dos_ajd cc = 
         match cc with
         | h::tail ->
             { 
-                OrderableQuantity = oq
-                OrderQuantity = rq
-                Dose = ds
-                DoseAdjust = da 
+                OrderableQuantity = orb_qty
+                OrderQuantity = ord_qty
+                OrderCount = orb_cnt
+                Dose = dos
+                DoseAdjust = dos_ajd 
                 Components = h, tail
             }
         | _ -> failwith "Not a valid Orderable"
 
+    /// Create a new `Orderable` with a `Component` list
+    /// `cl`, an `Orderable`unit `u` and adjust unit `adj`
     let createNew cl u adj =
         let s = 
             [
@@ -447,19 +518,24 @@ module Orderable =
                 |> List.map (String.concat "/")
                 |> String.concat " & " ] @ [LT.orderable]
 
-        let oq = let s = [LT.orderable] |> List.append s in QT.quantity s u
-        let rq = let s = [LT.order] |> List.append s in QT.quantity s u
-        let ds = let s = [LT.dose] |> List.append s in DS.dose s u
-        let da = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s u adj
+        let orb_qty = let s = [LT.orderable]  |> List.append s in QT.quantity s u
+        let ord_qty = let s = [LT.order]      |> List.append s in QT.quantity s u
+        let orb_cnt = let s = [LT.order]      |> List.append s in CT.count s
+        let dos     = let s = [LT.dose]       |> List.append s in DS.dose s u
+        let dos_ajd = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s u adj
 
         let cc = cl |> List.map (fun c -> CM.createNew c u adj)
 
-        create oq rq ds da cc
+        create orb_qty ord_qty orb_cnt dos dos_ajd cc
 
+    /// Apply `f` to `Orderable` `ord`
     let apply f (ord: Orderable) = ord |> f
 
+    /// Utility function to facilitate type inference
     let get = apply id
 
+    /// Get the name of the `Orderable` which is 
+    /// the sum of the concatenated lists of `Item`s
     let getName = apply (fun o -> 
         o.OrderableQuantity 
         |> QT.toVar 
@@ -468,6 +544,8 @@ module Orderable =
         |> String.split "."
         |> List.head)
 
+    /// Turn an `Orderable` `ord` into
+    /// a list of strings.
     let toString ord = 
         let oq = (ord |> get).OrderableQuantity
         let rq = ord.OrderQuantity
@@ -480,40 +558,57 @@ module Orderable =
         |> List.map VU.toString
         |> List.append (c::cc |> List.collect CM.toString )
 
-
+    /// The following variables are used:
+    ///
+    /// * ord\_qty: the quantity of orderable in an order
+    /// * orb\_qty: the quantity of orderable
+    /// * ord\_cnt: the count of orderable in an order
+    /// * dos\_qty: the dose quantity of orderable
+    /// * dos\_tot: the dose total of orderable
+    /// * dos\_rte: the dose rate of orderable
+    /// * dos\_qty_adj: the adjustedn dose quantity
+    /// * dos\_tot_adj: the adjusted dose total
+    /// * dos\_rte_adj: the adjusted dose rate
+    /// * frq: frequency
+    /// * tme: time
+    /// 
     /// The following equations are generated:
     ///
-    /// * ord\_ord\_qty = ord\_ord\_qty \* ord\_ord\_qty
-    /// * ord\_ord\_qty = ord\_ord\_cnc \* ord\_ord\_qty
-    /// * ord\_dos\_tot = ord\_dos\_qty \* frq 
-    /// * ord\_dos\_qty = ord\_dos\_rte \* tme
-    /// * ord\_dos\_qty = ord\_ord\_cnc \* qty
-    /// * ord\_dos\_tot = ord\_ord\_cnc \* tot
-    /// * ord\_dos\_rte = ord\_ord\_cnc \* rte
-    /// * ord\_dos\_qty = ord\_dos\_qty\_adj \* adj
-    /// * ord\_dos\_tot = ord\_dos\_tot\_adj \* adj
-    /// * ord\_dos\_rte = ord\_dos\_rte\_adj \* adj
-    let toEqs hasRte adj frq tme ord =
-        let ord_der_qty = (ord |> get).OrderQuantity |> QT.toVar
-        let ord_ord_qty = ord.OrderableQuantity      |> QT.toVar
+    /// *Process or Continuous*
+    ///
+    /// * ord\_qty = ord\_cnt \* orb\_qty
+    ///
+    /// *Discontinuous Timed*
+    ///
+    /// * dot\_tot = dos\_qty \* frq
+    /// * dos\_qty = dos\_rte \* tme
+    /// * dot\_tot\_adj = dos\_qty\_adj \* frq
+    /// * dos\_qty\_adj = dos\_rte\_adj \* tme
+    /// 
+    /// *Discontinuous*
+    ///
+    /// * dot\_tot = dos\_qty \* frq
+    /// * dot\_tot\_adj = dos\_qty\_adj \* frq
+    let toEqs hasRte adj frq tme orb =
+        let ord_qty = (orb |> get).OrderQuantity |> QT.toVar
+        let orb_qty = orb.OrderableQuantity      |> QT.toVar
+        let ord_cnt = orb.OrderCount             |> CT.toVar
 
-        let ord_dos_qty,     ord_dos_tot,     ord_dos_rte     = ord.Dose       |> DS.toVar
-        let ord_dos_qty_adj, ord_dos_tot_adj, ord_dos_rte_adj = ord.DoseAdjust |> DA.toVar
+        let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVar
+        let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVar
 
-        let qty = ord_dos_qty
-        let tot = ord_dos_tot
-        let rte = if hasRte then ord_dos_rte |> Some else None
+        let rte = if hasRte then dos_rte |> Some else None
 
-        let qty_adj = ord_dos_qty_adj
-        let tot_adj = ord_dos_tot_adj
-        let rte_adj = ord_dos_rte_adj
+        let qty_adj = dos_qty_adj
+        let tot_adj = dos_tot_adj
+        let rte_adj = dos_rte_adj
 
-        let map = CM.toEqs adj frq qty tot tme rte ord_ord_qty
-        let c, cc = ord.Components
+        let map = CM.toEqs adj frq dos_qty dos_tot tme rte orb_qty
+        let c, cc = orb.Components
 
         let eqs = 
             [
-                [ tot; ord_der_qty; ord_ord_qty ]
+                [ ord_qty; ord_cnt; orb_qty ]
             ] 
             
 
@@ -521,18 +616,21 @@ module Orderable =
         // Discontinuous timed
         | Some rte, Some frq, Some tme ->
             [
-                [tot; qty; frq]
-                [ tot_adj; qty_adj; frq ]
+                [dos_tot;     dos_qty;     frq]
+                [dos_qty;     dos_rte;     tme]
+                [dos_tot_adj; dos_qty_adj; frq]
+                [dos_qty_adj; dos_rte_adj; tme]
             ] |> List.append eqs
         // Discontinuous
         | None, Some frq, None   ->
             [
-                [tot; qty; frq]
+                [dos_tot;     dos_qty;     frq]
+                [dos_tot_adj; dos_qty_adj; frq]
             ] |> List.append eqs
         // Continuous or Process
         | _ -> eqs
         |> List.append (c::cc |> List.collect map)
-        , ord_ord_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVar))
+        , orb_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVar))
 
 
     let fromEqs eqs (ord: Orderable) =

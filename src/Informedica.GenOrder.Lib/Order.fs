@@ -26,6 +26,8 @@ module Order =
             | ItemDoseAdjustRateAdjust
             | ComponentComponentQty
             | ComponentOrderableQty
+            | ComponentOrderableCount
+            | ComponentOrderCount
             | ComponentOrderableConc
             | ComponentDoseQty
             | ComponentDoseTotal
@@ -35,6 +37,7 @@ module Order =
             | ComponentDoseAdjustRateAdjust
             | OrderableOrderableQty
             | OrderableOrderQty
+            | OrderableOrderCount
             | OrderableDoseQty
             | OrderableDoseTotal
             | OrderableDoseRate
@@ -57,6 +60,8 @@ module Order =
             | ItemDoseAdjustRateAdjust -> "Item.DoseAdjust.RateAdjust"
             | ComponentComponentQty -> "Component.Component.Qty"
             | ComponentOrderableQty -> "Component.Orderable.Qty"
+            | ComponentOrderableCount -> "Component.Orderable.Count"
+            | ComponentOrderCount -> "Component.Order.Count"
             | ComponentOrderableConc -> "Component.Orderable.Conc"
             | ComponentDoseQty -> "Component.Dose.Qty"
             | ComponentDoseTotal -> "Component.Dose.Total"
@@ -66,6 +71,7 @@ module Order =
             | ComponentDoseAdjustRateAdjust -> "Component.DoseAdjust.RateAdjust"
             | OrderableOrderableQty -> "Orderable.Orderable.Qty"
             | OrderableOrderQty -> "Orderable.Order.Qty"
+            | OrderableOrderCount -> "Orderable.Order.Count"
             | OrderableDoseQty -> "Orderable.Dose.Qty"
             | OrderableDoseTotal -> "Orderable.Dose.Total"
             | OrderableDoseRate -> "Orderable.Dose.Rate"
