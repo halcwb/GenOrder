@@ -100,17 +100,57 @@ module Orderable =
         /// Utility method to facilitaite type inference
         let get = apply id
 
-        /// Turn an item to a list of string fields
-        let toString item = 
-            let cq = (item |> get).ComponentQuantity
-            let oq = item.OrderableQuantity
-            let cc = item.ComponentConcentration
-            let oc = item.OrderableConcentration
-            let dq, dt, dr = item.Dose |> DS.toVar
-            let aq, at, ar = item.DoseAdjust |> DA.toVar
+        /// Turn an item to vars
+        let toVar itm =
+            let itm_cmp_qty = (itm |> get).ComponentQuantity |> QT.toVar
+            let itm_orb_qty = itm.OrderableQuantity          |> QT.toVar
+            let itm_cmp_cnc = itm.ComponentConcentration     |> CN.toVar
+            let itm_orb_cnc = itm.OrderableConcentration     |> CN.toVar
 
-            [cq |> QT.toVar; oq |> QT.toVar; cc |> CN.toVar; oc |> CN.toVar; dq; dt; dr; aq; at; ar ]
-            |> List.map VU.toString
+            let itm_dos_qty, itm_dos_tot, itm_dos_rte = itm.Dose                   |> DS.toVar
+            let itm_dos_qty_adj, itm_dos_tot_adj, itm_dos_rte_adj = itm.DoseAdjust |> DA.toVar
+
+            (
+                itm_cmp_qty, 
+                itm_orb_qty, 
+                itm_cmp_cnc, 
+                itm_orb_cnc, 
+                itm_dos_qty, 
+                itm_dos_tot, 
+                itm_dos_rte,
+                itm_dos_qty_adj, 
+                itm_dos_tot_adj, 
+                itm_dos_rte_adj
+            )
+            
+
+        /// Turn an item to a list of strings,
+        /// each string containing the variable
+        /// name, valuerange and unitgroup
+        let toString itm = 
+            let itm_cmp_qty, 
+                itm_orb_qty, 
+                itm_cmp_cnc, 
+                itm_orb_cnc, 
+                itm_dos_qty, 
+                itm_dos_tot, 
+                itm_dos_rte,
+                itm_dos_qty_adj, 
+                itm_dos_tot_adj, 
+                itm_dos_rte_adj = itm |> toVar
+
+            [
+                itm_cmp_qty 
+                itm_orb_qty 
+                itm_cmp_cnc 
+                itm_orb_cnc 
+                itm_dos_qty 
+                itm_dos_tot 
+                itm_dos_rte
+                itm_dos_qty_adj 
+                itm_dos_tot_adj 
+                itm_dos_rte_adj
+            ] |> List.map VU.toString
 
         
         /// The following variables are used
@@ -166,14 +206,17 @@ module Orderable =
         ///
         /// * itm\_dos\_rte = itm\_orb\_cnc \* rte
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
-        let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty item =
-            let itm_cmp_qty = (item |> get).ComponentQuantity |> QT.toVar
-            let itm_orb_qty = item.OrderableQuantity          |> QT.toVar
-            let itm_cmp_cnc = item.ComponentConcentration     |> CN.toVar
-            let itm_orb_cnc = item.OrderableConcentration     |> CN.toVar
-
-            let itm_dos_qty, itm_dos_tot, itm_dos_rte = item.Dose                   |> DS.toVar
-            let itm_dos_qty_adj, itm_dos_tot_adj, itm_dos_rte_adj = item.DoseAdjust |> DA.toVar
+        let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty itm =
+            let itm_cmp_qty, 
+                itm_orb_qty, 
+                itm_cmp_cnc, 
+                itm_orb_cnc, 
+                itm_dos_qty, 
+                itm_dos_tot, 
+                itm_dos_rte,
+                itm_dos_qty_adj, 
+                itm_dos_tot_adj, 
+                itm_dos_rte_adj = itm |> toVar
 
             let eqs =
                 [
@@ -322,18 +365,58 @@ module Orderable =
         /// Utility to facilitate type inference
         let get = apply id
 
+        let toVar cmp =
+            let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
+            let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVar
+            let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVar
+            let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVar
+
+            let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVar
+            let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVar
+
+            (
+                cmp_cmp_qty, 
+                cmp_orb_qty,
+                cmp_orb_cnt,
+                cmp_orb_cnc,
+                cmp_dos_qty,
+                cmp_dos_tot,
+                cmp_dos_rte,
+                cmp_dos_qty_adj,
+                cmp_dos_tot_adj,
+                cmp_dos_rte_adj
+            )
+
         /// Create a string list from a 
-        /// component
-        let toString comp = 
-            let cq = (comp |> get).ComponentQuantity
-            let oq = comp.OrderableQuantity
-            let oc = comp.OrderableConcentration
-            let dq, dt, dr = comp.Dose |> DS.toVar
-            let aq, at, ar = comp.DoseAdjust |> DA.toVar
+        /// component where each string is
+        /// a variable name with the valuerange
+        /// and the unitgroup
+        let toString cmp = 
+            let cmp_cmp_qty, 
+                cmp_orb_qty,
+                cmp_orb_cnt,
+                cmp_orb_cnc,
+                cmp_dos_qty,
+                cmp_dos_tot,
+                cmp_dos_rte,
+                cmp_dos_qty_adj,
+                cmp_dos_tot_adj,
+                cmp_dos_rte_adj = cmp |> toVar
 
-            let i, ii = comp.Items
+            let i, ii = cmp.Items
 
-            [cq |> QT.toVar; oq |> QT.toVar; oc |> CN.toVar; dq; dt; dr; aq; at; ar ]
+            [
+                cmp_cmp_qty 
+                cmp_orb_qty
+                cmp_orb_cnt
+                cmp_orb_cnc
+                cmp_dos_qty
+                cmp_dos_tot
+                cmp_dos_rte
+                cmp_dos_qty_adj
+                cmp_dos_tot_adj
+                cmp_dos_rte_adj
+            ]
             |> List.map VU.toString
             |> List.append (i::ii |> List.collect IT.toString )
 
@@ -391,13 +474,16 @@ module Orderable =
         /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
         let toEqs adj frq qty tot tme rte orb_orb_qty cmp =
-            let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
-            let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVar
-            let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVar
-            let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVar
-
-            let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVar
-            let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVar
+            let cmp_cmp_qty, 
+                cmp_orb_qty,
+                cmp_orb_cnt,
+                cmp_orb_cnc,
+                cmp_dos_qty,
+                cmp_dos_tot,
+                cmp_dos_rte,
+                cmp_dos_qty_adj,
+                cmp_dos_tot_adj,
+                cmp_dos_rte_adj = cmp |> toVar
 
             let map = IT.toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty
             let i, ii = cmp.Items
@@ -529,7 +615,7 @@ module Orderable =
         create orb_qty ord_qty orb_cnt dos dos_ajd cc
 
     /// Apply `f` to `Orderable` `ord`
-    let apply f (ord: Orderable) = ord |> f
+    let apply f (orb: Orderable) = orb |> f
 
     /// Utility function to facilitate type inference
     let get = apply id
@@ -544,17 +630,53 @@ module Orderable =
         |> String.split "."
         |> List.head)
 
+    let toVar orb =
+        let ord_qty = (orb |> get).OrderQuantity |> QT.toVar
+        let orb_qty = orb.OrderableQuantity      |> QT.toVar
+        let ord_cnt = orb.OrderCount             |> CT.toVar
+
+        let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVar
+        let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVar
+
+        (
+            ord_qty,
+            orb_qty,
+            ord_cnt,
+            dos_qty,
+            dos_tot,
+            dos_rte,
+            dos_qty_adj,
+            dos_tot_adj,
+            dos_rte_adj
+        )
+
+
     /// Turn an `Orderable` `ord` into
     /// a list of strings.
-    let toString ord = 
-        let oq = (ord |> get).OrderableQuantity
-        let rq = ord.OrderQuantity
-        let dq, dt, dr = ord.Dose       |> DS.toVar
-        let aq, at, ar = ord.DoseAdjust |> DA.toVar
+    let toString orb = 
+        let ord_qty,
+            orb_qty,
+            ord_cnt,
+            dos_qty,
+            dos_tot,
+            dos_rte,
+            dos_qty_adj,
+            dos_tot_adj,
+            dos_rte_adj = orb |> toVar
 
-        let c, cc = ord.Components
+        let c, cc = orb.Components
 
-        [oq |> QT.toVar; rq |> QT.toVar; dq; dt; dr; aq; at; ar ]
+        [
+            ord_qty
+            orb_qty
+            ord_cnt
+            dos_qty
+            dos_tot
+            dos_rte
+            dos_qty_adj
+            dos_tot_adj
+            dos_rte_adj
+        ]
         |> List.map VU.toString
         |> List.append (c::cc |> List.collect CM.toString )
 
@@ -590,12 +712,15 @@ module Orderable =
     /// * dot\_tot = dos\_qty \* frq
     /// * dot\_tot\_adj = dos\_qty\_adj \* frq
     let toEqs hasRte adj frq tme orb =
-        let ord_qty = (orb |> get).OrderQuantity |> QT.toVar
-        let orb_qty = orb.OrderableQuantity      |> QT.toVar
-        let ord_cnt = orb.OrderCount             |> CT.toVar
-
-        let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVar
-        let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVar
+        let ord_qty,
+            orb_qty,
+            ord_cnt,
+            dos_qty,
+            dos_tot,
+            dos_rte,
+            dos_qty_adj,
+            dos_tot_adj,
+            dos_rte_adj = orb |> toVar
 
         let rte = if hasRte then dos_rte |> Some else None
 

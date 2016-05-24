@@ -18,39 +18,30 @@ module SV = Solver
 module UN = Unit
 module UG = Informedica.GenUnits.Lib.UnitGroup
 
-"mg[Mass]/kg[Weight]/min[Time]" |> Informedica.GenUnits.Lib.CombiUnit.fromString
-|> UG.fromUnit
-|> UG.getUnits
-|> List.map Informedica.GenUnits.Lib.CombiUnit.toString
-|> List.iter (printfn "%s")
-
-"Mass/Weight/Time" |> UG.fromString
-|> UG.getUnits
-|> List.map Informedica.GenUnits.Lib.CombiUnit.toString
-|> List.iter (printfn "%s")
+"Shape" |> UG.fromString |> UG.getUnits
 
 let print ord =
     for s in ord |> OD.toString do
         printfn "%s" s
     ord
         
-for o in OR.createNew [["Genta", "mg[Mass]"]] "ml[Volume]" "kg[Weight]" |> OR.toString do
+for o in OR.createNew [["Genta", "Mass"]] "Volume" "Weight" |> OR.toString do
     printfn "%s" o
 
-for o in OR.createNew [["dopamine", "mg[Mass]"];["sodium", "mmol[Molar]";"chloride", "mmol[Molar]"]] "ml[Volume]" "kg[Weight]" |> OR.toString do
+for o in OR.createNew [["dopamine", "Mass"];["sodium", "Molar";"chloride", "Molar"]] "Volume" "Weight" |> OR.toString do
     printfn "%s" o
 
-let pcm = OR.createNew [["paracetamol", "mg[Mass]"]] "tabl[Shape]" "kg[Weight]" 
+let pcm = OR.createNew [["paracetamol", "Mass"]] "Shape" "Weight" 
 let prs = PR.discontinuous 
 
-let ord = OD.createNew "kg[Weight]" pcm prs "oral"
+let ord = OD.createNew "Weight" pcm prs "oral"
 
 ord |> print |> ignore
 let solve = OD.solve "paracetamol"
 ord
 |> solve  MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
 |> print
-|> solve  MP.Freq SV.Vals [2N;3N;4N;5N;6N] "X/day"
+|> solve  MP.Freq SV.Vals [2N;3N;4N;5N;6N] "x/day"
 |> print
 |> solve  MP.OrderableOrderableQty SV.Vals [1N] "tabl"
 |> print
