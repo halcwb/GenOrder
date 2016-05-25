@@ -169,6 +169,7 @@
 <span class="l">120: </span>
 <span class="l">121: </span>
 <span class="l">122: </span>
+<span class="l">123: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// Create an orderable with two components</span>
 <span class="c">// dopamine and sodium/chloride</span>
@@ -245,11 +246,11 @@
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs35', 47)" onmouseover="showTip(event, 'fs35', 47)" class="f">solve</span> <span class="o">=</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs36', 48)" onmouseover="showTip(event, 'fs36', 48)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span>
 <span onmouseout="hideTip(event, 'fs32', 49)" onmouseover="showTip(event, 'fs32', 49)" class="i">ord</span>
 <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 50)" onmouseover="showTip(event, 'fs35', 50)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 51)" onmouseover="showTip(event, 'fs37', 51)" class="p">ItemComponentQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 52)" onmouseover="showTip(event, 'fs38', 52)" class="p">Vals</span> [<span class="n">240N</span>; <span class="n">300N</span>; <span class="n">500N</span>] <span class="s">&quot;mg&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 53)" onmouseover="showTip(event, 'fs35', 53)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs39', 54)" onmouseover="showTip(event, 'fs39', 54)" class="p">Freq</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 55)" onmouseover="showTip(event, 'fs38', 55)" class="p">Vals</span> [<span class="n">2N</span>;<span class="n">3N</span>;<span class="n">4N</span>;<span class="n">5N</span>;<span class="n">6N</span>] <span class="s">&quot;x/day&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 56)" onmouseover="showTip(event, 'fs35', 56)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs40', 57)" onmouseover="showTip(event, 'fs40', 57)" class="p">OrderableOrderableQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 58)" onmouseover="showTip(event, 'fs38', 58)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 59)" onmouseover="showTip(event, 'fs35', 59)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs41', 60)" onmouseover="showTip(event, 'fs41', 60)" class="p">OrderableDoseQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 61)" onmouseover="showTip(event, 'fs38', 61)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 62)" onmouseover="showTip(event, 'fs35', 62)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 63)" onmouseover="showTip(event, 'fs42', 63)" class="p">ItemDoseTotal</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs43', 64)" onmouseover="showTip(event, 'fs43', 64)" class="p">MaxIncl</span> [<span class="n">4N</span>] <span class="s">&quot;gram/day&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 65)" onmouseover="showTip(event, 'fs35', 65)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs44', 66)" onmouseover="showTip(event, 'fs44', 66)" class="p">ItemDoseAdjustTotalAdjust</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs43', 67)" onmouseover="showTip(event, 'fs43', 67)" class="p">MaxIncl</span> [<span class="n">90N</span>] <span class="s">&quot;mg/kg/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 53)" onmouseover="showTip(event, 'fs35', 53)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs39', 54)" onmouseover="showTip(event, 'fs39', 54)" class="p">OrderableOrderableQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 55)" onmouseover="showTip(event, 'fs38', 55)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 56)" onmouseover="showTip(event, 'fs35', 56)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs40', 57)" onmouseover="showTip(event, 'fs40', 57)" class="p">OrderableDoseQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 58)" onmouseover="showTip(event, 'fs38', 58)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 59)" onmouseover="showTip(event, 'fs35', 59)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs41', 60)" onmouseover="showTip(event, 'fs41', 60)" class="p">ItemDoseTotal</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 61)" onmouseover="showTip(event, 'fs42', 61)" class="p">MaxIncl</span> [<span class="n">4N</span>] <span class="s">&quot;gram/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 62)" onmouseover="showTip(event, 'fs35', 62)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs43', 63)" onmouseover="showTip(event, 'fs43', 63)" class="p">ItemDoseAdjustTotalAdjust</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 64)" onmouseover="showTip(event, 'fs42', 64)" class="p">MaxIncl</span> [<span class="n">90N</span>] <span class="s">&quot;mg/kg/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 65)" onmouseover="showTip(event, 'fs35', 65)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs44', 66)" onmouseover="showTip(event, 'fs44', 66)" class="p">Freq</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 67)" onmouseover="showTip(event, 'fs38', 67)" class="p">Vals</span> [<span class="n">2N</span>;<span class="n">3N</span>;<span class="n">4N</span>;<span class="n">6N</span>] <span class="s">&quot;x/day&quot;</span>
 <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 68)" onmouseover="showTip(event, 'fs35', 68)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs45', 69)" onmouseover="showTip(event, 'fs45', 69)" class="p">AdjustQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 70)" onmouseover="showTip(event, 'fs38', 70)" class="p">Vals</span> [<span class="n">10N</span>] <span class="s">&quot;kg&quot;</span>
 <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs21', 71)" onmouseover="showTip(event, 'fs21', 71)" class="f">print</span>
 <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs34', 72)" onmouseover="showTip(event, 'fs34', 72)" class="f">ignore</span>
@@ -279,7 +280,8 @@
 <span class="fsi"> paracetamol.Component.Dose.Total[1/43200, 1/28800, 1/21600, 1/17280, 1/14400] Shape/Time</span>
 <span class="fsi"> paracetamol.Component.Dose.Rate&lt;..&gt; Shape/Time</span>
 <span class="fsi"> paracetamol.Component.DoseAdjust.QtyAdjust[1/10000] Shape/Weight</span>
-<span class="fsi"> paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000, 1/216000000, 1/172800000, 1/144000000] Shape/Weight/Time</span>
+<span class="c">// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000, 1/216000000, </span>
+<span class="fsi"> 1/172800000, 1/144000000] Shape/Weight/Time]</span>
 <span class="fsi"> paracetamol.Component.DoseAdjust.RateAdjust&lt;..&gt; Shape/Weight/Time</span>
 <span class="fsi"> paracetamol.Orderable.Order.Qty&lt;0..&gt; Shape</span>
 <span class="fsi"> paracetamol.Orderable.Orderable.Qty[1] Shape</span>
@@ -355,12 +357,12 @@ redistribution for both commercial and non-commercial purposes. For more informa
 <div class="tip" id="fs36">val solve : n:string -&gt; m:Order.Mapping.Map -&gt; p:Solver.Prop -&gt; v:BigRational list -&gt; u:string -&gt; o:Order.Order -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.solve<br /><em><br /><br />&#160;Solve an `Order` *ord* with<br />&#160;<br />&#160;* n: the name of the variable to be set<br />&#160;* m: the mapping for the field of the order<br />&#160;* p: the property of the variable to be set<br />&#160;* v: the values to be set</em></div>
 <div class="tip" id="fs37">union case Order.Mapping.Map.ItemComponentQty: Order.Mapping.Map</div>
 <div class="tip" id="fs38">union case Solver.Prop.Vals: Solver.Prop</div>
-<div class="tip" id="fs39">union case Order.Mapping.Map.Freq: Order.Mapping.Map</div>
-<div class="tip" id="fs40">union case Order.Mapping.Map.OrderableOrderableQty: Order.Mapping.Map</div>
-<div class="tip" id="fs41">union case Order.Mapping.Map.OrderableDoseQty: Order.Mapping.Map</div>
-<div class="tip" id="fs42">union case Order.Mapping.Map.ItemDoseTotal: Order.Mapping.Map</div>
-<div class="tip" id="fs43">union case Solver.Prop.MaxIncl: Solver.Prop</div>
-<div class="tip" id="fs44">union case Order.Mapping.Map.ItemDoseAdjustTotalAdjust: Order.Mapping.Map</div>
+<div class="tip" id="fs39">union case Order.Mapping.Map.OrderableOrderableQty: Order.Mapping.Map</div>
+<div class="tip" id="fs40">union case Order.Mapping.Map.OrderableDoseQty: Order.Mapping.Map</div>
+<div class="tip" id="fs41">union case Order.Mapping.Map.ItemDoseTotal: Order.Mapping.Map</div>
+<div class="tip" id="fs42">union case Solver.Prop.MaxIncl: Solver.Prop</div>
+<div class="tip" id="fs43">union case Order.Mapping.Map.ItemDoseAdjustTotalAdjust: Order.Mapping.Map</div>
+<div class="tip" id="fs44">union case Order.Mapping.Map.Freq: Order.Mapping.Map</div>
 <div class="tip" id="fs45">union case Order.Mapping.Map.AdjustQty: Order.Mapping.Map</div>
 
         </div>
