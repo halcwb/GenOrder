@@ -40,6 +40,10 @@
   <span>Namespace: Informedica.GenOrder.Lib</span><br />
 </p>
 <div class="xmldoc">
+<p>Types and functions to deal
+with an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a>, i.e. something
+that can be ordered.</p>
+
 </div>
 
 <!-- Render nested types and modules, if there are any -->
@@ -54,7 +58,9 @@
           <td class="type-name">
             <a href="informedica-genorder-lib-orderablemodule-orderable.html">Orderable</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Models an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a></p>
+
+</td>
         </tr>
     </tbody>
   </table>
@@ -67,14 +73,20 @@
           <td class="module-name">
             <a href="informedica-genorder-lib-orderablemodule-componentmodule.html">Component</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Types and functions to model a
+<a href="informedica-genorder-lib-orderablemodule-componentmodule-component.html" title="Component"><code>Component</code></a> in an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a>.
+A <a href="informedica-genorder-lib-orderablemodule-componentmodule-component.html" title="Component"><code>Component</code></a> contains a list
+of <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a>s</p>
+
+</td>
         </tr>
         <tr>
           <td class="module-name">
             <a href="informedica-genorder-lib-orderablemodule-itemmodule.html">Item</a>
           </td>
           <td class="xmldoc"><p>Type and functions that models an
-<a href="informedica-genorder-lib-ordermodule-order.html" title="Order"><code>Order</code></a> <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a></p>
+<a href="informedica-genorder-lib-ordermodule-order.html" title="Order"><code>Order</code></a> <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a> that is contained in
+a <a href="informedica-genorder-lib-orderablemodule-componentmodule-component.html" title="Component"><code>Component</code></a></p>
 
 </td>
         </tr>
@@ -102,36 +114,47 @@ to create <code>Variable</code> names</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '13', 13)" onmouseover="showTip(event, '13', 13)">
-            apply f ord
+            apply f orb
           </code>
           <div class="tip" id="13">
-            <strong>Signature:</strong> f:(Orderable -&gt; &#39;?7000) -&gt; ord:Orderable -&gt; &#39;?7000<br />
-                          <strong>Type parameters:</strong> '?7000          </div>
+            <strong>Signature:</strong> f:(Orderable -&gt; &#39;?7027) -&gt; orb:Orderable -&gt; &#39;?7027<br />
+                          <strong>Type parameters:</strong> '?7027          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L422-422" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L618-618" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Apply <code>f</code> to <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a> <code>ord</code></p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '14', 14)" onmouseover="showTip(event, '14', 14)">
-            create oq rq ds da cc
+            create (...)
           </code>
           <div class="tip" id="14">
-            <strong>Signature:</strong> oq:Quantity -&gt; rq:Quantity -&gt; ds:Dose -&gt; da:DoseAdjust -&gt; cc:Component list -&gt; Orderable<br />
+            <strong>Signature:</strong> orb_qty:Quantity -&gt; ord_qty:Quantity -&gt; orb_cnt:Count -&gt; dos:Dose -&gt; dos_ajd:DoseAdjust -&gt; cc:Component list -&gt; Orderable<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L393-393" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L584-584" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Create an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a> with</p>
+<ul>
+<li>orb_qty: quantity of the orderable</li>
+<li>ord_qty: quantity of orderable in the order</li>
+<li>orb_cnt: the count of orderable in the order</li>
+<li>dos: the orderable dose</li>
+<li>dos_adj: the adjusted orderable dose</li>
+</ul>
+
+
         </td>
       </tr>
       <tr>
@@ -145,11 +168,14 @@ to create <code>Variable</code> names</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L405-405" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L599-599" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Create a new <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a> with a <a href="informedica-genorder-lib-orderablemodule-componentmodule-component.html" title="Component"><code>Component</code></a> list
+<code>cl</code>, an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a>unit <code>u</code> and adjust unit <code>adj</code></p>
+
+
         </td>
       </tr>
       <tr>
@@ -163,7 +189,7 @@ to create <code>Variable</code> names</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L501-501" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L761-761" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -181,11 +207,13 @@ to create <code>Variable</code> names</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L424-424" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L621-621" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Utility function to facilitate type inference</p>
+
+
         </td>
       </tr>
       <tr>
@@ -199,40 +227,61 @@ to create <code>Variable</code> names</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L426-426" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L625-625" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Get the name of the <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a> which is
+the sum of the concatenated lists of <a href="informedica-genorder-lib-orderablemodule-itemmodule-item.html" title="Item"><code>Item</code></a>s</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '19', 19)" onmouseover="showTip(event, '19', 19)">
-            toEqs hasRte adj frq tme ord
+            toEqs hasRte adj frq tme orb
           </code>
           <div class="tip" id="19">
-            <strong>Signature:</strong> hasRte:bool -&gt; adj:VariableUnit -&gt; frq:VariableUnit option -&gt; tme:VariableUnit option -&gt; ord:Orderable -&gt; VariableUnit list list * VariableUnit list<br />
+            <strong>Signature:</strong> hasRte:bool -&gt; adj:VariableUnit -&gt; frq:VariableUnit option -&gt; tme:VariableUnit option -&gt; orb:Orderable -&gt; VariableUnit list list * VariableUnit list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L459-459" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L714-714" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>The following equations are generated:</p>
+          <p>The following variables are used:</p>
 <ul>
-<li>ord_ord_qty = ord_ord_qty * ord_ord_qty</li>
-<li>ord_ord_qty = ord_ord_cnc * ord_ord_qty</li>
-<li>ord_dos_tot = ord_dos_qty * frq</li>
-<li>ord_dos_qty = ord_dos_rte * tme</li>
-<li>ord_dos_qty = ord_ord_cnc * qty</li>
-<li>ord_dos_tot = ord_ord_cnc * tot</li>
-<li>ord_dos_rte = ord_ord_cnc * rte</li>
-<li>ord_dos_qty = ord_dos_qty_adj * adj</li>
-<li>ord_dos_tot = ord_dos_tot_adj * adj</li>
-<li>ord_dos_rte = ord_dos_rte_adj * adj</li>
+<li>ord_qty: the quantity of orderable in an order</li>
+<li>orb_qty: the quantity of orderable</li>
+<li>ord_cnt: the count of orderable in an order</li>
+<li>dos_qty: the dose quantity of orderable</li>
+<li>dos_tot: the dose total of orderable</li>
+<li>dos_rte: the dose rate of orderable</li>
+<li>dos_qty_adj: the adjustedn dose quantity</li>
+<li>dos_tot_adj: the adjusted dose total</li>
+<li>dos_rte_adj: the adjusted dose rate</li>
+<li>frq: frequency</li>
+<li>tme: time</li>
+</ul>
+<p>The following equations are generated:</p>
+<p><em>Process or Continuous</em></p>
+<ul>
+<li>ord_qty = ord_cnt * orb_qty</li>
+</ul>
+<p><em>Discontinuous Timed</em></p>
+<ul>
+<li>dot_tot = dos_qty * frq</li>
+<li>dos_qty = dos_rte * tme</li>
+<li>dot_tot_adj = dos_qty_adj * frq</li>
+<li>dos_qty_adj = dos_rte_adj * tme</li>
+</ul>
+<p><em>Discontinuous</em></p>
+<ul>
+<li>dot_tot = dos_qty * frq</li>
+<li>dot_tot_adj = dos_qty_adj * frq</li>
 </ul>
 
 
@@ -242,14 +291,35 @@ to create <code>Variable</code> names</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '20', 20)" onmouseover="showTip(event, '20', 20)">
-            toString ord
+            toString orb
           </code>
           <div class="tip" id="20">
-            <strong>Signature:</strong> ord:Orderable -&gt; string list<br />
+            <strong>Signature:</strong> orb:Orderable -&gt; string list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L434-434" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L656-656" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Turn an <a href="informedica-genorder-lib-orderablemodule-orderable.html" title="Orderable"><code>Orderable</code></a> <code>ord</code> into
+a list of strings.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '21', 21)" onmouseover="showTip(event, '21', 21)">
+            toVar orb
+          </code>
+          <div class="tip" id="21">
+            <strong>Signature:</strong> orb:Orderable -&gt; VariableUnit * VariableUnit * VariableUnit * VariableUnit * VariableUnit * VariableUnit * VariableUnit * VariableUnit * VariableUnit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/Orderable.fs#L633-633" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>

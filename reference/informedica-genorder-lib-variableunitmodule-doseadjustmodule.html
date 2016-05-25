@@ -41,6 +41,9 @@
   <span>Parent Module: <a href="informedica-genorder-lib-variableunitmodule.html">VariableUnit</a></span>
 </p>
 <div class="xmldoc">
+<p>Type and functions that represent an adjusted dose,
+and a dose is an adjusted dose quantity, total and rate</p>
+
 </div>
 
 <!-- Render nested types and modules, if there are any -->
@@ -55,7 +58,9 @@
           <td class="type-name">
             <a href="informedica-genorder-lib-variableunitmodule-doseadjustmodule-doseadjust.html">DoseAdjust</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Type that represents an adjusted dose quantity, total and rate</p>
+
+</td>
         </tr>
     </tbody>
   </table>
@@ -71,73 +76,83 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '98', 98)" onmouseover="showTip(event, '98', 98)">
-            doseAdjust n u1 u2
+          <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
+            doseAdjust n ung1 ung2
           </code>
-          <div class="tip" id="98">
-            <strong>Signature:</strong> n:string list -&gt; u1:String -&gt; u2:string -&gt; DoseAdjust<br />
+          <div class="tip" id="115">
+            <strong>Signature:</strong> n:string list -&gt; ung1:String -&gt; ung2:string -&gt; DoseAdjust<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L355-355" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L538-538" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Create a <a href="informedica-genorder-lib-variableunitmodule-doseadjustmodule-doseadjust.html" title="DoseAdjust"><code>DoseAdjust</code></a> with name <strong>n</strong>
+and <code>UnitGroup</code> <strong>ung1</strong> adjusted by <strong>ung2</strong></p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '99', 99)" onmouseover="showTip(event, '99', 99)">
+          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
             fromVar eqs arg2
           </code>
-          <div class="tip" id="99">
+          <div class="tip" id="116">
             <strong>Signature:</strong> eqs:Variable list list -&gt; DoseAdjust -&gt; DoseAdjust<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L349-349" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L530-530" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Set a <a href="informedica-genorder-lib-variableunitmodule-doseadjustmodule-doseadjust.html" title="DoseAdjust"><code>DoseAdjust</code></a> with an adjusted quantity, total and rate <code>Variable</code>
+in a list of <code>Variable</code> lists</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '100', 100)" onmouseover="showTip(event, '100', 100)">
+          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
             toString arg1
           </code>
-          <div class="tip" id="100">
+          <div class="tip" id="117">
             <strong>Signature:</strong> DoseAdjust -&gt; string list<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L362-362" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L546-546" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Turn a <a href="informedica-genorder-lib-variableunitmodule-doseadjustmodule-doseadjust.html" title="DoseAdjust"><code>DoseAdjust</code></a> to a string</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
-            toVar arg1
+          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
+            toVarUnt arg1
           </code>
-          <div class="tip" id="101">
+          <div class="tip" id="118">
             <strong>Signature:</strong> DoseAdjust -&gt; VariableUnit * VariableUnit * VariableUnit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L346-346" class="github-link">
+            <a href="http://github.com/halcwb/GenOrder/tree/master/src/Informedica.GenOrder.Lib/VariableUnit.fs#L525-525" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Turn <a href="informedica-genorder-lib-variableunitmodule-doseadjustmodule-doseadjust.html" title="DoseAdjust"><code>DoseAdjust</code></a> in an adjusted quantity, total and rate <a href="informedica-genorder-lib-variableunitmodule-variableunit.html" title="VariableUnit"><code>VariableUnit</code></a></p>
+
+
         </td>
       </tr>
     </tbody>
