@@ -309,7 +309,7 @@ module Orderable =
                 /// i.e. adjusted quanity, total and rate of `Component` administered
                 DoseAdjust: DA.DoseAdjust
                 /// The `Item`s in a `Component`
-                Items: IT.Item * IT.Item list
+                Items: IT.Item list
             }
         
         /// Create a component with
@@ -324,20 +324,17 @@ module Orderable =
         /// * `dos_adj`: adjusted dose of component
         /// * `ii`: list of `Item`s in a component
         let create cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii = 
-            match ii with
-            | h::tail ->
-                { 
-                    ComponentQuantity = cmp_qty
-                    OrderableQuantity = orb_qty
-                    OrderableCount = orb_cnt
-                    OrderQuantity = ord_qty
-                    OrderCount = ord_cnt
-                    OrderableConcentration = orb_cnc
-                    Dose = dos
-                    DoseAdjust = dos_adj 
-                    Items = h, tail
-                }
-            | _ -> failwith "Not a valid component"
+            { 
+                ComponentQuantity = cmp_qty
+                OrderableQuantity = orb_qty
+                OrderableCount = orb_cnt
+                OrderQuantity = ord_qty
+                OrderCount = ord_cnt
+                OrderableConcentration = orb_cnc
+                Dose = dos
+                DoseAdjust = dos_adj 
+                Items = ii
+            }
 
         /// Create a new component with
         ///
@@ -403,7 +400,7 @@ module Orderable =
                 cmp_dos_tot_adj,
                 cmp_dos_rte_adj = cmp |> toVar
 
-            let i, ii = cmp.Items
+            let ii = cmp.Items
 
             [
                 cmp_cmp_qty 
@@ -418,7 +415,7 @@ module Orderable =
                 cmp_dos_rte_adj
             ]
             |> List.map VU.toString
-            |> List.append (i::ii |> List.collect IT.toString )
+            |> List.append (ii |> List.collect IT.toString )
 
 
         /// The following variables are used
@@ -486,7 +483,7 @@ module Orderable =
                 cmp_dos_rte_adj = cmp |> toVar
 
             let map = IT.toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty
-            let i, ii = cmp.Items
+            let ii = cmp.Items
 
             let eqs =
                 [
@@ -525,13 +522,13 @@ module Orderable =
                 ] |> List.append eqs
             // Process
             | _ -> eqs
-            |> List.append (i::ii |> List.collect map)
+            |> List.append (ii |> List.collect map)
 
         /// Create a `Component` from a list
         /// of variable list eqs 
         let fromEqs eqs (cmp: Component) =
             let items = 
-                (cmp.Items |> fst)::(cmp.Items |> snd)
+                cmp.Items
                 |> List.map (IT.fromEqs eqs)
             {
                 cmp with
@@ -540,7 +537,7 @@ module Orderable =
                     OrderableConcentration = CN.fromVar eqs cmp.OrderableConcentration
                     Dose = DS.fromVar eqs cmp.Dose
                     DoseAdjust = DA.fromVar eqs cmp.DoseAdjust
-                    Items = items.Head, items.Tail
+                    Items = items
             }    
 
 
@@ -570,7 +567,7 @@ module Orderable =
             /// The adjusted dose of an orderable
             DoseAdjust: DA.DoseAdjust
             /// The list of components in an orderable
-            Components: CM.Component * CM.Component list
+            Components: CM.Component list
         }
         
     /// Create an `Orderable` with
@@ -582,20 +579,17 @@ module Orderable =
     /// * dos\_adj: the adjusted orderable dose
     ///
     let create orb_qty ord_qty orb_cnt dos dos_ajd cc = 
-        match cc with
-        | h::tail ->
-            { 
-                OrderableQuantity = orb_qty
-                OrderQuantity = ord_qty
-                OrderCount = orb_cnt
-                Dose = dos
-                DoseAdjust = dos_ajd 
-                Components = h, tail
-            }
-        | _ -> failwith "Not a valid Orderable"
+        { 
+            OrderableQuantity = orb_qty
+            OrderQuantity = ord_qty
+            OrderCount = orb_cnt
+            Dose = dos
+            DoseAdjust = dos_ajd 
+            Components = cc
+        }
 
     /// Create a new `Orderable` with a `Component` list
-    /// `cl`, an `Orderable`unit `u` and adjust unit `adj`
+    /// `cl`, an `Orderable`unit `u` and adjust unit groep `adj`
     let createNew cl u adj =
         let s = 
             [
@@ -664,7 +658,7 @@ module Orderable =
             dos_tot_adj,
             dos_rte_adj = orb |> toVar
 
-        let c, cc = orb.Components
+        let cc = orb.Components
 
         [
             ord_qty
@@ -678,7 +672,7 @@ module Orderable =
             dos_rte_adj
         ]
         |> List.map VU.toString
-        |> List.append (c::cc |> List.collect CM.toString )
+        |> List.append (cc |> List.collect CM.toString )
 
     /// The following variables are used:
     ///
@@ -729,7 +723,7 @@ module Orderable =
         let rte_adj = dos_rte_adj
 
         let map = CM.toEqs adj frq dos_qty dos_tot tme rte orb_qty
-        let c, cc = orb.Components
+        let cc = orb.Components
 
         let eqs = 
             [
@@ -754,13 +748,13 @@ module Orderable =
             ] |> List.append eqs
         // Continuous or Process
         | _ -> eqs
-        |> List.append (c::cc |> List.collect map)
-        , orb_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
+        |> List.append (cc |> List.collect map)
+        , orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
 
 
     let fromEqs eqs (ord: Orderable) =
         let cmps = 
-            (ord.Components |> fst)::(ord.Components |> snd)
+            ord.Components
             |> List.map (CM.fromEqs eqs)
         {
             ord with
@@ -768,6 +762,6 @@ module Orderable =
                 OrderQuantity = QT.fromVar eqs ord.OrderQuantity
                 Dose = DS.fromVar eqs ord.Dose
                 DoseAdjust = DA.fromVar eqs ord.DoseAdjust
-                Components = cmps.Head, cmps.Tail
+                Components = cmps
         }
 

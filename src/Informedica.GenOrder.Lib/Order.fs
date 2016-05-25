@@ -165,12 +165,22 @@ module Order =
     /// * str_prs: a function that takes in a list of strings 
     /// that will generate the names and returns a `Prescription`
     /// * rot: the route of administration
-    let createNew adj_ung orb str_prs rot = 
-        let nm = orb |> OR.getName
+    let createNew cil shp_ung adj_ung str_prs rot = 
+        let orb = OR.createNew cil shp_ung adj_ung
+        let nm  = orb |> OR.getName
         let prs = [nm] |> str_prs
         let adj = adj_ung |> QT.quantity [nm; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
         create adj orb prs rot sts
+
+    let getAdjust ord = (ord |> get).Adjust
+
+    let getName ord = 
+        ord 
+        |> (getAdjust >> QT.toVarUnt >> VU.getName)
+        |> NM.toString
+        |> String.split "."
+        |> List.head
 
     /// Create a `ProductEquation` from
     /// a `VariableUnit` list
@@ -251,8 +261,11 @@ module Order =
                 |> CU.fromString
             | None -> sprintf "Cannot find VariableUnit %A" n |> failwith
 
-        let dls = if n |> String.isNullOrWhiteSpace then "" else "."
-        let n = [n + dls + (m |> Mapping.map)] |> NM.create
+        let dls = "."
+        let n =
+            match m with
+            | Mapping.Freq -> [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+            | _ -> [n + dls + (m |> Mapping.map)] |> NM.create
         let vus = o |> toEqs
         let cu = vus |> toUnit n u 
 

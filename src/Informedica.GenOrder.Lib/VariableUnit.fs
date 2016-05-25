@@ -30,7 +30,9 @@ module VariableUnit =
     /// Create a new `VariableUnit` with
     /// `Name` **nme** and `UnitGroup` **ung**
     let create nme ung = 
-        let var = VR.createSucc nme VL.unrestricted
+        let var = 
+            VR.createSucc nme VL.unrestricted
+            |> VR.setNonZeroOrNegative
         { Variable = var; UnitGroup = ung } 
         
     /// Create a `VariableUnit` with
@@ -156,6 +158,8 @@ module VariableUnit =
 
         /// Create a `Name` from a list of strings that 
         let create ns = ns |> String.concat "." |> N.createExc
+
+        let toString = N.toString
 
     /// Type and functions that represent a frequency
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

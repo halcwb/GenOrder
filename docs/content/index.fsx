@@ -52,33 +52,17 @@ This example demonstrates using a function defined in this sample library.
 
 *)
 
-// Create an orderable with two components
-// dopamine and sodium/chloride
-// dopamine component contains item dopamine
-// sodium/chloride component (is saline) contains sodium and chloride
-// dopamine is measured in mass units, sodium and chloride in molar units
-// the components are measured in volume units
-// Dose is adjusteded in weight units        
-for o in OR.createNew 
-    [
-        ["dopamine", "Mass"]
-        ["sodium", "Molar";"chloride", "Molar"]
-    ] 
-    "Volume" "Weight" |> OR.toString do
-    printfn "%s" o
-
 // Create a paracetamol order with an paracetamol orderable
 // and how to prescribe this
-let pcm = 
-    OR.createNew 
+let ord = 
+    OD.createNew 
         [
             ["paracetamol", "Mass"]
         ] 
         "Shape" 
         "Weight" 
-
-let prs = PR.discontinuous
-let ord = OD.createNew "Weight" pcm prs "oral"
+        PR.discontinuous
+        "oral"
 
 // Print out the order
 ord |> print |> ignore
@@ -127,11 +111,11 @@ ord |> print |> ignore
 let solve = OD.solve "paracetamol"
 ord
 |> solve MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
-|> solve MP.Freq SV.Vals [2N;3N;4N;5N;6N] "x/day"
 |> solve MP.OrderableOrderableQty SV.Vals [1N] "tabl"
 |> solve MP.OrderableDoseQty SV.Vals [1N] "tabl"
 |> solve MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
 |> solve MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] "mg/kg/day"
+|> solve MP.Freq SV.Vals [2N;3N;4N;6N] "x/day"
 |> solve MP.AdjustQty SV.Vals [10N] "kg"
 |> print
 |> ignore
@@ -161,7 +145,8 @@ ord
 // [fsi: paracetamol.Component.Dose.Total[1/43200, 1/28800, 1/21600, 1/17280, 1/14400] Shape/Time]
 // [fsi: paracetamol.Component.Dose.Rate<..> Shape/Time]
 // [fsi: paracetamol.Component.DoseAdjust.QtyAdjust[1/10000] Shape/Weight]
-// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000, 1/216000000, 1/172800000, 1/144000000] Shape/Weight/Time]
+// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000, 1/216000000,]
+// [fsi: 1/172800000, 1/144000000] Shape/Weight/Time]]
 // [fsi: paracetamol.Component.DoseAdjust.RateAdjust<..> Shape/Weight/Time]
 // [fsi: paracetamol.Orderable.Order.Qty<0..> Shape]
 // [fsi: paracetamol.Orderable.Orderable.Qty[1] Shape]

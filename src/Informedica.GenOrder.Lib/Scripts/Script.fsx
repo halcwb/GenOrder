@@ -18,39 +18,33 @@ module SV = Solver
 module UN = Unit
 module UG = Informedica.GenUnits.Lib.UnitGroup
 
-"Shape" |> UG.fromString |> UG.getUnits
-
-let print ord =
-    for s in ord |> OD.toString do
-        printfn "%s" s
+let print ord = 
+    for s in ord |> OD.toString do printfn "%s" s
     ord
-        
-for o in OR.createNew [["Genta", "Mass"]] "Volume" "Weight" |> OR.toString do
-    printfn "%s" o
 
-for o in OR.createNew [["dopamine", "Mass"];["sodium", "Molar";"chloride", "Molar"]] "Volume" "Weight" |> OR.toString do
-    printfn "%s" o
+let lab frq unt itms =
+    let items =
+        itms |> List.map (fun i -> [(i, "Count")])
 
-let pcm = OR.createNew [["paracetamol", "Mass"]] "Shape" "Weight"
-let prs = PR.discontinuous 
+    let ord =
+        OD.createNew 
+            items
+            "Count" 
+            "Weight" 
+            PR.discontinuous
+            "None"
+    items
+    |> List.collect id
+    |> List.fold (fun ord itm ->
+            ord
+            |> OD.solve (itm |> fst) MP.ItemComponentQty SV.Vals [1N] "count" 
+            |> OD.solve (itm |> fst) MP.ItemOrderableQty SV.Vals [1N] "count" 
+            |> OD.solve (itm |> fst) MP.ItemDoseQty SV.Vals [1N] "count" 
+            |> OD.solve (itm |> fst) MP.ComponentComponentQty SV.Vals [1N] "count" 
+            |> OD.solve (itm |> fst) MP.ComponentOrderableQty SV.Vals [1N] "count" 
+            ) ord
+    |> OD.solve "" MP.Freq SV.Vals [frq] unt
 
-let ord = OD.createNew "Weight" pcm prs "oral"
-
-ord |> print |> ignore
-let solve = OD.solve "paracetamol"
-ord
-|> solve  MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
-|> print
-|> solve  MP.Freq SV.Vals [2N;3N;4N;5N;6N] "x/day"
-|> print
-|> solve  MP.OrderableOrderableQty SV.Vals [1N] "tabl"
-|> print
-|> solve  MP.OrderableDoseQty SV.Vals [1N] "tabl"
-|> print
-|> solve  MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
-|> print
-|> solve  MP.ItemDoseAdjustTotalAdjust SV.MaxIncl [90N] "mg/kg/day"
-|> print
-|> solve  MP.AdjustQty SV.Vals [10N] "kg"
+lab 3N "x/day" ["gluc"; "Na"; "Chl"; "K"; "Ca"; "Hb"; "Ht"; "L"; "T"; "alb"]  
 |> print
 |> ignore
