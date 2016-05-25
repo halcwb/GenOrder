@@ -29,6 +29,8 @@ module Unit =
         | _ -> failwith "Not suported"
         |> UN.fromString
 
+/// Helper functions for the `Informedica.GenUnits.Lib.UnitGroup`
+/// module
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module UnitGroups =
     
@@ -36,19 +38,27 @@ module UnitGroups =
 
     module CS = Informedica.GenUnits.Lib.Constants
 
+    /// Create a mass unitgroup
     let mass = CS.massGroup |> fromString
 
+    /// Create a mass unitgroup
     let bsa = CS.bsaGroup |> fromString
 
+    /// Create a count unitgroup
     let count = CS.countGroup |> fromString
 
+    /// Create a distance unitgroup
     let distance = CS.distanceGroup |> fromString
 
+    /// Create a molar unitgroup
     let molar = CS.molarGroup |> fromString
 
+    /// Create a time unitgroup
     let time = CS.timeGroup |> fromString
 
+    /// Create a volume unitgroup
     let volume = CS.volumeGroup |> fromString
 
+    /// Create a weight unitgroup
     let weight = CS.weightGroup |> fromString
     

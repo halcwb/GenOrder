@@ -61,10 +61,10 @@ This example demonstrates using a function defined in this sample library.
 // Dose is adjusteded in weight units        
 for o in OR.createNew 
     [
-        ["dopamine", "mg[Mass]"]
-        ["sodium", "mmol[Molar]";"chloride", "mmol[Molar]"]
+        ["dopamine", "Mass"]
+        ["sodium", "Molar";"chloride", "Molar"]
     ] 
-    "ml[Volume]" "kg[Weight]" |> OR.toString do
+    "Volume" "Weight" |> OR.toString do
     printfn "%s" o
 
 // Create a paracetamol order with an paracetamol orderable
@@ -72,13 +72,13 @@ for o in OR.createNew
 let pcm = 
     OR.createNew 
         [
-            ["paracetamol", "mg[Mass]"]
+            ["paracetamol", "Mass"]
         ] 
-        "tabl[Shape]" 
-        "kg[Weight]" 
+        "Shape" 
+        "Weight" 
 
 let prs = PR.discontinuous
-let ord = OD.createNew "kg[Weight]" pcm prs "oral"
+let ord = OD.createNew "Weight" pcm prs "oral"
 
 // Print out the order
 ord |> print |> ignore
@@ -88,44 +88,46 @@ ord |> print |> ignore
 // [fsi: Route]
 // [fsi: oral]
 // [fsi: Prescription]
-// [fsi: Freq<..> Count/Time]
+// [fsi: paracetamol.Freq<..> Count/Time]
 // [fsi: Orderable]
 // [fsi: paracetamol.Item.Component.Qty<..> Mass]
 // [fsi: paracetamol.Item.Orderable.Qty<..> Mass]
-// [fsi: paracetamol.Item.Component.Conc<..> Mass/Tabl]
-// [fsi: paracetamol.Item.Orderable.Conc<..> Mass/Tabl]
+// [fsi: paracetamol.Item.Component.Conc<..> Mass/Shape]
+// [fsi: paracetamol.Item.Orderable.Conc<..> Mass/Shape]
 // [fsi: paracetamol.Item.Dose.Qty<..> Mass]
 // [fsi: paracetamol.Item.Dose.Total<..> Mass/Time]
 // [fsi: paracetamol.Item.Dose.Rate<..> Mass/Time]
 // [fsi: paracetamol.Item.DoseAdjust.QtyAdjust<..> Mass/Weight]
 // [fsi: paracetamol.Item.DoseAdjust.TotalAdjust<..> Mass/Weight/Time]
 // [fsi: paracetamol.Item.DoseAdjust.RateAdjust<..> Mass/Weight/Time]
-// [fsi: paracetamol.Component.Component.Qty<..> Tabl]
-// [fsi: paracetamol.Component.Orderable.Qty<..> Tabl]
-// [fsi: paracetamol.Component.Orderable.Conc<..> Tabl/Tabl]
-// [fsi: paracetamol.Component.Dose.Qty<..> Tabl]
-// [fsi: paracetamol.Component.Dose.Total<..> Tabl/Time]
-// [fsi: paracetamol.Component.Dose.Rate<..> Tabl/Time]
-// [fsi: paracetamol.Component.DoseAdjust.QtyAdjust<..> Tabl/Weight]
-// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust<..> Tabl/Weight/Time]
-// [fsi: paracetamol.Component.DoseAdjust.RateAdjust<..> Tabl/Weight/Time]
-// [fsi: paracetamol.Orderable.Orderable.Qty<..> Tabl]
-// [fsi: paracetamol.Orderable.Order.Qty<..> Tabl]
-// [fsi: paracetamol.Orderable.Dose.Qty<..> Tabl]
-// [fsi: paracetamol.Orderable.Dose.Total<..> Tabl/Time]
-// [fsi: paracetamol.Orderable.Dose.Rate<..> Tabl/Time]
-// [fsi: paracetamol.Orderable.DoseAdjust.QtyAdjust<..> Tabl/Weight]
-// [fsi: paracetamol.Orderable.DoseAdjust.TotalAdjust<..> Tabl/Weight/Time]
-// [fsi: paracetamol.Orderable.DoseAdjust.RateAdjust<..> Tabl/Weight/Time]
+// [fsi: paracetamol.Component.Component.Qty<..> Shape]
+// [fsi: paracetamol.Component.Orderable.Qty<..> Shape]
+// [fsi: paracetamol.Component.Orderable.Count<..> Count]
+// [fsi: paracetamol.Component.Orderable.Conc<..> Shape/Shape]
+// [fsi: paracetamol.Component.Dose.Qty<..> Shape]
+// [fsi: paracetamol.Component.Dose.Total<..> Shape/Time]
+// [fsi: paracetamol.Component.Dose.Rate<..> Shape/Time]
+// [fsi: paracetamol.Component.DoseAdjust.QtyAdjust<..> Shape/Weight]
+// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust<..> Shape/Weight/Time]
+// [fsi: paracetamol.Component.DoseAdjust.RateAdjust<..> Shape/Weight/Time]
+// [fsi: paracetamol.Orderable.Order.Qty<..> Shape]
+// [fsi: paracetamol.Orderable.Orderable.Qty<..> Shape]
+// [fsi: paracetamol.Orderable.Order.Count<..> Count]
+// [fsi: paracetamol.Orderable.Dose.Qty<..> Shape]
+// [fsi: paracetamol.Orderable.Dose.Total<..> Shape/Time]
+// [fsi: paracetamol.Orderable.Dose.Rate<..> Shape/Time]
+// [fsi: paracetamol.Orderable.DoseAdjust.QtyAdjust<..> Shape/Weight]
+// [fsi: paracetamol.Orderable.DoseAdjust.TotalAdjust<..> Shape/Weight/Time]
+// [fsi: paracetamol.Orderable.DoseAdjust.RateAdjust<..> Shape/Weight/Time]
 // [fsi: Adjust]
-// [fsi: Adjust.Qty<..> Weight]
+// [fsi: paracetamol.Adjust.Qty<..> Weight]
 
 // Start entering values for the order while solving
 // the calculation model the order at each step
 let solve = OD.solve "paracetamol"
 ord
 |> solve MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
-|> solve MP.Freq SV.Vals [2N;3N;4N;5N;6N] "X/day"
+|> solve MP.Freq SV.Vals [2N;3N;4N;5N;6N] "x/day"
 |> solve MP.OrderableOrderableQty SV.Vals [1N] "tabl"
 |> solve MP.OrderableDoseQty SV.Vals [1N] "tabl"
 |> solve MP.ItemDoseTotal SV.MaxIncl [4N] "gram/day"
@@ -139,37 +141,39 @@ ord
 // [fsi: Route]
 // [fsi: oral]
 // [fsi: Prescription]
-// [fsi: Freq[1/43200, 1/28800] Count/Time]
+// [fsi: paracetamol.Freq[1/43200, 1/28800, 1/21600, 1/17280, 1/14400] Count/Time]
 // [fsi: Orderable]
-// [fsi: paracetamol.Item.Component.Qty[6/25, 3/10] Mass]
-// [fsi: paracetamol.Item.Orderable.Qty[6/25, 3/10] Mass]
-// [fsi: paracetamol.Item.Component.Conc[6/25, 3/10] Mass/Tabl]
-// [fsi: paracetamol.Item.Orderable.Conc[6/25, 3/10] Mass/Tabl]
-// [fsi: paracetamol.Item.Dose.Qty[6/25, 3/10] Mass]
-// [fsi: paracetamol.Item.Dose.Total[1/180000, 1/144000, 1/120000, 1/96000] Mass/Time]
-// [fsi: paracetamol.Item.Dose.Rate<0..> Mass/Time]
-// [fsi: paracetamol.Item.DoseAdjust.QtyAdjust[3/125000, 3/100000] Mass/Weight]
-// [fsi: paracetamol.Item.DoseAdjust.TotalAdjust[1/1800000000, 1/1440000000, 1/1200000000, 1/960000000] Mass/Weight/Time]
-// [fsi: paracetamol.Item.DoseAdjust.RateAdjust<0..> Mass/Weight/Time]
-// [fsi: paracetamol.Component.Component.Qty[1] Tabl]
-// [fsi: paracetamol.Component.Orderable.Qty[1] Tabl]
-// [fsi: paracetamol.Component.Orderable.Conc[1] Tabl/Tabl]
-// [fsi: paracetamol.Component.Dose.Qty[1] Tabl]
-// [fsi: paracetamol.Component.Dose.Total[1/43200, 1/28800] Tabl/Time]
-// [fsi: paracetamol.Component.Dose.Rate<0..> Tabl/Time]
-// [fsi: paracetamol.Component.DoseAdjust.QtyAdjust[1/10000] Tabl/Weight]
-// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000] Tabl/Weight/Time]
-// [fsi: paracetamol.Component.DoseAdjust.RateAdjust<0..> Tabl/Weight/Time]
-// [fsi: paracetamol.Orderable.Orderable.Qty[1] Tabl]
-// [fsi: paracetamol.Orderable.Order.Qty[1/43200, 1/28800] Tabl]
-// [fsi: paracetamol.Orderable.Dose.Qty[1] Tabl]
-// [fsi: paracetamol.Orderable.Dose.Total[1/43200, 1/28800] Tabl/Time]
-// [fsi: paracetamol.Orderable.Dose.Rate<0..> Tabl/Time]
-// [fsi: paracetamol.Orderable.DoseAdjust.QtyAdjust<0..> Tabl/Weight]
-// [fsi: paracetamol.Orderable.DoseAdjust.TotalAdjust<0..> Tabl/Weight/Time]
-// [fsi: paracetamol.Orderable.DoseAdjust.RateAdjust<0..> Tabl/Weight/Time]
+// [fsi: paracetamol.Item.Component.Qty[6/25, 3/10, 1/2] Mass]
+// [fsi: paracetamol.Item.Orderable.Qty<0..9/20] Mass]
+// [fsi: paracetamol.Item.Component.Conc<0..9/20] Mass/Shape]
+// [fsi: paracetamol.Item.Orderable.Conc<0..9/20] Mass/Shape]
+// [fsi: paracetamol.Item.Dose.Qty<0..9/20] Mass]
+// [fsi: paracetamol.Item.Dose.Total<0..1/96000] Mass/Time]
+// [fsi: paracetamol.Item.Dose.Rate<..> Mass/Time]
+// [fsi: paracetamol.Item.DoseAdjust.QtyAdjust<0..9/200000] Mass/Weight]
+// [fsi: paracetamol.Item.DoseAdjust.TotalAdjust<0..1/960000000] Mass/Weight/Time]
+// [fsi: paracetamol.Item.DoseAdjust.RateAdjust<..> Mass/Weight/Time]
+// [fsi: paracetamol.Component.Component.Qty[8/15..> Shape]
+// [fsi: paracetamol.Component.Orderable.Qty[1] Shape]
+// [fsi: paracetamol.Component.Orderable.Count<..> Count]
+// [fsi: paracetamol.Component.Orderable.Conc[1] Shape/Shape]
+// [fsi: paracetamol.Component.Dose.Qty[1] Shape]
+// [fsi: paracetamol.Component.Dose.Total[1/43200, 1/28800, 1/21600, 1/17280, 1/14400] Shape/Time]
+// [fsi: paracetamol.Component.Dose.Rate<..> Shape/Time]
+// [fsi: paracetamol.Component.DoseAdjust.QtyAdjust[1/10000] Shape/Weight]
+// [fsi: paracetamol.Component.DoseAdjust.TotalAdjust[1/432000000, 1/288000000, 1/216000000, 1/172800000, 1/144000000] Shape/Weight/Time]
+// [fsi: paracetamol.Component.DoseAdjust.RateAdjust<..> Shape/Weight/Time]
+// [fsi: paracetamol.Orderable.Order.Qty<0..> Shape]
+// [fsi: paracetamol.Orderable.Orderable.Qty[1] Shape]
+// [fsi: paracetamol.Orderable.Order.Count<..> Count]
+// [fsi: paracetamol.Orderable.Dose.Qty[1] Shape]
+// [fsi: paracetamol.Orderable.Dose.Total[1/43200, 1/28800, 1/21600, 1/17280, 1/14400] Shape/Time]
+// [fsi: paracetamol.Orderable.Dose.Rate<..> Shape/Time]
+// [fsi: paracetamol.Orderable.DoseAdjust.QtyAdjust<0..> Shape/Weight]
+// [fsi: paracetamol.Orderable.DoseAdjust.TotalAdjust<0..> Shape/Weight/Time]
+// [fsi: paracetamol.Orderable.DoseAdjust.RateAdjust<..> Shape/Weight/Time]
 // [fsi: Adjust]
-// [fsi: Adjust.Qty[10000] Weight]
+// [fsi: paracetamol.Adjust.Qty[10000] Weight]
 
 (**
 Some more info

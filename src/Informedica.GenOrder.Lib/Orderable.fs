@@ -102,13 +102,13 @@ module Orderable =
 
         /// Turn an item to vars
         let toVar itm =
-            let itm_cmp_qty = (itm |> get).ComponentQuantity |> QT.toVar
-            let itm_orb_qty = itm.OrderableQuantity          |> QT.toVar
-            let itm_cmp_cnc = itm.ComponentConcentration     |> CN.toVar
-            let itm_orb_cnc = itm.OrderableConcentration     |> CN.toVar
+            let itm_cmp_qty = (itm |> get).ComponentQuantity |> QT.toVarUnt
+            let itm_orb_qty = itm.OrderableQuantity          |> QT.toVarUnt
+            let itm_cmp_cnc = itm.ComponentConcentration     |> CN.toVarUnt
+            let itm_orb_cnc = itm.OrderableConcentration     |> CN.toVarUnt
 
-            let itm_dos_qty, itm_dos_tot, itm_dos_rte = itm.Dose                   |> DS.toVar
-            let itm_dos_qty_adj, itm_dos_tot_adj, itm_dos_rte_adj = itm.DoseAdjust |> DA.toVar
+            let itm_dos_qty, itm_dos_tot, itm_dos_rte = itm.Dose                   |> DS.toVarUnt
+            let itm_dos_qty_adj, itm_dos_tot_adj, itm_dos_rte_adj = itm.DoseAdjust |> DA.toVarUnt
 
             (
                 itm_cmp_qty, 
@@ -366,13 +366,13 @@ module Orderable =
         let get = apply id
 
         let toVar cmp =
-            let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVar
-            let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVar
-            let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVar
-            let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVar
+            let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVarUnt
+            let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVarUnt
+            let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVarUnt
+            let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVarUnt
 
-            let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVar
-            let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVar
+            let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVarUnt
+            let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVarUnt
 
             (
                 cmp_cmp_qty, 
@@ -624,19 +624,19 @@ module Orderable =
     /// the sum of the concatenated lists of `Item`s
     let getName = apply (fun o -> 
         o.OrderableQuantity 
-        |> QT.toVar 
+        |> QT.toVarUnt 
         |> VU.getName 
         |> NM.toString
         |> String.split "."
         |> List.head)
 
     let toVar orb =
-        let ord_qty = (orb |> get).OrderQuantity |> QT.toVar
-        let orb_qty = orb.OrderableQuantity      |> QT.toVar
-        let ord_cnt = orb.OrderCount             |> CT.toVar
+        let ord_qty = (orb |> get).OrderQuantity |> QT.toVarUnt
+        let orb_qty = orb.OrderableQuantity      |> QT.toVarUnt
+        let ord_cnt = orb.OrderCount             |> CT.toVarUnt
 
-        let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVar
-        let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVar
+        let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVarUnt
+        let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVarUnt
 
         (
             ord_qty,
@@ -755,7 +755,7 @@ module Orderable =
         // Continuous or Process
         | _ -> eqs
         |> List.append (c::cc |> List.collect map)
-        , orb_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVar))
+        , orb_qty::(c::cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
 
 
     let fromEqs eqs (ord: Orderable) =

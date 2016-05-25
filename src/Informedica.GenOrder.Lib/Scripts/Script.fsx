@@ -31,7 +31,7 @@ for o in OR.createNew [["Genta", "Mass"]] "Volume" "Weight" |> OR.toString do
 for o in OR.createNew [["dopamine", "Mass"];["sodium", "Molar";"chloride", "Molar"]] "Volume" "Weight" |> OR.toString do
     printfn "%s" o
 
-let pcm = OR.createNew [["paracetamol", "Mass"]] "Shape" "Weight" 
+let pcm = OR.createNew [["paracetamol", "Mass"]] "Shape" "Weight"
 let prs = PR.discontinuous 
 
 let ord = OD.createNew "Weight" pcm prs "oral"
