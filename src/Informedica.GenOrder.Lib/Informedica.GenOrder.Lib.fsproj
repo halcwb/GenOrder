@@ -60,12 +60,14 @@
     <Content Include="InstallationDummyFile.txt">
       <Paket>True</Paket>
     </Content>
+    <Compile Include="Primitives.fs" />
     <Compile Include="Solver.fs" />
     <Compile Include="Unit.fs" />
     <Compile Include="VariableUnit.fs" />
     <Compile Include="Orderable.fs" />
     <Compile Include="Prescription.fs" />
     <Compile Include="Order.fs" />
+    <Compile Include="OrderSet.fs" />
     <None Include="paket.references" />
     <None Include="paket.template" />
     <None Include="Scripts\load-references-release.fsx" />

@@ -107,11 +107,12 @@ module Order =
     open Informedica.GenUtils.Lib.BCL
 
     module LT = Literals
+    module ID = Primitives.Id
     module CS = Informedica.GenUnits.Lib.Constants
     module CU = Informedica.GenUnits.Lib.CombiUnit
     module UG = Informedica.GenUnits.Lib.UnitGroup
     module EQ = Informedica.GenSolver.Lib.Equation
-    module OR = Orderable
+    module OB = Orderable
     module PR = Prescription
     module DT = StartStop
     module SV = Solver
@@ -124,10 +125,12 @@ module Order =
     /// Models an order
     type Order = 
         {
+            /// The id of an order
+            Id: ID.Id
             /// Used to adjust doses
             Adjust: QT.Quantity
             /// That what can be ordered
-            Orderable: OR.Orderable
+            Orderable: OB.Orderable
             /// How the orderable is prescribed
             Prescription: PR.Prescription
             /// The route of administration of the order
@@ -143,14 +146,19 @@ module Order =
     /// Utilty function to facilitate type inference
     let get = apply id
 
+    /// Get the order id
+    let getId ord = (ord |> get).Id
+
     /// Create an `Order` with
     ///
+    /// * id: the id of the order
     /// * adj: by which doses are adjusted
     /// * orb: the `Orderable`
     /// * prs: `Prescription`, how the orderable is prescribed
     /// * rot: the route of administration of the orderable
-    let create adj_qty orb prs rot sts =
+    let create id adj_qty orb prs rot sts =
         {
+            Id = id
             Adjust = adj_qty 
             Orderable = orb
             Prescription = prs
@@ -160,18 +168,17 @@ module Order =
 
     /// Create a new orderable using:
     ///
-    /// * adj_unt: the unit group by which doses are adjusted
-    /// * orb: the orderable being ordered
+    /// 
     /// * str_prs: a function that takes in a list of strings 
     /// that will generate the names and returns a `Prescription`
     /// * rot: the route of administration
-    let createNew cil shp_ung adj_ung str_prs rot = 
-        let orb = OR.createNew cil shp_ung adj_ung
-        let nm  = orb |> OR.getName
-        let prs = [nm] |> str_prs
-        let adj = adj_ung |> QT.quantity [nm; LT.adjust]
+    let createNew id nm cil shp_ung adj_ung str_prs rot = 
+        let orb = OB.createNew id nm cil shp_ung adj_ung
+        let nm  = orb |> OB.getName
+        let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
+        let adj = adj_ung |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
-        create adj orb prs rot sts
+        create id adj orb prs rot sts
 
     let getAdjust ord = (ord |> get).Adjust
 
@@ -186,7 +193,7 @@ module Order =
     /// a `VariableUnit` list
     let toProd xs = 
         match xs with
-        | h::tail -> VU.toProdEq id (fun m -> printfn "%A" m; failwith "Oops") h tail |> EQ.nonZeroOrNegative
+        | y::xs -> VU.toProdEq id (fun m -> printfn "%A" m; failwith "Oops") y xs |> EQ.nonZeroOrNegative
         | _ -> failwith "Not a valid equation"
 
     /// Create a `SumEquation` from
@@ -206,12 +213,12 @@ module Order =
             ord.Prescription |> PR.isContinuous || 
             ord.Prescription |> PR.isTimed
         
-        orb |> OR.toEqs hasRate adj frq tme
+        orb |> OB.toEqs hasRate adj frq tme
 
     /// Map a list of `VariableUnit` lists
     /// to an `Order` *ord*
     let fromEqs ord vus =        
-        let orb = ord.Orderable |> OR.fromEqs vus
+        let orb = ord.Orderable |> OB.fromEqs vus
         let adj = ord.Adjust |> QT.fromVar vus
         let prs = ord.Prescription |> PR.fromEqs vus
 
@@ -222,12 +229,31 @@ module Order =
                 Prescription = prs
         }
 
+
+    // Add unit group of corresponding variableunit with name to unit
+    // and create a combined unit from the string
+    let createUnit succ fail n u vul = 
+        let us = u |> String.split "/"
+        match vul |> VU.tryFindVarUnt n with
+        | Some vu -> 
+            vu
+            |> VU.getUnitGroup 
+            |> UG.toString
+            |> String.split CS.divs
+            |> List.fold2 (fun s u ug -> 
+                if s = "" then u + CS.openBr + ug + CS.closBr
+                else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
+            |> CU.fromString
+            |> succ
+        | None -> vul |> fail
+
+
     /// Turn an order into a list of string
     /// representing variable name, valuerange 
     /// and unit group
     let toString (ord: Order) =
         [ LT.adjust; ord.Adjust |> QT.toString ]
-        |> List.append (OR.Literals.orderable::(ord.Orderable |> OR.toString))
+        |> List.append (OB.Literals.orderable::(ord.Orderable |> OB.toString))
         |> List.append ("Prescription"::(ord.Prescription |> PR.toString))
         |> List.append ("Route"::[(ord.Route)])
         
@@ -244,33 +270,26 @@ module Order =
             |> List.append [sum |> toSum]
 
         let toVars eqs = eqs |> List.map(fun e -> 
-            match e with | EQ.ProductEquation(y, xs) | EQ.SumEquation(y, xs) -> y::xs)
+            match e with 
+            | EQ.ProductEquation(y, xs) 
+            | EQ.SumEquation(y, xs) -> y::xs)
 
-        let toUnit n u (p, s) = 
-            let us = u |> String.split "/"
-            match s::p |> VU.tryFindVarUnt n with
-            | Some vu -> 
-                vu
-                |> VU.getUnitGroup 
-                |> UG.toString
-                |> String.split CS.divs
-                |> List.fold2 (fun s u ug -> 
-                    if s = "" then u + CS.openBr + ug + CS.closBr
-                    else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
-                |> (fun s -> printfn "Created: %s" s; s)
-                |> CU.fromString
-            | None -> sprintf "Cannot find VariableUnit %A" n |> failwith
+        let createUnit = createUnit Some (fun _ -> None)
 
         let dls = "."
         let n =
             match m with
             | Mapping.Freq -> [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
             | _ -> [n + dls + (m |> Mapping.map)] |> NM.create
-        let vus = o |> toEqs
-        let cu = vus |> toUnit n u 
 
-        vus 
-        |> toEql
-        |> SV.solve n p v cu
-        |> toVars
-        |> fromEqs o
+        let prod, sum = o |> toEqs
+
+        match sum::prod |> createUnit n u with
+        | Some cu ->
+            (prod, sum) 
+            |> toEql
+            |> SV.solve n p v cu
+            |> toVars
+            |> fromEqs o
+        | None -> o
+

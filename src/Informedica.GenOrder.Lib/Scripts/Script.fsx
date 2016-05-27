@@ -5,46 +5,49 @@
 open Informedica.GenUtils.Lib.BCL
 open Informedica.GenOrder.Lib
 
-module VU = VariableUnit
-module NM = VU.Name
-module FR = VU.Frequency
-module OR = Orderable
-module IT = OR.Item
-module CM = OR.Component
-module PR = Prescription
-module OD = Order
-module MP = OD.Mapping
-module SV = Solver
-module UN = Unit
-module UG = Informedica.GenUnits.Lib.UnitGroup
+module Name = VariableUnit.Name
+module Id = Primitives.Id
+module Map = Order.Mapping
 
 let print ord = 
-    for s in ord |> OD.toString do printfn "%s" s
+    for s in ord |> Order.toString do printfn "%s" s
     ord
 
-let lab frq unt itms =
+let lab id frq unt itms =
+    let getItmNm itm =
+        [id; itm |> Name.toString] |> Name.create |> Name.toString
+
     let items =
-        itms |> List.map (fun i -> [(i, "Count")])
+        itms |> List.map (fun i -> ([i] |> Name.create, "Count"))
 
     let ord =
-        OD.createNew 
-            items
+        Order.createNew 
+            (id |> Id.create)
+            (["lab"] |> Name.create)
+            ([["lab"] |> Name.create, items])
             "Count" 
             "Weight" 
-            PR.discontinuous
+            Prescription.discontinuous
             "None"
-    items
-    |> List.collect id
-    |> List.fold (fun ord itm ->
-            ord
-            |> OD.solve (itm |> fst) MP.ItemComponentQty SV.Vals [1N] "count" 
-            |> OD.solve (itm |> fst) MP.ItemOrderableQty SV.Vals [1N] "count" 
-            |> OD.solve (itm |> fst) MP.ItemDoseQty SV.Vals [1N] "count" 
-            |> OD.solve (itm |> fst) MP.ComponentComponentQty SV.Vals [1N] "count" 
-            |> OD.solve (itm |> fst) MP.ComponentOrderableQty SV.Vals [1N] "count" 
-            ) ord
-    |> OD.solve "" MP.Freq SV.Vals [frq] unt
+    ord
+//    items
+//    |> List.fold (fun ord itm ->
+//            ord
+//            |> Order.solve (itm |> fst |> getItmNm) Map.ItemComponentQty  Solver.Vals [1N] "count" 
+//            |> Order.solve (itm |> fst |> getItmNm)  Map.ItemOrderableQty Solver.Vals [1N] "count" 
+//            |> Order.solve (itm |> fst |> getItmNm)  Map.ItemDoseQty      Solver.Vals [1N] "count" 
+//            ) ord
+//    |> Order.solve id Map.Freq Solver.Vals [frq] unt
 
-lab 3N "x/day" ["gluc"; "Na"; "Chl"; "K"; "Ca"; "Hb"; "Ht"; "L"; "T"; "alb"]  
+let testLab =
+    lab "1" 3N "x/day" ["gluc"; "Na"; "Chl"; "K"; "Ca"; "Hb"; "Ht"; "L"; "T"; 
+                    "alb"; "LDH"; "ASA"; "ALAT"; "PT" ; "APTT"]  
+
+lab "1" 1N "x/day" ["Hb"] 
+|> print
+|> ignore
+
+testLab
+|> Order.solve "1.APTT" Map.ItemDoseQty Solver.Vals [10N] "count"
 |> print
 |> ignore

@@ -9,6 +9,9 @@ module Solver =
 
     module N = Informedica.GenSolver.Lib.Variable.Name
     module SV = Informedica.GenSolver.Api
+    module VR = Informedica.GenSolver.Lib.Variable
+    module VL = VR.ValueRange
+    module EQ = Informedica.GenSolver.Lib.Equation
     module UN = Informedica.GenUnits.Lib.CombiUnit
     
     [<Literal>]
@@ -45,14 +48,12 @@ module Solver =
 
     /// Turn a set of values `vs` to base values of
     /// unit `u`
-    let valsToString u vs = 
+    let toBase u vs = 
         vs 
         |> List.map (UN.toBase u)
-        |> List.map BigRational.toString 
-        |> String.concat ", "
     
     /// Solve a set of equations setting a property `p` with
     /// name `n`, to a valueset `vs` with unit `u`.
-    let solve (N.Name n) p vs u = SV.solve id n (p |> propToString) (vs |> valsToString u)
+    let solve (N.Name n) p vs u = SV.solve (fun _ -> ()) n (p |> propToString) (vs |> toBase u)
 
 

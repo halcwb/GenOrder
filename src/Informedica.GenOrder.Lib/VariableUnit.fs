@@ -156,6 +156,8 @@ module VariableUnit =
         
         module N = VR.Name
 
+        type Name = N.Name
+
         /// Create a `Name` from a list of strings that 
         let create ns = ns |> String.concat "." |> N.createExc
 

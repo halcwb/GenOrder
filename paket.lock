@@ -10,7 +10,7 @@ NUGET
       NUnit.Runners (>= 2.6.4 < 2.7)
     FSharp.Compiler.Service (2.0.0.6)
     FSharp.Core (4.0.0.1)
-    FSharp.Formatting (2.14.2)
+    FSharp.Formatting (2.14.3)
       FSharp.Compiler.Service (2.0.0.6)
       FSharpVSPowerTools.Core (>= 2.3 < 2.4)
     FSharpVSPowerTools.Core (2.3)
@@ -29,7 +29,7 @@ NUGET
     FsUnit (1.4.1)
       FSharp.Core (>= 3.1.2.5)
       NUnit (2.6.4)
-    Informedica.GenSolver.Lib (0.2.0-beta)
+    Informedica.GenSolver.Lib (0.2.2-beta)
       FSPowerPack.Community
       Informedica.GenUtils.Lib
     Informedica.GenUnits.lib (0.4.3-beta)

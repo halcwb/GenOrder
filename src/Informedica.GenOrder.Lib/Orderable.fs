@@ -32,6 +32,7 @@ module Orderable =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Item =
 
+        module ID = Primitives.Id
         module LT = Literals
         module VU = VariableUnit
         module NM = VU.Name
@@ -45,6 +46,10 @@ module Orderable =
         /// Models an `Item` in a `Component`
         type Item = 
             {
+                /// The id of the item
+                OrderId: ID.Id
+                /// The name of the item
+                Name: NM.Name
                 /// The quantity of an `Item` in a `Component`
                 ComponentQuantity: QT.Quantity 
                 /// The quantity of an `Item` in an `Orderable`
@@ -61,14 +66,18 @@ module Orderable =
         
         /// Create an item with
         ///
-        /// * `cmp_qty`: the quantity of the item in a component
-        /// * `orb_qty`: the quantity of the item in an orderable
-        /// * `cmp_cnc`: the item concentration in a component
-        /// * `orb_cnc`: the item concentration in an orderable
-        /// * `dos`: the item dose
-        /// * `dos_adj`: the adjusted item dose
-        let create cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj = 
-            { 
+        /// * **id**: the order id
+        /// * **nm**: the name of the item
+        /// * **cmp_qty**: the quantity of the item in a component
+        /// * **orb_qty**: the quantity of the item in an orderable
+        /// * **cmp_cnc**: the item concentration in a component
+        /// * **orb_cnc**: the item concentration in an orderable
+        /// * **dos**: the item dose
+        /// * **dos_adj**: the adjusted item dose
+        let create id nm cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj = 
+            {   
+                OrderId = id
+                Name = nm
                 ComponentQuantity = cmp_qty
                 OrderableQuantity = orb_qty
                 ComponentConcentration = cmp_cnc
@@ -79,12 +88,14 @@ module Orderable =
 
         /// Create a new item with
         ///
-        /// `s`: the name of the item
-        /// `u1`: the unit of the item
-        /// `u2`: the unit of the component that contains the item
-        /// `adj`: the unit to adjust the item dose
-        let createNew (s, u1) u2 adj =
-            let s = [LT.item] |> List.append [s]
+        /// **id**: the order id
+        /// **s**: the string name of the item
+        /// **u1**: the unit of the item
+        /// **u2**: the unit of the component that contains the item
+        /// **adj**: the unit to adjust the item dose
+        let createNew id (nm, u1) u2 adj =
+            let s = [LT.item] |> List.append [id |> ID.toString; nm |> NM.toString]
+
             let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u1
             let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u1
             let cmp_cnc = let s = [LT.``component``] |> List.append s in CN.conc s u1 u2
@@ -92,16 +103,27 @@ module Orderable =
             let dos     = let s = [LT.dose]          |> List.append s in DS.dose s u1
             let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u1 adj
 
-            create cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj
+            create id nm cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj
 
-        /// Aply `f` to an `item`
+        /// Aply **f** to an `item`
         let apply f (itm: Item) = itm |> f
 
         /// Utility method to facilitaite type inference
         let get = apply id
 
-        /// Turn an item to vars
-        let toVar itm =
+        /// Get the order id of an `Item`
+        let getOrderId itm = (itm |> get).OrderId
+
+        /// Get the `Name` of an `Item`
+        let getName itm = (itm |> get).Name
+
+        /// Get the unique id of an `Item`
+        let getId itm = 
+            ((itm |> get).OrderId |> ID.toString) + "." +
+            (itm.Name |> NM.toString)
+
+        /// Turn an `Item` to `VariableUnit`s
+        let toVarUnt itm =
             let itm_cmp_qty = (itm |> get).ComponentQuantity |> QT.toVarUnt
             let itm_orb_qty = itm.OrderableQuantity          |> QT.toVarUnt
             let itm_cmp_cnc = itm.ComponentConcentration     |> CN.toVarUnt
@@ -124,9 +146,9 @@ module Orderable =
             )
             
 
-        /// Turn an item to a list of strings,
+        /// Turn an `Item` to a list of `string`s,
         /// each string containing the variable
-        /// name, valuerange and unitgroup
+        /// `Name`, `ValueRange` and `UnitGroup`
         let toString itm = 
             let itm_cmp_qty, 
                 itm_orb_qty, 
@@ -137,7 +159,7 @@ module Orderable =
                 itm_dos_rte,
                 itm_dos_qty_adj, 
                 itm_dos_tot_adj, 
-                itm_dos_rte_adj = itm |> toVar
+                itm_dos_rte_adj = itm |> toVarUnt
 
             [
                 itm_cmp_qty 
@@ -216,7 +238,7 @@ module Orderable =
                 itm_dos_rte,
                 itm_dos_qty_adj, 
                 itm_dos_tot_adj, 
-                itm_dos_rte_adj = itm |> toVar
+                itm_dos_rte_adj = itm |> toVarUnt
 
             let eqs =
                 [
@@ -276,8 +298,10 @@ module Orderable =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Component =
 
+        module ID = Primitives.Id
         module LT = Literals
         module VU = VariableUnit
+        module NM = VU.Name
         module QT = VU.Quantity
         module CT = VU.Count
         module CN = VU.Concentration
@@ -290,6 +314,10 @@ module Orderable =
         /// Models in a `Component` in and `Orderable`
         type Component = 
             {
+                /// The id of a `Component`
+                OrderId: ID.Id
+                /// The name of a `Component`
+                Name: NM.Name
                 /// The quantity of a `Component`
                 ComponentQuantity: QT.Quantity
                 /// The quantity of a `Component` in an `Orderable`
@@ -323,8 +351,10 @@ module Orderable =
         /// * `dos`: component dose
         /// * `dos_adj`: adjusted dose of component
         /// * `ii`: list of `Item`s in a component
-        let create cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii = 
+        let create id nm cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii = 
             { 
+                OrderId = id
+                Name = nm
                 ComponentQuantity = cmp_qty
                 OrderableQuantity = orb_qty
                 OrderableCount = orb_cnt
@@ -341,8 +371,8 @@ module Orderable =
         /// * `sl`: list of item name and unit name tuples
         /// * `u1`: unit name of component
         /// * `adj`: adjust unit to adjust the dose
-        let createNew sl u adj =
-            let s = [LT.``component``] |> List.append [sl |> List.map fst |> String.concat "/"] 
+        let createNew id nm sl u adj =
+            let s = [id |> ID.toString; nm |> NM.toString; LT.``component``]
             let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u
             let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u
             let orb_cnt = let s = [LT.orderable]     |> List.append s in CT.count s
@@ -352,16 +382,26 @@ module Orderable =
             let dos = let s = [LT.dose]              |> List.append s in DS.dose s u
             let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u adj
 
-            let ii = sl |> List.map (fun s -> IT.createNew s u adj)
+            let ii = sl |> List.map (fun s -> IT.createNew id s u adj)
 
-            create cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii
+            create id nm cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii
 
-        /// Apply `f` to a `Component` `comp` 
+        /// Apply **f** to a `Component` **comp** 
         let apply f (comp: Component) = comp |> f
 
         /// Utility to facilitate type inference
         let get = apply id
 
+        /// Get the id of a `Component`
+        let getId cmp = 
+            ((cmp |> get).OrderId |> ID.toString) + "." +
+            (cmp.Name |> NM.toString)
+
+        /// Get the name of a `Component`
+        let getName cmp = (cmp |> get).Name 
+
+        /// Map a `Component` **cmp**
+        /// to `VariableUnit`s
         let toVar cmp =
             let cmp_cmp_qty = (cmp |> get).ComponentQuantity |> QT.toVarUnt
             let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVarUnt
@@ -541,6 +581,7 @@ module Orderable =
             }    
 
 
+    module ID = Primitives.Id
     module NM = Informedica.GenSolver.Lib.Variable.Name
     module LT = Literals
     module VU = VariableUnit
@@ -556,6 +597,10 @@ module Orderable =
     /// Models an `Orderable` 
     type Orderable = 
         {
+            /// The order id of 
+            OrderId: ID.Id
+            /// The name of the orderable
+            Name: NM.Name
             /// The quantity of an orderable
             OrderableQuantity: QT.Quantity
             /// The quantity of an orderable in an order
@@ -572,14 +617,17 @@ module Orderable =
         
     /// Create an `Orderable` with
     ///
+    /// * id: the order id
+    /// * nm: the name of the orderable
     /// * orb\_qty: quantity of the orderable
     /// * ord\_qty: quantity of orderable in the order
     /// * orb\_cnt: the count of orderable in the order 
     /// * dos: the orderable dose
     /// * dos\_adj: the adjusted orderable dose
-    ///
-    let create orb_qty ord_qty orb_cnt dos dos_ajd cc = 
+    let create id nm orb_qty ord_qty orb_cnt dos dos_ajd cc = 
         { 
+            OrderId = id
+            Name = nm
             OrderableQuantity = orb_qty
             OrderQuantity = ord_qty
             OrderCount = orb_cnt
@@ -590,25 +638,19 @@ module Orderable =
 
     /// Create a new `Orderable` with a `Component` list
     /// `cl`, an `Orderable`unit `u` and adjust unit groep `adj`
-    let createNew cl u adj =
-        let s = 
-            [
-                cl 
-                |> List.map (List.map fst) 
-                |> List.map (String.concat "/")
-                |> String.concat " & " ] @ [LT.orderable]
-
+    let createNew id nm cl u adj =
+        let s =  [id |> ID.toString; nm |> NM.toString; LT.orderable]
         let orb_qty = let s = [LT.orderable]  |> List.append s in QT.quantity s u
         let ord_qty = let s = [LT.order]      |> List.append s in QT.quantity s u
         let orb_cnt = let s = [LT.order]      |> List.append s in CT.count s
         let dos     = let s = [LT.dose]       |> List.append s in DS.dose s u
         let dos_ajd = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s u adj
 
-        let cc = cl |> List.map (fun c -> CM.createNew c u adj)
+        let cc = cl |> List.map (fun (c, sl) -> CM.createNew id c sl u adj)
 
-        create orb_qty ord_qty orb_cnt dos dos_ajd cc
+        create id nm orb_qty ord_qty orb_cnt dos dos_ajd cc
 
-    /// Apply `f` to `Orderable` `ord`
+    /// Apply **f** to `Orderable` `ord`
     let apply f (orb: Orderable) = orb |> f
 
     /// Utility function to facilitate type inference
@@ -616,15 +658,11 @@ module Orderable =
 
     /// Get the name of the `Orderable` which is 
     /// the sum of the concatenated lists of `Item`s
-    let getName = apply (fun o -> 
-        o.OrderableQuantity 
-        |> QT.toVarUnt 
-        |> VU.getName 
-        |> NM.toString
-        |> String.split "."
-        |> List.head)
+    let getName orb = (orb |> get).Name
 
-    let toVar orb =
+    /// Map an `Orderable` **orb** to
+    /// `VariableUnit`s
+    let toVarUnt orb =
         let ord_qty = (orb |> get).OrderQuantity |> QT.toVarUnt
         let orb_qty = orb.OrderableQuantity      |> QT.toVarUnt
         let ord_cnt = orb.OrderCount             |> CT.toVarUnt
@@ -656,7 +694,7 @@ module Orderable =
             dos_rte,
             dos_qty_adj,
             dos_tot_adj,
-            dos_rte_adj = orb |> toVar
+            dos_rte_adj = orb |> toVarUnt
 
         let cc = orb.Components
 
@@ -714,7 +752,7 @@ module Orderable =
             dos_rte,
             dos_qty_adj,
             dos_tot_adj,
-            dos_rte_adj = orb |> toVar
+            dos_rte_adj = orb |> toVarUnt
 
         let rte = if hasRte then dos_rte |> Some else None
 
