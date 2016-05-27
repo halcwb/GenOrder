@@ -189,6 +189,8 @@ module Order =
         |> String.split "."
         |> List.head
 
+    let getOrderable ord = (ord |> get).Orderable
+
     /// Create a `ProductEquation` from
     /// a `VariableUnit` list
     let toProd xs = 

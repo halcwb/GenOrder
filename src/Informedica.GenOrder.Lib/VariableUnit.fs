@@ -4,6 +4,7 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VariableUnit =
 
+    open Informedica.GenUtils.Lib.BCL
 
     module VR = Informedica.GenSolver.Lib.Variable
     module EQ = Informedica.GenSolver.Lib.Equation
@@ -106,6 +107,11 @@ module VariableUnit =
         match vrll |> find n with
         | Some x -> x |> withVar ung |> c
         | None   -> vru
+
+    /// Set the 'Name' to the `Variable` of the `VariableUnit`
+    let setName nm vru = 
+        { vru with
+            Variable = vru.Variable |> VR.setName nm }        
 
     /// Set a property **prop** of a `VariableUnit` 
     /// **vru** with values **vs** and unit **unt**
@@ -277,6 +283,11 @@ module VariableUnit =
             let n = [name] |> List.append n |> N.create
             create n u |> Quantity
 
+        /// Set the name of the quantity `Variable` to **n**
+        let setName n qty =
+            let n = [n |> N.toString; name] |> N.create
+            qty |> toVarUnt |> setName n |> Quantity
+
         /// Turn a `Quantity` to a string
         let toString qty = 
             qty |> toVarUnt |> toString
@@ -309,6 +320,11 @@ module VariableUnit =
             let n = [name] |> List.append n |> N.create
             create n u |> Total
 
+        /// Set the name of the total `Variable` to **n**
+        let setName n tot =
+            let n = [n |> N.toString; name] |> N.create
+            tot |> toVarUnt |> setName n |> Total
+
         /// Turn a `Total` to a string
         let toString tot = 
             tot |> toVarUnt |> toString
@@ -340,6 +356,11 @@ module VariableUnit =
             let u = ung |> UG.fromString |> UG.perGroup CS.timeGroup
             let n = [name] |> List.append n |> N.create
             create n u |> Rate
+
+        /// Set the name of the rate `Variable` to **n**
+        let setName n rte =
+            let n = [n |> N.toString; name] |> N.create
+            rte |> toVarUnt |> setName n |> Rate
 
         /// Turn a `Rate` to a string
         let toString rte = 
@@ -405,6 +426,11 @@ module VariableUnit =
             let n = [name] |> List.append n |> N.create
             create n u |> QuantityAdjust
 
+        /// Set the name of the quantity adjust `Variable` to **n**
+        let setName n qty =
+            let n = [n |> N.toString; name] |> N.create
+            qty |> toVarUnt |> setName n |> QuantityAdjust
+
         /// Turn a `QuantityAdjust` to a string
         let toString qta = 
             qta |> toVarUnt |> toString
@@ -436,6 +462,11 @@ module VariableUnit =
             let u = ung1 |> UG.fromString |> UG.perGroup ung2 |> UG.perGroup CS.timeGroup
             let n = [name] |> List.append n |> N.create
             create n u |> TotalAdjust
+
+        /// Set the name of the total adjust `Variable` to **n**
+        let setName n tot =
+            let n = [n |> N.toString; name] |> N.create
+            tot |> toVarUnt |> setName n |> TotalAdjust
 
         /// Turn a `TotalAdjust` to a string
         let toString toa = 
@@ -469,6 +500,11 @@ module VariableUnit =
             let n = [name] |> List.append n |> N.create
             create n u |> RateAdjust
 
+        /// Set the name of the rate adjust `Variable` to **n**
+        let setName n rte =
+            let n = [n |> N.toString; name] |> N.create
+            rte |> toVarUnt |> setName n |> RateAdjust
+
         /// Turn a `RateAdjust` to a string
         let toString rta = 
             rta |> toVarUnt |> toString
@@ -478,7 +514,7 @@ module VariableUnit =
     /// and a dose is a dose quantity, total and rate
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Dose =
-    
+
         module QT = Quantity
         module TL = Total
         module RT = Rate
@@ -506,6 +542,24 @@ module VariableUnit =
             let rate  = RT.rate     n ung
 
             (qty, total, rate) |> Dose
+
+        /// Get the common name of a `Dose`
+        let getName (Dose(qty, _, _)) =
+            qty 
+            |> QT.toVarUnt 
+            |> getName 
+            |> Name.toString 
+            |> String.split "." 
+            |> List.head
+
+        /// Set the `Name` **n** to the dose `Variable`s
+        let setName n (Dose(qty, tot, rte)) =
+            (
+                qty |> QT.setName n,
+                tot |> TL.setName n,
+                rte |> RT.setName n
+            ) |> Dose
+            
 
         /// Turn a `Dose` to a string
         let toString (Dose(qty, tot, rte))  =
@@ -547,6 +601,23 @@ module VariableUnit =
             let rate  = RT.rateAdjust     n ung1 ung2
 
             (qty, total, rate) |> DoseAdjust    
+
+        /// Get the common name of a `DoseAdjust`
+        let getName (DoseAdjust(qty, _, _)) =
+            qty 
+            |> QT.toVarUnt 
+            |> getName 
+            |> Name.toString 
+            |> String.split "." 
+            |> List.head
+
+        /// Set the `Name` **n** to the dose `Variable`s
+        let setName n (DoseAdjust(qty, tot, rte)) =
+            (
+                qty |> QT.setName n,
+                tot |> TL.setName n,
+                rte |> RT.setName n
+            ) |> DoseAdjust
 
         /// Turn a `DoseAdjust` to a string
         let toString (DoseAdjust(qty, tot, rte))  =

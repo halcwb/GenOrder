@@ -46,7 +46,7 @@ module Orderable =
         /// Models an `Item` in a `Component`
         type Item = 
             {
-                /// The id of the item
+                /// The id of the Order
                 OrderId: ID.Id
                 /// The name of the item
                 Name: NM.Name
@@ -121,6 +121,12 @@ module Orderable =
         let getId itm = 
             ((itm |> get).OrderId |> ID.toString) + "." +
             (itm.Name |> NM.toString)
+
+        /// Get the `Item` dose
+        let getDose itm = (itm |> get).Dose
+
+        // Get the `Item` adjusted dose
+        let getDoseAdjust itm = (itm |> get).DoseAdjust
 
         /// Turn an `Item` to `VariableUnit`s
         let toVarUnt itm =
@@ -400,6 +406,9 @@ module Orderable =
         /// Get the name of a `Component`
         let getName cmp = (cmp |> get).Name 
 
+        /// Get the `Item`s in an `Component`
+        let getItems cmp = (cmp |> get).Items
+
         /// Map a `Component` **cmp**
         /// to `VariableUnit`s
         let toVar cmp =
@@ -659,6 +668,21 @@ module Orderable =
     /// Get the name of the `Orderable` which is 
     /// the sum of the concatenated lists of `Item`s
     let getName orb = (orb |> get).Name
+
+    /// Get the `Component`s in an `Orderable`
+    let getComponents orb = (orb |> get).Components
+
+    /// Get the `Orderable` dose
+    let getDose orb = (orb |> get).Dose
+
+    // Get the `Orderable` adjusted dose
+    let getDoseAdjust orb = (orb |> get).DoseAdjust
+
+    // Get the base `UnitGroup` of an `Orderable`
+    let getUnitGroup orb = 
+        (orb |> get).OrderableQuantity
+        |> QT.toVarUnt
+        |> VU.getUnitGroup
 
     /// Map an `Orderable` **orb** to
     /// `VariableUnit`s
