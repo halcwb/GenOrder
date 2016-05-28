@@ -10,18 +10,11 @@
 open Informedica.GenUtils.Lib.BCL
 open Informedica.GenOrder.Lib
 
-module VU = VariableUnit
-module NM = VU.Name
-module FR = VU.Frequency
-module OR = Orderable
-module IT = OR.Item
-module CM = OR.Component
-module PR = Prescription
-module OD = Order
-module MP = OD.Mapping
+module Id = Primitives.Id
+module Name = VariableUnit.Name
+
+module MP = Order.Mapping
 module SV = Solver
-module UN = Unit
-module UG = Informedica.GenUnits.Lib.UnitGroup
 
 let print ord =
     for s in ord |> OD.toString do
@@ -55,14 +48,23 @@ This example demonstrates using a function defined in this sample library.
 // Create a paracetamol order with an paracetamol orderable
 // and how to prescribe this
 let ord = 
-    OD.createNew 
-        [
-            ["paracetamol", "Mass"]
-        ] 
-        "Shape" 
-        "Weight" 
-        PR.discontinuous
+    Order.createNew 
+        ("1" |> Id.create)
+        (["paracetamol"] |> Name.create)
+        ([["paracetamol"] |> Name.create, [
+            ["paracetamol"] |> Name.create, "Mass"
+        ]])
+        "Tablet"
+        "Weight"
+        Prescription.discontinuous
         "oral"
+//        [
+//            ["paracetamol", "ass"]
+//        ] 
+//        "Shape" 
+//        "Weight" 
+//        PR.discontinuous
+//        "oral"
 
 // Print out the order
 ord |> print |> ignore
@@ -108,7 +110,7 @@ ord |> print |> ignore
 
 // Start entering values for the order while solving
 // the calculation model the order at each step
-let solve = OD.solve "paracetamol"
+let solve = Order.solve "paracetamol"
 ord
 |> solve MP.ItemComponentQty SV.Vals [240N; 300N; 500N] "mg"
 |> solve MP.OrderableOrderableQty SV.Vals [1N] "tabl"

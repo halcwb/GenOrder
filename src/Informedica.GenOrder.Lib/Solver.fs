@@ -54,6 +54,6 @@ module Solver =
     
     /// Solve a set of equations setting a property `p` with
     /// name `n`, to a valueset `vs` with unit `u`.
-    let solve (N.Name n) p vs u = SV.solve (fun _ -> ()) n (p |> propToString) (vs |> toBase u)
+    let solve (N.Name n) p vs u = SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase u)
 
 
