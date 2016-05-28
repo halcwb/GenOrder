@@ -1,3 +1,7 @@
+#### 0.0.4-beta - May 28 2016
+* First order set implementation
+* Calculate totals over an set of orders
+
 #### 0.0.3-beta - May 25 2016
 * Updated order generation with only unit groups
 * Updated calculation model
