@@ -163,44 +163,30 @@
 <span class="l">114: </span>
 <span class="l">115: </span>
 <span class="l">116: </span>
-<span class="l">117: </span>
-<span class="l">118: </span>
-<span class="l">119: </span>
-<span class="l">120: </span>
-<span class="l">121: </span>
-<span class="l">122: </span>
-<span class="l">123: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// Create an orderable with two components</span>
-<span class="c">// dopamine and sodium/chloride</span>
-<span class="c">// dopamine component contains item dopamine</span>
-<span class="c">// sodium/chloride component (is saline) contains sodium and chloride</span>
-<span class="c">// dopamine is measured in mass units, sodium and chloride in molar units</span>
-<span class="c">// the components are measured in volume units</span>
-<span class="c">// Dose is adjusteded in weight units        </span>
-<span class="k">for</span> <span onmouseout="hideTip(event, 'fs26', 31)" onmouseover="showTip(event, 'fs26', 31)" class="i">o</span> <span class="k">in</span> <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 32)" onmouseover="showTip(event, 'fs27', 32)" class="f">createNew</span> 
-    [
-        [<span class="s">&quot;dopamine&quot;</span>, <span class="s">&quot;Mass&quot;</span>]
-        [<span class="s">&quot;sodium&quot;</span>, <span class="s">&quot;Molar&quot;</span>;<span class="s">&quot;chloride&quot;</span>, <span class="s">&quot;Molar&quot;</span>]
-    ] 
-    <span class="s">&quot;Volume&quot;</span> <span class="s">&quot;Weight&quot;</span> <span class="o">|&gt;</span> <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 33)" onmouseover="showTip(event, 'fs28', 33)" class="f">toString</span> <span class="k">do</span>
-    <span onmouseout="hideTip(event, 'fs25', 34)" onmouseover="showTip(event, 'fs25', 34)" class="f">printfn</span> <span class="s">&quot;</span><span class="pf">%s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs26', 35)" onmouseover="showTip(event, 'fs26', 35)" class="i">o</span>
-
-<span class="c">// Create a paracetamol order with an paracetamol orderable</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// Create a paracetamol order with an paracetamol orderable</span>
 <span class="c">// and how to prescribe this</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs29', 36)" onmouseover="showTip(event, 'fs29', 36)" class="i">pcm</span> <span class="o">=</span> 
-    <span class="t">OR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 37)" onmouseover="showTip(event, 'fs27', 37)" class="f">createNew</span> 
-        [
-            [<span class="s">&quot;paracetamol&quot;</span>, <span class="s">&quot;Mass&quot;</span>]
-        ] 
-        <span class="s">&quot;Shape&quot;</span> 
-        <span class="s">&quot;Weight&quot;</span> 
-
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs30', 38)" onmouseover="showTip(event, 'fs30', 38)" class="f">prs</span> <span class="o">=</span> <span class="t">PR</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs31', 39)" onmouseover="showTip(event, 'fs31', 39)" class="f">discontinuous</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs32', 40)" onmouseover="showTip(event, 'fs32', 40)" class="i">ord</span> <span class="o">=</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs33', 41)" onmouseover="showTip(event, 'fs33', 41)" class="f">createNew</span> <span class="s">&quot;Weight&quot;</span> <span onmouseout="hideTip(event, 'fs29', 42)" onmouseover="showTip(event, 'fs29', 42)" class="i">pcm</span> <span onmouseout="hideTip(event, 'fs30', 43)" onmouseover="showTip(event, 'fs30', 43)" class="f">prs</span> <span class="s">&quot;oral&quot;</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs18', 22)" onmouseover="showTip(event, 'fs18', 22)" class="i">ord</span> <span class="o">=</span> 
+    <span onmouseout="hideTip(event, 'fs11', 23)" onmouseover="showTip(event, 'fs11', 23)" class="t">Order</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs19', 24)" onmouseover="showTip(event, 'fs19', 24)" class="f">createNew</span> 
+        (<span class="s">&quot;1&quot;</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs8', 25)" onmouseover="showTip(event, 'fs8', 25)" class="t">Id</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs20', 26)" onmouseover="showTip(event, 'fs20', 26)" class="f">create</span>)
+        ([<span class="s">&quot;paracetamol&quot;</span>] <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 27)" onmouseover="showTip(event, 'fs10', 27)" class="t">Name</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs21', 28)" onmouseover="showTip(event, 'fs21', 28)" class="f">create</span>)
+        ([[<span class="s">&quot;paracetamol&quot;</span>] <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 29)" onmouseover="showTip(event, 'fs10', 29)" class="t">Name</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs21', 30)" onmouseover="showTip(event, 'fs21', 30)" class="f">create</span>, [
+            [<span class="s">&quot;paracetamol&quot;</span>] <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs10', 31)" onmouseover="showTip(event, 'fs10', 31)" class="t">Name</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs21', 32)" onmouseover="showTip(event, 'fs21', 32)" class="f">create</span>, <span class="s">&quot;Mass&quot;</span>
+        ]])
+        <span class="s">&quot;Tablet&quot;</span>
+        <span class="s">&quot;Weight&quot;</span>
+        <span onmouseout="hideTip(event, 'fs22', 33)" onmouseover="showTip(event, 'fs22', 33)" class="t">Prescription</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs23', 34)" onmouseover="showTip(event, 'fs23', 34)" class="f">discontinuous</span>
+        <span class="s">&quot;oral&quot;</span>
+<span class="c">//        [</span>
+<span class="c">//            [&quot;paracetamol&quot;, &quot;ass&quot;]</span>
+<span class="c">//        ] </span>
+<span class="c">//        &quot;Shape&quot; </span>
+<span class="c">//        &quot;Weight&quot; </span>
+<span class="c">//        PR.discontinuous</span>
+<span class="c">//        &quot;oral&quot;</span>
 
 <span class="c">// Print out the order</span>
-<span onmouseout="hideTip(event, 'fs32', 44)" onmouseover="showTip(event, 'fs32', 44)" class="i">ord</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs21', 45)" onmouseover="showTip(event, 'fs21', 45)" class="f">print</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs34', 46)" onmouseover="showTip(event, 'fs34', 46)" class="f">ignore</span>
+<span onmouseout="hideTip(event, 'fs18', 35)" onmouseover="showTip(event, 'fs18', 35)" class="i">ord</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs14', 36)" onmouseover="showTip(event, 'fs14', 36)" class="f">print</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs24', 37)" onmouseover="showTip(event, 'fs24', 37)" class="f">ignore</span>
 
 <span class="c">// Prints:</span>
 
@@ -243,17 +229,17 @@
 
 <span class="c">// Start entering values for the order while solving</span>
 <span class="c">// the calculation model the order at each step</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs35', 47)" onmouseover="showTip(event, 'fs35', 47)" class="f">solve</span> <span class="o">=</span> <span class="t">OD</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs36', 48)" onmouseover="showTip(event, 'fs36', 48)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span>
-<span onmouseout="hideTip(event, 'fs32', 49)" onmouseover="showTip(event, 'fs32', 49)" class="i">ord</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 50)" onmouseover="showTip(event, 'fs35', 50)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs37', 51)" onmouseover="showTip(event, 'fs37', 51)" class="p">ItemComponentQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 52)" onmouseover="showTip(event, 'fs38', 52)" class="p">Vals</span> [<span class="n">240N</span>; <span class="n">300N</span>; <span class="n">500N</span>] <span class="s">&quot;mg&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 53)" onmouseover="showTip(event, 'fs35', 53)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs39', 54)" onmouseover="showTip(event, 'fs39', 54)" class="p">OrderableOrderableQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 55)" onmouseover="showTip(event, 'fs38', 55)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 56)" onmouseover="showTip(event, 'fs35', 56)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs40', 57)" onmouseover="showTip(event, 'fs40', 57)" class="p">OrderableDoseQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 58)" onmouseover="showTip(event, 'fs38', 58)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 59)" onmouseover="showTip(event, 'fs35', 59)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs41', 60)" onmouseover="showTip(event, 'fs41', 60)" class="p">ItemDoseTotal</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 61)" onmouseover="showTip(event, 'fs42', 61)" class="p">MaxIncl</span> [<span class="n">4N</span>] <span class="s">&quot;gram/day&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 62)" onmouseover="showTip(event, 'fs35', 62)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs43', 63)" onmouseover="showTip(event, 'fs43', 63)" class="p">ItemDoseAdjustTotalAdjust</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs42', 64)" onmouseover="showTip(event, 'fs42', 64)" class="p">MaxIncl</span> [<span class="n">90N</span>] <span class="s">&quot;mg/kg/day&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 65)" onmouseover="showTip(event, 'fs35', 65)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs44', 66)" onmouseover="showTip(event, 'fs44', 66)" class="p">Freq</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 67)" onmouseover="showTip(event, 'fs38', 67)" class="p">Vals</span> [<span class="n">2N</span>;<span class="n">3N</span>;<span class="n">4N</span>;<span class="n">6N</span>] <span class="s">&quot;x/day&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs35', 68)" onmouseover="showTip(event, 'fs35', 68)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs45', 69)" onmouseover="showTip(event, 'fs45', 69)" class="p">AdjustQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs38', 70)" onmouseover="showTip(event, 'fs38', 70)" class="p">Vals</span> [<span class="n">10N</span>] <span class="s">&quot;kg&quot;</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs21', 71)" onmouseover="showTip(event, 'fs21', 71)" class="f">print</span>
-<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs34', 72)" onmouseover="showTip(event, 'fs34', 72)" class="f">ignore</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs25', 38)" onmouseover="showTip(event, 'fs25', 38)" class="f">solve</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs11', 39)" onmouseover="showTip(event, 'fs11', 39)" class="t">Order</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs26', 40)" onmouseover="showTip(event, 'fs26', 40)" class="f">solve</span> <span class="s">&quot;paracetamol&quot;</span>
+<span onmouseout="hideTip(event, 'fs18', 41)" onmouseover="showTip(event, 'fs18', 41)" class="i">ord</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 42)" onmouseover="showTip(event, 'fs25', 42)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 43)" onmouseover="showTip(event, 'fs27', 43)" class="p">ItemComponentQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 44)" onmouseover="showTip(event, 'fs28', 44)" class="p">Vals</span> [<span class="n">240N</span>; <span class="n">300N</span>; <span class="n">500N</span>] <span class="s">&quot;mg&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 45)" onmouseover="showTip(event, 'fs25', 45)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs29', 46)" onmouseover="showTip(event, 'fs29', 46)" class="p">OrderableOrderableQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 47)" onmouseover="showTip(event, 'fs28', 47)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 48)" onmouseover="showTip(event, 'fs25', 48)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs30', 49)" onmouseover="showTip(event, 'fs30', 49)" class="p">OrderableDoseQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 50)" onmouseover="showTip(event, 'fs28', 50)" class="p">Vals</span> [<span class="n">1N</span>] <span class="s">&quot;tabl&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 51)" onmouseover="showTip(event, 'fs25', 51)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs31', 52)" onmouseover="showTip(event, 'fs31', 52)" class="p">ItemDoseTotal</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs32', 53)" onmouseover="showTip(event, 'fs32', 53)" class="p">MaxIncl</span> [<span class="n">4N</span>] <span class="s">&quot;gram/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 54)" onmouseover="showTip(event, 'fs25', 54)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs33', 55)" onmouseover="showTip(event, 'fs33', 55)" class="p">ItemDoseAdjustTotalAdjust</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs32', 56)" onmouseover="showTip(event, 'fs32', 56)" class="p">MaxIncl</span> [<span class="n">90N</span>] <span class="s">&quot;mg/kg/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 57)" onmouseover="showTip(event, 'fs25', 57)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs34', 58)" onmouseover="showTip(event, 'fs34', 58)" class="p">Freq</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 59)" onmouseover="showTip(event, 'fs28', 59)" class="p">Vals</span> [<span class="n">2N</span>;<span class="n">3N</span>;<span class="n">4N</span>;<span class="n">6N</span>] <span class="s">&quot;x/day&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs25', 60)" onmouseover="showTip(event, 'fs25', 60)" class="f">solve</span> <span class="t">MP</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs35', 61)" onmouseover="showTip(event, 'fs35', 61)" class="p">AdjustQty</span> <span class="t">SV</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 62)" onmouseover="showTip(event, 'fs28', 62)" class="p">Vals</span> [<span class="n">10N</span>] <span class="s">&quot;kg&quot;</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs14', 63)" onmouseover="showTip(event, 'fs14', 63)" class="f">print</span>
+<span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs24', 64)" onmouseover="showTip(event, 'fs24', 64)" class="f">ignore</span>
 
 <span class="c">// Prints:</span>
 
@@ -325,45 +311,35 @@ redistribution for both commercial and non-commercial purposes. For more informa
 <div class="tip" id="fs4">namespace Informedica.GenUtils.Lib.BCL</div>
 <div class="tip" id="fs5">namespace Informedica.GenOrder</div>
 <div class="tip" id="fs6">namespace Informedica.GenOrder.Lib</div>
-<div class="tip" id="fs7">module VariableUnit<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Functions that deal with the `VariableUnit` type</em></div>
-<div class="tip" id="fs8">module Name<br /><br />from Informedica.GenOrder.Lib.VariableUnitModule<br /><em><br /><br />&#160;Helper functions for `Informedica.GenSolver.Variable.Name` type</em></div>
-<div class="tip" id="fs9">module Frequency<br /><br />from Informedica.GenOrder.Lib.VariableUnitModule<br /><em><br /><br />&#160;Type and functions that represent a frequency</em></div>
-<div class="tip" id="fs10">module Orderable<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Types and functions to deal <br />&#160;with an `Orderable`, i.e. something<br />&#160;that can be ordered.</em></div>
-<div class="tip" id="fs11">module Item<br /><br />from Informedica.GenOrder.Lib.OrderableModule<br /><em><br /><br />&#160;Type and functions that models an<br />&#160;`Order` `Item` that is contained in <br />&#160;a `Component`</em></div>
-<div class="tip" id="fs12">module Component<br /><br />from Informedica.GenOrder.Lib.OrderableModule<br /><em><br /><br />&#160;Types and functions to model a <br />&#160;`Component` in an `Orderable`. <br />&#160;A `Component` contains a list <br />&#160;of `Item`s</em></div>
-<div class="tip" id="fs13">module Prescription<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Types and functions that presents a `Prescription`, i.e. either a <br />&#160;process, or a continuous prescription or a discontinuous prescription<br />&#160;with or without a time</em></div>
-<div class="tip" id="fs14">module Order<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Types and functions that deal with an order.<br />&#160;An `Order` models the `Prescription` of an <br />&#160;`Orderable` with a `StartStop` start date and<br />&#160;stop date.</em></div>
-<div class="tip" id="fs15">module Mapping<br /><br />from Informedica.GenOrder.Lib.OrderModule<br /><em><br /><br />&#160;Utitlity functions to<br />&#160;enable mapping of a `Variable`s<br />&#160;to an `Order`</em></div>
-<div class="tip" id="fs16">module Solver<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Helper functions to <br />&#160;facilitate the use of the<br />&#160;`Informedica.GenSolver.Lib`</em></div>
-<div class="tip" id="fs17">module Unit<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Helper functions to facilitate the use <br />&#160;of `Informedica.GenUnits.Lib`</em></div>
-<div class="tip" id="fs18">namespace Informedica.GenUnits</div>
-<div class="tip" id="fs19">namespace Informedica.GenUnits.Lib</div>
-<div class="tip" id="fs20">module UnitGroup<br /><br />from Informedica.GenUnits.Lib</div>
-<div class="tip" id="fs21">val print : ord:Order.Order -&gt; Order.Order<br /><br />Full name: Index.print</div>
-<div class="tip" id="fs22">val ord : Order.Order</div>
-<div class="tip" id="fs23">val s : string</div>
-<div class="tip" id="fs24">val toString : ord:Order.Order -&gt; string list<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.toString<br /><em><br /><br />&#160;Turn an order into a list of string<br />&#160;representing variable name, valuerange <br />&#160;and unit group</em></div>
-<div class="tip" id="fs25">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
-<div class="tip" id="fs26">val o : string</div>
-<div class="tip" id="fs27">val createNew : cl:(string * System.String) list list -&gt; u:System.String -&gt; adj:string -&gt; Orderable.Orderable<br /><br />Full name: Informedica.GenOrder.Lib.OrderableModule.createNew<br /><em><br /><br />&#160;Create a new `Orderable` with a `Component` list<br />&#160;`cl`, an `Orderable`unit `u` and adjust unit `adj`</em></div>
-<div class="tip" id="fs28">val toString : orb:Orderable.Orderable -&gt; string list<br /><br />Full name: Informedica.GenOrder.Lib.OrderableModule.toString<br /><em><br /><br />&#160;Turn an `Orderable` `ord` into<br />&#160;a list of strings.</em></div>
-<div class="tip" id="fs29">val pcm : Orderable.Orderable<br /><br />Full name: Index.pcm</div>
-<div class="tip" id="fs30">val prs : (string list -&gt; Prescription.Prescription)<br /><br />Full name: Index.prs</div>
-<div class="tip" id="fs31">val discontinuous : n:string list -&gt; Prescription.Prescription<br /><br />Full name: Informedica.GenOrder.Lib.PrescriptionModule.discontinuous<br /><em><br /><br />&#160;Create a discontinuous `Prescription` with name generated by string list **n**</em></div>
-<div class="tip" id="fs32">val ord : Order.Order<br /><br />Full name: Index.ord</div>
-<div class="tip" id="fs33">val createNew : adj_ung:System.String -&gt; orb:Orderable.Orderable -&gt; str_prs:(string list -&gt; Prescription.Prescription) -&gt; rot:string -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.createNew<br /><em><br /><br />&#160;Create a new orderable using:<br /><br />&#160;* adj_unt: the unit group by which doses are adjusted<br />&#160;* orb: the orderable being ordered<br />&#160;* str_prs: a function that takes in a list of strings <br />&#160;that will generate the names and returns a `Prescription`<br />&#160;* rot: the route of administration</em></div>
-<div class="tip" id="fs34">val ignore : value:&#39;T -&gt; unit<br /><br />Full name: Microsoft.FSharp.Core.Operators.ignore</div>
-<div class="tip" id="fs35">val solve : (Order.Mapping.Map -&gt; Solver.Prop -&gt; BigRational list -&gt; string -&gt; Order.Order -&gt; Order.Order)<br /><br />Full name: Index.solve</div>
-<div class="tip" id="fs36">val solve : n:string -&gt; m:Order.Mapping.Map -&gt; p:Solver.Prop -&gt; v:BigRational list -&gt; u:string -&gt; o:Order.Order -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.solve<br /><em><br /><br />&#160;Solve an `Order` *ord* with<br />&#160;<br />&#160;* n: the name of the variable to be set<br />&#160;* m: the mapping for the field of the order<br />&#160;* p: the property of the variable to be set<br />&#160;* v: the values to be set</em></div>
-<div class="tip" id="fs37">union case Order.Mapping.Map.ItemComponentQty: Order.Mapping.Map</div>
-<div class="tip" id="fs38">union case Solver.Prop.Vals: Solver.Prop</div>
-<div class="tip" id="fs39">union case Order.Mapping.Map.OrderableOrderableQty: Order.Mapping.Map</div>
-<div class="tip" id="fs40">union case Order.Mapping.Map.OrderableDoseQty: Order.Mapping.Map</div>
-<div class="tip" id="fs41">union case Order.Mapping.Map.ItemDoseTotal: Order.Mapping.Map</div>
-<div class="tip" id="fs42">union case Solver.Prop.MaxIncl: Solver.Prop</div>
-<div class="tip" id="fs43">union case Order.Mapping.Map.ItemDoseAdjustTotalAdjust: Order.Mapping.Map</div>
-<div class="tip" id="fs44">union case Order.Mapping.Map.Freq: Order.Mapping.Map</div>
-<div class="tip" id="fs45">union case Order.Mapping.Map.AdjustQty: Order.Mapping.Map</div>
+<div class="tip" id="fs7">module Primitives<br /><br />from Informedica.GenOrder.Lib</div>
+<div class="tip" id="fs8">module Id<br /><br />from Informedica.GenOrder.Lib.Primitives</div>
+<div class="tip" id="fs9">module VariableUnit<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Functions that deal with the `VariableUnit` type</em></div>
+<div class="tip" id="fs10">module Name<br /><br />from Informedica.GenOrder.Lib.VariableUnitModule<br /><em><br /><br />&#160;Helper functions for `Informedica.GenSolver.Variable.Name` type</em></div>
+<div class="tip" id="fs11">module Order<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Types and functions that deal with an order.<br />&#160;An `Order` models the `Prescription` of an <br />&#160;`Orderable` with a `StartStop` start date and<br />&#160;stop date.</em></div>
+<div class="tip" id="fs12">module Mapping<br /><br />from Informedica.GenOrder.Lib.OrderModule<br /><em><br /><br />&#160;Utitlity functions to<br />&#160;enable mapping of a `Variable`s<br />&#160;to an `Order`</em></div>
+<div class="tip" id="fs13">module Solver<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Helper functions to <br />&#160;facilitate the use of the<br />&#160;`Informedica.GenSolver.Lib`</em></div>
+<div class="tip" id="fs14">val print : ord:&#39;a -&gt; &#39;a<br /><br />Full name: Index.print</div>
+<div class="tip" id="fs15">val ord : &#39;a</div>
+<div class="tip" id="fs16">val s : string</div>
+<div class="tip" id="fs17">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="fs18">val ord : Order.Order<br /><br />Full name: Index.ord</div>
+<div class="tip" id="fs19">val createNew : id:Primitives.Id.Id -&gt; nm:Informedica.GenSolver.Lib.Variable.Name.Name -&gt; cil:(Informedica.GenSolver.Lib.Variable.Name.Name * (Informedica.GenSolver.Lib.Variable.Name.Name * System.String) list) list -&gt; shp_ung:System.String -&gt; adj_ung:string -&gt; str_prs:(string list -&gt; Prescription.Prescription) -&gt; rot:string -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.createNew<br /><em><br /><br />&#160;Create a new orderable using:<br /><br />&#160;<br />&#160;* str_prs: a function that takes in a list of strings <br />&#160;that will generate the names and returns a `Prescription`<br />&#160;* rot: the route of administration</em></div>
+<div class="tip" id="fs20">val create : s:string -&gt; Primitives.Id.Id<br /><br />Full name: Informedica.GenOrder.Lib.Primitives.IdModule.create</div>
+<div class="tip" id="fs21">val create : ns:seq&lt;string&gt; -&gt; Informedica.GenSolver.Lib.Variable.Name.Name<br /><br />Full name: Informedica.GenOrder.Lib.VariableUnitModule.NameModule.create<br /><em><br /><br />&#160;Create a `Name` from a list of strings that </em></div>
+<div class="tip" id="fs22">module Prescription<br /><br />from Informedica.GenOrder.Lib<br /><em><br /><br />&#160;Types and functions that presents a `Prescription`, i.e. either a <br />&#160;process, or a continuous prescription or a discontinuous prescription<br />&#160;with or without a time</em></div>
+<div class="tip" id="fs23">val discontinuous : n:string list -&gt; Prescription.Prescription<br /><br />Full name: Informedica.GenOrder.Lib.PrescriptionModule.discontinuous<br /><em><br /><br />&#160;Create a discontinuous `Prescription` with name generated by string list **n**</em></div>
+<div class="tip" id="fs24">val ignore : value:&#39;T -&gt; unit<br /><br />Full name: Microsoft.FSharp.Core.Operators.ignore</div>
+<div class="tip" id="fs25">val solve : (Order.Mapping.Map -&gt; Solver.Prop -&gt; BigRational list -&gt; string -&gt; Order.Order -&gt; Order.Order)<br /><br />Full name: Index.solve</div>
+<div class="tip" id="fs26">val solve : n:string -&gt; m:Order.Mapping.Map -&gt; p:Solver.Prop -&gt; v:BigRational list -&gt; u:string -&gt; o:Order.Order -&gt; Order.Order<br /><br />Full name: Informedica.GenOrder.Lib.OrderModule.solve<br /><em><br /><br />&#160;Solve an `Order` *ord* with<br />&#160;<br />&#160;* n: the name of the variable to be set<br />&#160;* m: the mapping for the field of the order<br />&#160;* p: the property of the variable to be set<br />&#160;* v: the values to be set</em></div>
+<div class="tip" id="fs27">union case Order.Mapping.Map.ItemComponentQty: Order.Mapping.Map</div>
+<div class="tip" id="fs28">union case Solver.Prop.Vals: Solver.Prop</div>
+<div class="tip" id="fs29">union case Order.Mapping.Map.OrderableOrderableQty: Order.Mapping.Map</div>
+<div class="tip" id="fs30">union case Order.Mapping.Map.OrderableDoseQty: Order.Mapping.Map</div>
+<div class="tip" id="fs31">union case Order.Mapping.Map.ItemDoseTotal: Order.Mapping.Map</div>
+<div class="tip" id="fs32">union case Solver.Prop.MaxIncl: Solver.Prop</div>
+<div class="tip" id="fs33">union case Order.Mapping.Map.ItemDoseAdjustTotalAdjust: Order.Mapping.Map</div>
+<div class="tip" id="fs34">union case Order.Mapping.Map.Freq: Order.Mapping.Map</div>
+<div class="tip" id="fs35">union case Order.Mapping.Map.AdjustQty: Order.Mapping.Map</div>
 
         </div>
         <div class="span3">
