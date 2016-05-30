@@ -106,8 +106,10 @@ module Order =
 
     open Informedica.GenUtils.Lib.BCL
 
+    open Informedica.GenWrap.Lib.WrappedString
+
     module LT = Literals
-    module ID = Primitives.Id
+    module ID = Id
     module CS = Informedica.GenUnits.Lib.Constants
     module CU = Informedica.GenUnits.Lib.CombiUnit
     module UG = Informedica.GenUnits.Lib.UnitGroup
@@ -117,7 +119,7 @@ module Order =
     module DT = StartStop
     module SV = Solver
     module VU = VariableUnit
-    module NM = VU.Name
+    module NM = Name
     module QT = VU.Quantity
     module FR = VU.Frequency
     module TM = VU.Time
@@ -168,17 +170,21 @@ module Order =
 
     /// Create a new orderable using:
     ///
-    /// 
-    /// * str_prs: a function that takes in a list of strings 
-    /// that will generate the names and returns a `Prescription`
-    /// * rot: the route of administration
-    let createNew id nm cil shp_ung adj_ung str_prs rot = 
-        let orb = OB.createNew id nm cil shp_ung adj_ung
+    /// * id: the unique id in an `OrderSet` of an `Order`
+    /// * nm: the name of the `Orderable`
+    /// * cil: the names for the `Component`s, each with a list of name, string tuples for `Item`s
+    /// * orb_ung: the unitgroup name for the `Orderable` and its `Component`s
+    /// * adj_ung: the unitgroup used to adjust doses
+    /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
+    /// * route: the route of administration
+    let createNew id nm cil orb_ung adj_ung str_prs route = 
+        let orb = OB.createNew id nm cil orb_ung adj_ung
         let nm  = orb |> OB.getName
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
         let adj = adj_ung |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
-        create id adj orb prs rot sts
+
+        create id adj orb prs route sts
 
     let getAdjust ord = (ord |> get).Adjust
 

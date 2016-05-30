@@ -4,16 +4,19 @@
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module VariableUnit =
 
+    open Informedica.GenUtils.Lib
     open Informedica.GenUtils.Lib.BCL
-
-    module VR = Informedica.GenSolver.Lib.Variable
-    module EQ = Informedica.GenSolver.Lib.Equation
-    module VL = VR.ValueRange
-    module CS = Informedica.GenUnits.Lib.Constants
-    module UN = Informedica.GenUnits.Lib.CombiUnit
-    module GN = Informedica.GenUnits.Lib.Unit.Name
-    module UG = Informedica.GenUnits.Lib.UnitGroup
-    module GS = UnitGroups
+    open Informedica.GenWrap.Lib.WrappedString
+    
+    module Variable    = Informedica.GenSolver.Lib.Variable
+    module VariableDto = Informedica.GenSolver.Dtos.Variable
+    module Equation    = Informedica.GenSolver.Lib.Equation
+    module ValueRange  = Variable.ValueRange
+    module Constants   = Informedica.GenUnits.Lib.Constants
+    module CombiUnit   = Informedica.GenUnits.Lib.CombiUnit
+    module UnitName    = Informedica.GenUnits.Lib.Unit.Name
+    module UnitGroup   = Informedica.GenUnits.Lib.UnitGroup
+    module UnitGroups  = UnitGroups
 
     /// A `VariableUnit` is the combination of 
     /// an `Informedica.GenSolver.Lib.Variable` with
@@ -22,20 +25,32 @@ module VariableUnit =
     /// to the `UnitGroup`
     type VariableUnit =
         {
-             /// Stores the values/range
-             Variable:  VR.Variable
-             /// Stores the unit group
-             UnitGroup: UG.UnitGroup
-         }  
+            /// Stores the values/range
+            Variable:  Variable.Variable
+            /// Stores the unit group
+            UnitGroup: UnitGroup.UnitGroup
+        }  
          
     /// Create a new `VariableUnit` with
     /// `Name` **nme** and `UnitGroup` **ung**
-    let create nme ung = 
+    let createNew nm ung = 
         let var = 
-            VR.createSucc nme VL.unrestricted
-            |> VR.setNonZeroOrNegative
+            Variable.createSucc nm ValueRange.unrestricted
+            |> Variable.setNonZeroOrNegative
         { Variable = var; UnitGroup = ung } 
         
+    /// Create a `VariableUnit` with preset values
+    let create succ fail nm unr vs min incr max ung =
+        let succ = Some
+        let fail = Option.none
+
+        let vlr = ValueRange.create succ fail unr vs min incr max
+        match vlr with
+        | Some vlr' ->
+            let var = Variable.create id nm vlr'        
+            { Variable = var; UnitGroup = ung }
+        | None -> createNew nm ung
+
     /// Create a `VariableUnit` with
     /// `Variable` **var** and `UnitGroup` **ung**
     let withVar ung var =    
@@ -66,10 +81,10 @@ module VariableUnit =
     let toEq cr y xs = (y |> getVar, xs |> List.map getVar) |> cr
 
     /// Create a `ProdEquation` from `VariableUnit`s
-    let toProdEq succ fail = toEq (EQ.createProductEq succ fail)
+    let toProdEq succ fail = toEq (Equation.createProductEq succ fail)
 
     /// Create a `SumEquation` from `VariableUnit`s
-    let toSumEq succ fail = toEq (EQ.createSumEq succ fail)
+    let toSumEq succ fail = toEq (Equation.createSumEq succ fail)
 
     /// Set a property **p** of a `VariableUnit` **vru** 
     /// with values **vs** and `CombinedUnit` **unt** in
@@ -101,8 +116,8 @@ module VariableUnit =
     /// current variable from **vru**
     let fromVar toVar c vrll vru = 
         let var, ung = vru |> (toVar >> getAll)
-        let n = var |> VR.getName
-        let find = tryFind VR.getName
+        let n = var |> Variable.getName
+        let find = tryFind Variable.getName
         
         match vrll |> find n with
         | Some x -> x |> withVar ung |> c
@@ -111,72 +126,60 @@ module VariableUnit =
     /// Set the 'Name' to the `Variable` of the `VariableUnit`
     let setName nm vru = 
         { vru with
-            Variable = vru.Variable |> VR.setName nm }        
+            Variable = vru.Variable |> Variable.setName nm }        
 
-    /// Set a property **prop** of a `VariableUnit` 
-    /// **vru** with values **vs** and unit **unt**
-    /// in a set of equations **eqs**. Return the 
-    /// unmodified set of **unt** is `None`.
-    let setPropWithUnit prop unt vru vs eqs = 
-        match unt with
-        | Some unt' -> eqs |> setProp vru prop vs unt'
-        | None      -> eqs
-
-    /// Set values of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setVals unt vru    = setPropWithUnit Solver.Vals    unt vru
-
-    /// Set minimum inclusive of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setMinIncl unt vru = setPropWithUnit Solver.MinIncl unt vru
-
-    /// Set minimum exclusive of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setMinExcl unt vru = setPropWithUnit Solver.MinExcl unt vru
-
-    /// Set increment of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setIncr unt vru    = setPropWithUnit Solver.Incr    unt vru
-
-    /// Set maximum inclusive of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setMaxIncl unt vru = setPropWithUnit Solver.MaxIncl unt vru
-
-    /// Set maximum exclusive of `VariableUnit` **vru** with values with
-    /// unit **unt** in a list of equations
-    let setMaxExcl unt vru = setPropWithUnit Solver.MaxExcl unt vru
 
     /// Get the string representation of a `VariableUnit` **vru**
     let toString vru = 
-        let (VR.Name.Name n) = vru |> getName
-        let ug = vru.UnitGroup |> UG.toString
+        let (Variable.Name.Name n) = vru |> getName
+        let ug = vru.UnitGroup |> UnitGroup.toString
 
         n +
         (vru.Variable 
-        |> VR.getValueRange
-        |> VL.toString) + " " + ug
+        |> Variable.getValueRange
+        |> ValueRange.toString) + " " + ug
 
-    /// Helper functions for `Informedica.GenSolver.Variable.Name` type
+    /// Type and functions to handle the `Dto` 
+    /// data transfer type for a `VariableUnit`
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module Name =
-        
-        module N = VR.Name
+    module Dto =
 
-        type Name = N.Name
+        open Informedica.GenUtils.Lib
+                    
+        type Dto = 
+            {
+                Id: string
+                Name: string
+                Mapping: string
+                UnitGroup: string
+                Variable: VariableDto.Dto
+            }
 
-        /// Create a `Name` from a list of strings that 
-        let create ns = ns |> String.concat "." |> N.createExc
+        let fromDto succ fail (dto: Dto) =
+            let map  = Option.map
+            let none = Option.none
+            let bind = Option.bind
+            let var  = dto.Variable
 
-        let toString = N.toString
+            let nm   = [dto.Id; dto.Name; dto.Mapping] |> Name.create 
+            let vals = var.Vals |> Set.ofList
+            let min  = var.Min  |> map  (Variable.ValueRange.createMin  var.MinIncl)
+            let incr = var.Incr |> bind (Variable.ValueRange.createIncr Some none)
+            let max  = var.Max  |> map  (Variable.ValueRange.createMax  var.MaxIncl)
+
+            create succ fail nm dto.Variable.Unr vals min incr max
 
     /// Type and functions that represent a frequency
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Frequency =
 
-        module N = Name
-
         /// String representation of the type
         let name = "Freq"
+
+        /// The `Frequency` `UnitGroup`
+        let unitGroup = UnitGroups.count |> UnitGroup.perGroup Constants.timeGroup
+
+        let unitGroupToString = unitGroup |> UnitGroup.toString
 
         /// Type that represents a frequency
         type Frequency = Frequency of VariableUnit
@@ -187,12 +190,16 @@ module VariableUnit =
         /// Set a `Frequency` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Frequency 
+
+        /// Create a `Frequency` with a preset `Variable`
+        let create succ fail nm unr vs min incr max = 
+            create succ fail nm unr vs min incr max unitGroup 
+            |> Frequency
         
         /// Create a `Frequency` with name **n**
         let frequency n = 
-            let u = GS.count |> UG.perGroup CS.timeGroup
-            let n = [name] |> List.append n |> N.create
-            create n u |> Frequency
+            let n = [name] |> List.append n |> Name.create
+            createNew n unitGroup |> Frequency
 
         /// Turn a `Frequency` to a string
         let toString freq = 
@@ -203,10 +210,11 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Time = 
 
-        module N = Name
-
         /// String representation of the type
         let name = "Time"
+
+        /// The time `UnitGroup`
+        let unitGroup = UnitGroups.time
 
         /// Type that represents a time
         type Time = Time of VariableUnit
@@ -218,11 +226,15 @@ module VariableUnit =
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Time 
 
+        /// Create a `Time` with a preset `Variable`
+        let create succ fail nm unr vs min incr max = 
+            create succ fail nm unr vs min incr max unitGroup 
+            |> Time
+        
         /// Create a `Time` with name **n**
         let time n = 
-            let u = GS.time
-            let n = [name] |> List.append n |> N.create
-            create n u |> Time
+            let n = [name] |> List.append n |> Name.create
+            createNew n unitGroup |> Time
 
         /// Turn a `Time` to a string
         let toString tme = 
@@ -232,10 +244,11 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Count =    
     
-        module N = Name
-
         /// String representation of the type
         let name = "Count" 
+
+        /// The count `UnitGroup`
+        let unitGroup = UnitGroups.count
 
         /// Type that represents a count
         type Count = Count of VariableUnit
@@ -247,10 +260,15 @@ module VariableUnit =
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Count 
 
+        /// Create a `Count` with a preset `Variable`
+        let create succ fail nm unr vs min incr max = 
+            create succ fail nm unr vs min incr max unitGroup 
+            |> Count
+        
         /// Create a `Count` with name **n**
         let count n = 
-            let n = [name] |> List.append n |> N.create
-            create n GS.count |> Count
+            let n = [name] |> List.append n |> Name.create
+            createNew n unitGroup |> Count
 
         /// Turn a `Count` to a string
         let toString qty = 
@@ -261,8 +279,6 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Quantity =    
     
-        module N = Name
-
         /// String representation of the type
         let name = "Qty" 
 
@@ -275,17 +291,22 @@ module VariableUnit =
         /// Set a `Quantity` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Quantity 
+        
+        /// Create a `Quantity` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung = 
+            create succ fail nm unr vs min incr max ung 
+            |> Quantity
 
         /// Create a `Quantity` with name **n**
         /// and `UnitGroup` **ung**
         let quantity n ung = 
-            let u = ung |> UG.fromString
-            let n = [name] |> List.append n |> N.create
-            create n u |> Quantity
+            let u = ung |> UnitGroup.fromString
+            let n = [name] |> List.append n |> Name.create
+            createNew n u |> Quantity
 
         /// Set the name of the quantity `Variable` to **n**
         let setName n qty =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             qty |> toVarUnt |> setName n |> Quantity
 
         /// Turn a `Quantity` to a string
@@ -298,10 +319,11 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Total =
     
-        module N = Name
-
         /// String representation of the type of the type
         let name = "Total" 
+
+        /// Create a `Total` `UnitGroup`
+        let unitGroup ung = ung |> UnitGroup.fromString |> UnitGroup.perGroup Constants.timeGroup
 
         /// Type that represents a total
         type Total = Total of VariableUnit
@@ -313,16 +335,20 @@ module VariableUnit =
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Total 
         
+        /// Create a `Total` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung = 
+            create succ fail nm unr vs min incr max (ung |> unitGroup) 
+            |> Total
+        
         /// Create a `Total` with name **n**
         /// and `UnitGroup` **ung**
         let total n ung = 
-            let u = ung |> UG.fromString |> UG.perGroup CS.timeGroup
-            let n = [name] |> List.append n |> N.create
-            create n u |> Total
+            let n = [name] |> List.append n |> Name.create
+            ung |> unitGroup |> createNew n |> Total
 
         /// Set the name of the total `Variable` to **n**
         let setName n tot =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             tot |> toVarUnt |> setName n |> Total
 
         /// Turn a `Total` to a string
@@ -335,10 +361,11 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Rate =
     
-        module N = Name
-
         /// String representation of the type
         let name = "Rate" 
+
+        /// Create a `Rate` `UnitGroup`
+        let unitGroup ung = ung |> UnitGroup.fromString |> UnitGroup.perGroup Constants.timeGroup
 
         /// Type that represents a rate
         type Rate = Rate of VariableUnit
@@ -349,17 +376,21 @@ module VariableUnit =
         /// Set a `Rate` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Rate 
-        
+
+        /// Create a `Rate` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung = 
+            create succ fail nm unr vs min incr max (ung |> unitGroup) 
+            |> Rate
+                
         /// Create a `Rate` with name **n**
         /// and `UnitGroup` **ung**
         let rate n ung = 
-            let u = ung |> UG.fromString |> UG.perGroup CS.timeGroup
-            let n = [name] |> List.append n |> N.create
-            create n u |> Rate
+            let n = [name] |> List.append n |> Name.create
+            ung |> unitGroup |> createNew n |> Rate
 
         /// Set the name of the rate `Variable` to **n**
         let setName n rte =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             rte |> toVarUnt |> setName n |> Rate
 
         /// Turn a `Rate` to a string
@@ -372,10 +403,12 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Concentration =
     
-        module N = Name
-
         /// String representation of the type
         let name = "Conc" 
+
+        /// Create a `Concentration` `UnitGroup`
+        /// **ung1**\/**ung2**
+        let unitGroup ung1 ung2 = ung1 |> UnitGroup.fromString |> UnitGroup.perGroup ung2
 
         /// Type that represents a concentration
         type Concentration = Concentration of VariableUnit
@@ -387,12 +420,16 @@ module VariableUnit =
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Concentration 
         
+        /// Create a `Concentration` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung1 ung2 = 
+            create succ fail nm unr vs min incr max (unitGroup ung1 ung2) 
+            |> Concentration
+                
         /// Create a `Concentration` with name **n**
         /// and `UnitGroup` **ung1** per **ung2**
         let conc n ung1 ung2 = 
-            let u = ung1 |> UG.fromString |> UG.perGroup ung2
-            let n = [name] |> List.append n |> N.create
-            create n u |> Concentration
+            let n = [name] |> List.append n |> Name.create
+            createNew n (unitGroup ung1 ung2) |> Concentration
 
         /// Turn a `Concentration` to a string
         let toString cnc = 
@@ -404,10 +441,12 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module QuantityAdjust =    
     
-        module N = Name
-
         /// String representation of the type
-        let name = "QtyAdjust" 
+        let name = "QtyAdjust"
+
+        /// `QuantityAdjust` `UnitGroup` 
+        /// **ung* \/ **adj_ung**
+        let unitGroup ung adj_ung = ung |> UnitGroup.fromString |> UnitGroup.perGroup adj_ung
 
         /// Type that represents a adjusted quantity
         type QuantityAdjust = QuantityAdjust of VariableUnit
@@ -418,17 +457,21 @@ module VariableUnit =
         /// Set a `QuantityAdjust` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt QuantityAdjust 
+
+        /// Create a `QuantityAdjust` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung adj_ung = 
+            create succ fail nm unr vs min incr max (unitGroup ung adj_ung) 
+            |> QuantityAdjust
         
         /// Create a `QuantityAdjust` with name **n**
-        /// and `UnitGroup` **ung1** adjusted by **ung2**
-        let quantityAdjust n ung1 ung2 = 
-            let u = ung1 |> UG.fromString |> UG.perGroup ung2
-            let n = [name] |> List.append n |> N.create
-            create n u |> QuantityAdjust
+        /// and `UnitGroup` **ung** adjusted by **adj_ung**
+        let quantityAdjust n ung adj_ung = 
+            let n = [name] |> List.append n |> Name.create
+            createNew n (unitGroup ung adj_ung) |> QuantityAdjust
 
         /// Set the name of the quantity adjust `Variable` to **n**
         let setName n qty =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             qty |> toVarUnt |> setName n |> QuantityAdjust
 
         /// Turn a `QuantityAdjust` to a string
@@ -441,10 +484,16 @@ module VariableUnit =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module TotalAdjust =
     
-        module N = Name
-
         /// String representation of the type
         let name = "TotalAdjust" 
+
+        /// `TotalAdjust` `UnitGroup` 
+        /// **ung* \/ **adj_ung**
+        let unitGroup ung adj_ung = 
+            ung 
+            |> UnitGroup.fromString 
+            |> UnitGroup.perGroup adj_ung
+            |> UnitGroup.perGroup Constants.timeGroup
 
         /// Type that represents a adjusted total
         type TotalAdjust = TotalAdjust of VariableUnit
@@ -455,17 +504,21 @@ module VariableUnit =
         /// Set a `TotalAdjust` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt TotalAdjust 
-        
+
+        /// Create a `TotalAdjust` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung adj_ung = 
+            create succ fail nm unr vs min incr max (unitGroup ung adj_ung) 
+            |> TotalAdjust
+                
         /// Create a `TotalAdjust` with name **n**
-        /// and `UnitGroup` **ung1** adjusted by **ung2**
-        let totalAdjust n ung1 ung2 = 
-            let u = ung1 |> UG.fromString |> UG.perGroup ung2 |> UG.perGroup CS.timeGroup
-            let n = [name] |> List.append n |> N.create
-            create n u |> TotalAdjust
+        /// and `UnitGroup` **ung** adjusted by **adj_ung**
+        let totalAdjust n ung adj_ung = 
+            let n = [name] |> List.append n |> Name.create
+            createNew n (unitGroup ung adj_ung) |> TotalAdjust
 
         /// Set the name of the total adjust `Variable` to **n**
         let setName n tot =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             tot |> toVarUnt |> setName n |> TotalAdjust
 
         /// Turn a `TotalAdjust` to a string
@@ -477,11 +530,17 @@ module VariableUnit =
     /// and a adjusted rate is a quantity per time unit
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module RateAdjust =
-    
-        module N = Name
 
         /// String representation of the type
         let name = "RateAdjust" 
+
+        /// `RateAdjust` `UnitGroup` 
+        /// **ung* \/ **adj_ung**
+        let unitGroup ung adj_ung = 
+            ung 
+            |> UnitGroup.fromString 
+            |> UnitGroup.perGroup adj_ung
+            |> UnitGroup.perGroup Constants.timeGroup
 
         /// Type that represents a adjusted rate
         type RateAdjust = RateAdjust of VariableUnit
@@ -492,17 +551,21 @@ module VariableUnit =
         /// Set a `RateAdjust` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt RateAdjust 
+
+        /// Create a `RateAdjust` with a preset `Variable`
+        let create succ fail nm unr vs min incr max ung adj_ung = 
+            create succ fail nm unr vs min incr max (unitGroup ung adj_ung) 
+            |> RateAdjust
         
         /// Create a `RateAdjust` with name **n**
-        /// and `UnitGroup` **ung1** adjusted by **ung2**
-        let rateAdjust n ung1 ung2 = 
-            let u = ung1 |> UG.fromString |> UG.perGroup ung2 |> UG.perGroup CS.timeGroup
-            let n = [name] |> List.append n |> N.create
-            create n u |> RateAdjust
+        /// and `UnitGroup` **ung** adjusted by **adj_ung**
+        let rateAdjust n ung adj_ung = 
+            let n = [name] |> List.append n |> Name.create
+            createNew n (unitGroup ung adj_ung) |> RateAdjust
 
         /// Set the name of the rate adjust `Variable` to **n**
         let setName n rte =
-            let n = [n |> N.toString; name] |> N.create
+            let n = [n |> Name.toString; name] |> Name.create
             rte |> toVarUnt |> setName n |> RateAdjust
 
         /// Turn a `RateAdjust` to a string
@@ -521,6 +584,9 @@ module VariableUnit =
 
         /// Type that represents a dose quantity, total and rate
         type Dose = Dose of QT.Quantity * TL.Total * RT.Rate
+
+        /// Create a `Dose` 
+        let create qty tot rte = (qty, tot, rte) |> Dose
 
         /// Turn `Dose` in a dose quantity, total and rate `VariableUnit`
         let toVarUnt (Dose(qty, total, rate)) = 
@@ -580,6 +646,9 @@ module VariableUnit =
 
         /// Type that represents an adjusted dose quantity, total and rate
         type DoseAdjust = DoseAdjust of QT.QuantityAdjust * TL.TotalAdjust * RT.RateAdjust
+
+        /// Create a `DoseAdjust` 
+        let create qty tot rte = (qty, tot, rte) |> DoseAdjust
 
         /// Turn `DoseAdjust` in an adjusted quantity, total and rate `VariableUnit`
         let toVarUnt (DoseAdjust(qty, total, rate)) = 

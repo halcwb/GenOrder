@@ -32,10 +32,10 @@ NUGET
     Informedica.GenSolver.Lib (0.2.2-beta)
       FSPowerPack.Community
       Informedica.GenUtils.Lib
-    Informedica.GenUnits.lib (0.4.3-beta)
+    Informedica.GenUnits.lib (0.4.4-beta)
       FSPowerPack.Community
       Informedica.GenUtils.Lib
-    Informedica.GenUtils.Lib (0.2.1-beta)
+    Informedica.GenUtils.Lib (0.3.0-beta)
       FSPowerPack.Community
     Microsoft.Bcl (1.1.10) - framework: net10, net11, net20, net30, net35, net40, net40-full
       Microsoft.Bcl.Build (>= 1.0.14)

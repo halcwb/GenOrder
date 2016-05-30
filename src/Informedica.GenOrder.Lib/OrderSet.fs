@@ -8,10 +8,11 @@ module OrderSet =
     open Informedica.GenUnits.Lib
     open Informedica.GenUtils.Lib.BCL
 
+    open Informedica.GenWrap.Lib.WrappedString
+
     module EQ = Informedica.GenSolver.Lib.Equation
 
     module Dose = VariableUnit.Dose
-    module Name = VariableUnit.Name
     module DoseAdjust = VariableUnit.DoseAdjust
 
     /// Represents a set of `Order`s
@@ -71,7 +72,7 @@ module OrderSet =
             |> getItemTotals
             |> List.map (fun (d, _) -> d |> Dose.getName)
 
-        let nm = itm |> Orderable.Item.getName |> VariableUnit.Name.toString
+        let nm = itm |> Orderable.Item.getName |> Name.toString
         nms |> List.exists ((=) nm)
         
     // Adds an `Orderable` total
@@ -84,7 +85,7 @@ module OrderSet =
                 |> Orderable.getUnitGroup 
                 |> UnitGroup.getAll |> fst
                 |> UnitGroup.nameToString]
-                |> VariableUnit.Name.create
+                |> Name.create
             let dos = orb.Dose |> Dose.setName n
             let dsa = orb.DoseAdjust |> DoseAdjust.setName n
             { ors with 

@@ -60,7 +60,8 @@
     <Content Include="InstallationDummyFile.txt">
       <Paket>True</Paket>
     </Content>
-    <Compile Include="Primitives.fs" />
+    <Compile Include="Option.fs" />
+    <Compile Include="WrappedString.fs" />
     <Compile Include="Solver.fs" />
     <Compile Include="Unit.fs" />
     <Compile Include="VariableUnit.fs" />
@@ -74,6 +75,7 @@
     <None Include="Scripts\load-project-release.fsx" />
     <None Include="Scripts\Script.fsx" />
     <None Include="Scripts\OrderSet.fsx" />
+    <None Include="Scripts\Lab.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

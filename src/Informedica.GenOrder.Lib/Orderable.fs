@@ -8,6 +8,7 @@
 module Orderable =
 
     open Informedica.GenUtils.Lib.BCL
+    open Informedica.GenWrap.Lib.WrappedString
     
     /// Contains string constants
     /// to create `Variable` names
@@ -32,10 +33,10 @@ module Orderable =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Item =
 
-        module ID = Primitives.Id
+        module ID = Id
         module LT = Literals
         module VU = VariableUnit
-        module NM = VU.Name
+        module NM = Name
         module QT = VU.Quantity
         module CN = VU.Concentration
         module TL = VU.Total
@@ -304,10 +305,10 @@ module Orderable =
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Component =
 
-        module ID = Primitives.Id
+        module ID = Id
         module LT = Literals
         module VU = VariableUnit
-        module NM = VU.Name
+        module NM = Name
         module QT = VU.Quantity
         module CT = VU.Count
         module CN = VU.Concentration
@@ -590,7 +591,7 @@ module Orderable =
             }    
 
 
-    module ID = Primitives.Id
+    module ID = Id
     module NM = Informedica.GenSolver.Lib.Variable.Name
     module LT = Literals
     module VU = VariableUnit
