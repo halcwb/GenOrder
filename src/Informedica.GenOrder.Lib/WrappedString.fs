@@ -6,7 +6,6 @@ module WrappedString =
 
     /// Type and functions that 
     /// deal with an identifier
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Id = 
 
         type Id = Id of string
@@ -18,7 +17,6 @@ module WrappedString =
         let toString (Id s) = s
 
     /// Helper functions for `Informedica.GenSolver.Variable.Name` type
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Name =
         
         open Informedica.GenSolver.Lib

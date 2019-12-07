@@ -6,13 +6,13 @@
 module Solver =
 
     open Informedica.GenUtils.Lib
+    open Informedica.GenUnits.Lib
 
     module N = Informedica.GenSolver.Lib.Variable.Name
     module SV = Informedica.GenSolver.Api
     module VR = Informedica.GenSolver.Lib.Variable
     module VL = VR.ValueRange
     module EQ = Informedica.GenSolver.Lib.Equation
-    module UN = Informedica.GenUnits.Lib.CombiUnit
     
     [<Literal>]
     let vals = "vals"
@@ -46,14 +46,13 @@ module Solver =
         | MaxIncl -> maxincl
         | MaxExcl -> maxexcl
 
-    /// Turn a set of values `vs` to base values of
-    /// unit `u`
-    let toBase u vs = 
+    /// Turn a set of values `vs` to base values 
+    let toBase vs = 
         vs 
-        |> List.map (UN.toBase u)
+        |> List.map ValueUnit.toBase
     
     /// Solve a set of equations setting a property `p` with
-    /// name `n`, to a valueset `vs` with unit `u`.
-    let solve (N.Name n) p vs u = SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase u)
+    /// name `n`, to a valueset `vs`.
+    let solve (N.Name n) p vs = SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase)
 
 

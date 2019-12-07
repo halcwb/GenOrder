@@ -1,60 +1,59 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Informedica.GenOrder.Lib", "src\Informedica.GenOrder.Lib\Informedica.GenOrder.Lib.fsproj", "{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29424.173
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E101D488-94B4-4FB5-B1AC-732ECA83E960}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7CF66E32-64FC-452F-B29D-73097E06C233}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Informedica.GenOrder.Lib", "src\Informedica.GenOrder.Lib\Informedica.GenOrder.Lib.fsproj", "{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{A4803FE9-FFB3-4ECA-9778-C04E8B3A3C50}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		.travis.yml = .travis.yml
+		appveyor.yml = appveyor.yml
+		build.cmd = build.cmd
 		build.fsx = build.fsx
+		build.sh = build.sh
 		LICENSE.txt = LICENSE.txt
+		paket.cmd = paket.cmd
 		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
+		Procfile = Procfile
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
+		ToDo.txt = ToDo.txt
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{80FD0F28-7510-4EE6-869A-A56861B6B236}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{3863CDD3-8D26-45D9-AD35-1725063B346A}"
-	ProjectSection(SolutionItems) = preProject
-		docs\content\index.fsx = docs\content\index.fsx
-		docs\content\tutorial.fsx = docs\content\tutorial.fsx
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{0D6559CE-9C92-4A56-9814-CC0B9D21F656}"
-	ProjectSection(SolutionItems) = preProject
-		docs\tools\generate.fsx = docs\tools\generate.fsx
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{B0FF5F4E-ED74-4C44-9BB9-B3410311F700}"
-	ProjectSection(SolutionItems) = preProject
-		scripts\settings.fsx = scripts\settings.fsx
-	EndProjectSection
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Informedica.GenOrder.Tests", "tests\Informedica.GenOrder.Tests\Informedica.GenOrder.Tests.fsproj", "{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38145861-F7AB-4AA0-AF1E-5A04567FA4CF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9182A49F-B1C0-40FA-AF0C-06FF5956CC81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|x64.Build.0 = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Debug|x86.Build.0 = Debug|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|x64.ActiveCfg = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|x64.Build.0 = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|x86.ActiveCfg = Release|Any CPU
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{3863CDD3-8D26-45D9-AD35-1725063B346A} = {80FD0F28-7510-4EE6-869A-A56861B6B236}
-		{0D6559CE-9C92-4A56-9814-CC0B9D21F656} = {80FD0F28-7510-4EE6-869A-A56861B6B236}
+		{39BF3B1D-A1EC-4218-AF58-17AA34BA2FCE} = {E101D488-94B4-4FB5-B1AC-732ECA83E960}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6EB5B153-792B-445A-AD06-85725CE072C2}
 	EndGlobalSection
 EndGlobal

@@ -4,11 +4,11 @@
 /// Types and functions to deal 
 /// with an `Orderable`, i.e. something
 /// that can be ordered.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Orderable =
 
     open Informedica.GenUtils.Lib.BCL
     open Informedica.GenWrap.Lib.WrappedString
+    open Informedica.GenUnits.Lib
     
     /// Contains string constants
     /// to create `Variable` names
@@ -30,7 +30,6 @@ module Orderable =
     /// Type and functions that models an
     /// `Order` `Item` that is contained in 
     /// a `Component`
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Item =
 
         module ID = Id
@@ -91,18 +90,18 @@ module Orderable =
         ///
         /// **id**: the order id
         /// **s**: the string name of the item
-        /// **u1**: the unit of the item
-        /// **u2**: the unit of the component that contains the item
+        /// **un**: the unit of the item
+        /// **su**: the shape unit of the component that contains the item
         /// **adj**: the unit to adjust the item dose
-        let createNew id (nm, u1) u2 adj =
+        let createNew id (nm, un) su adj =
             let s = [LT.item] |> List.append [id |> ID.toString; nm |> NM.toString]
 
-            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u1
-            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u1
-            let cmp_cnc = let s = [LT.``component``] |> List.append s in CN.conc s u1 u2
-            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s u1 u2
-            let dos     = let s = [LT.dose]          |> List.append s in DS.dose s u1
-            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u1 adj
+            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s un
+            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s un
+            let cmp_cnc = let s = [LT.``component``] |> List.append s in CN.conc s un su
+            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s un su
+            let dos     = let s = [LT.dose]          |> List.append s in DS.dose s un su
+            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s un su adj
 
             create id nm cmp_qty orb_qty cmp_cnc orb_cnc dos dos_adj
 
@@ -302,7 +301,6 @@ module Orderable =
     /// `Component` in an `Orderable`. 
     /// A `Component` contains a list 
     /// of `Item`s
-    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Component =
 
         module ID = Id
@@ -376,20 +374,22 @@ module Orderable =
         /// Create a new component with
         ///
         /// * `sl`: list of item name and unit name tuples
-        /// * `u1`: unit name of component
+        /// * `un`: unit name of component
+        /// * `su`: unit name of shape
         /// * `adj`: adjust unit to adjust the dose
-        let createNew id nm sl u adj =
+        /// * `tu`: unit name of time
+        let createNew id nm sl un su adj tu =
             let s = [id |> ID.toString; nm |> NM.toString; LT.``component``]
-            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s u
-            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s u
+            let cmp_qty = let s = [LT.``component``] |> List.append s in QT.quantity s un
+            let orb_qty = let s = [LT.orderable]     |> List.append s in QT.quantity s un
             let orb_cnt = let s = [LT.orderable]     |> List.append s in CT.count s
-            let ord_qty = let s = [LT.order]         |> List.append s in QT.quantity s u
+            let ord_qty = let s = [LT.order]         |> List.append s in QT.quantity s un
             let ord_cnt = let s = [LT.order]         |> List.append s in CT.count s
-            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s u u
-            let dos = let s = [LT.dose]              |> List.append s in DS.dose s u
-            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s u adj
+            let orb_cnc = let s = [LT.orderable]     |> List.append s in CN.conc s un su
+            let dos = let s = [LT.dose]              |> List.append s in DS.dose s un tu
+            let dos_adj = let s = [LT.doseAdjust]    |> List.append s in DA.doseAdjust s un adj tu
 
-            let ii = sl |> List.map (fun s -> IT.createNew id s u adj)
+            let ii = sl |> List.map (fun s -> IT.createNew id s un adj)
 
             create id nm cmp_qty orb_qty orb_cnt ord_qty ord_cnt orb_cnc dos dos_adj ii
 
@@ -647,16 +647,20 @@ module Orderable =
         }
 
     /// Create a new `Orderable` with a `Component` list
-    /// `cl`, an `Orderable`unit `u` and adjust unit groep `adj`
-    let createNew id nm cl u adj =
+    /// `cl`, and 
+    /// * `Orderable`unit `un` and 
+    /// * shape unit `su`
+    /// * adjust unit groep `adj` and
+    /// * time unit `tu`
+    let createNew id nm cl un su adj tu =
         let s =  [id |> ID.toString; nm |> NM.toString; LT.orderable]
-        let orb_qty = let s = [LT.orderable]  |> List.append s in QT.quantity s u
-        let ord_qty = let s = [LT.order]      |> List.append s in QT.quantity s u
+        let orb_qty = let s = [LT.orderable]  |> List.append s in QT.quantity s un
+        let ord_qty = let s = [LT.order]      |> List.append s in QT.quantity s un
         let orb_cnt = let s = [LT.order]      |> List.append s in CT.count s
-        let dos     = let s = [LT.dose]       |> List.append s in DS.dose s u
-        let dos_ajd = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s u adj
+        let dos     = let s = [LT.dose]       |> List.append s in DS.dose s un tu
+        let dos_ajd = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s un adj tu
 
-        let cc = cl |> List.map (fun (c, sl) -> CM.createNew id c sl u adj)
+        let cc = cl |> List.map (fun (c, sl) -> CM.createNew id c sl un su adj tu)
 
         create id nm orb_qty ord_qty orb_cnt dos dos_ajd cc
 
@@ -679,11 +683,11 @@ module Orderable =
     // Get the `Orderable` adjusted dose
     let getDoseAdjust orb = (orb |> get).DoseAdjust
 
-    // Get the base `UnitGroup` of an `Orderable`
+    // Get the base `Unit` of an `Orderable`
     let getUnitGroup orb = 
         (orb |> get).OrderableQuantity
         |> QT.toVarUnt
-        |> VU.getUnitGroup
+        |> VU.getUnit
 
     /// Map an `Orderable` **orb** to
     /// `VariableUnit`s

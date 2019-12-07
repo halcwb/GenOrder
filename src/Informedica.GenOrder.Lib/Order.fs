@@ -4,7 +4,6 @@
 /// An `Order` models the `Prescription` of an 
 /// `Orderable` with a `StartStop` start date and
 /// stop date.
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Order =
 
     /// Contains literals used
@@ -18,8 +17,6 @@ module Order =
     /// enable mapping of a `Variable`s
     /// to an `Order`
     module Mapping =
-
-        module UN = Unit
 
         type Map =
             | Freq
@@ -105,14 +102,11 @@ module Order =
     open System
 
     open Informedica.GenUtils.Lib.BCL
-
+    open Informedica.GenUnits.Lib
     open Informedica.GenWrap.Lib.WrappedString
 
     module LT = Literals
     module ID = Id
-    module CS = Informedica.GenUnits.Lib.Constants
-    module CU = Informedica.GenUnits.Lib.CombiUnit
-    module UG = Informedica.GenUnits.Lib.UnitGroup
     module EQ = Informedica.GenSolver.Lib.Equation
     module OB = Orderable
     module PR = Prescription
@@ -157,14 +151,14 @@ module Order =
     /// * adj: by which doses are adjusted
     /// * orb: the `Orderable`
     /// * prs: `Prescription`, how the orderable is prescribed
-    /// * rot: the route of administration of the orderable
-    let create id adj_qty orb prs rot sts =
+    /// * rte: the route of administration of the orderable
+    let create id adj_qty orb prs rte sts =
         {
             Id = id
             Adjust = adj_qty 
             Orderable = orb
             Prescription = prs
-            Route = rot
+            Route = rte
             StartStop = sts
         }
 
@@ -173,15 +167,16 @@ module Order =
     /// * id: the unique id in an `OrderSet` of an `Order`
     /// * nm: the name of the `Orderable`
     /// * cil: the names for the `Component`s, each with a list of name, string tuples for `Item`s
-    /// * orb_ung: the unitgroup name for the `Orderable` and its `Component`s
-    /// * adj_ung: the unitgroup used to adjust doses
+    /// * orb_un: the unit name for the `Orderable` and its `Component`s
+    /// * cmp_un: the unit for the `Component`
+    /// * adj_un: the unit used to adjust doses
     /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
     /// * route: the route of administration
-    let createNew id nm cil orb_ung adj_ung str_prs route = 
-        let orb = OB.createNew id nm cil orb_ung adj_ung
+    let createNew id nm cil orb_un cmp_un adj_un tme_un str_prs route = 
+        let orb = OB.createNew id nm cil orb_un cmp_un adj_un tme_un
         let nm  = orb |> OB.getName
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
-        let adj = adj_ung |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
+        let adj = adj_un |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
 
         create id adj orb prs route sts
@@ -238,24 +233,6 @@ module Order =
         }
 
 
-    // Add unit group of corresponding variableunit with name to unit
-    // and create a combined unit from the string
-    let createUnit succ fail n u vul = 
-        let us = u |> String.split "/"
-        match vul |> VU.tryFindVarUnt n with
-        | Some vu -> 
-            vu
-            |> VU.getUnitGroup 
-            |> UG.toString
-            |> String.split CS.divs
-            |> List.fold2 (fun s u ug -> 
-                if s = "" then u + CS.openBr + ug + CS.closBr
-                else s + CS.divs + u + CS.openBr + ug + CS.closBr) "" us
-            |> CU.fromString
-            |> succ
-        | None -> vul |> fail
-
-
     /// Turn an order into a list of string
     /// representing variable name, valuerange 
     /// and unit group
@@ -270,8 +247,8 @@ module Order =
     /// * n: the name of the variable to be set
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
-    /// * v: the values to be set
-    let solve n m p v u o =
+    /// * vs: the values to be set
+    let solve n m p vs u o =
         let toEql (prod, sum) =
             prod 
             |> List.map toProd
@@ -282,8 +259,6 @@ module Order =
             | EQ.ProductEquation(y, xs) 
             | EQ.SumEquation(y, xs) -> y::xs)
 
-        let createUnit = createUnit Some (fun _ -> None)
-
         let dls = "."
         let n =
             match m with
@@ -292,12 +267,11 @@ module Order =
 
         let prod, sum = o |> toEqs
 
-        match sum::prod |> createUnit n u with
-        | Some cu ->
-            (prod, sum) 
-            |> toEql
-            |> SV.solve n p v cu
-            |> toVars
-            |> fromEqs o
-        | None -> o
+        let vu = vs |> List.map (ValueUnit.create u)
+
+        (prod, sum) 
+        |> toEql
+        |> SV.solve n p vu
+        |> toVars
+        |> fromEqs o
 
