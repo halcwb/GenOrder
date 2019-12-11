@@ -8,7 +8,7 @@ module OrderSet =
     open Informedica.GenUnits.Lib
     open Informedica.GenUtils.Lib.BCL
 
-    open Informedica.GenWrap.Lib.WrappedString
+    open WrappedString
 
     module EQ = Informedica.GenSolver.Lib.Equation
 
@@ -55,14 +55,18 @@ module OrderSet =
     /// Check if `OrderSet` allready contains 
     /// a total for the `Orderable` **orb**
     let containsOrderableTotal orb ors =
-        let ungs =
+        let uns =
             ors
             |> getOrderableTotals
-            |> List.map (fun (d, _) -> d |> Dose.toVarUnt)
-            |> List.map (fun (d, _, _) -> d.UnitGroup |> UnitGroup.getAll |> fst)
+            |> List.map (fun (d, _) -> 
+                let vu, _, _ =
+                    d 
+                    |> Dose.toVarUnt
+                vu |> VariableUnit.getUnit
+            )
 
-        let ung = orb |> Orderable.getUnitGroup |> UnitGroup.getAll |> fst
-        ungs |> List.exists ((=) ung)
+        let un = orb |> Orderable.getUnit 
+        uns |> List.exists ((=) un)
         
     /// Check if `OrderSet` allready contains 
     /// a total for the `Item` **itme**
@@ -81,11 +85,10 @@ module OrderSet =
         if ors |> containsOrderableTotal orb then ors
         else
             let n = 
-                [orb 
-                |> Orderable.getUnitGroup 
-                |> UnitGroup.getAll |> fst
-                |> UnitGroup.nameToString]
-                |> Name.create
+                [ orb 
+                  |> Orderable.getUnit 
+                  |> ValueUnit.unitToString ]
+                |> Name.create 
             let dos = orb.Dose |> Dose.setName n
             let dsa = orb.DoseAdjust |> DoseAdjust.setName n
             { ors with 
@@ -112,12 +115,12 @@ module OrderSet =
     /// properties for a specific `UnitGroup` **ung**
     /// to calculate the totals for that `UnitGroup` in
     /// and `OrderSet`
-    let getOrderableVarUnts ung ors =
+    let getOrderableVarUnts un ors =
         ors
         |> getOrders
         |> List.map Order.getOrderable
         |> List.filter (fun orb ->
-            orb |> Orderable.getUnitGroup = ung 
+            orb |> Orderable.getUnit = un 
         )
         |> List.map (fun orb ->
             (orb.Dose |> Dose.toVarUnt, orb.DoseAdjust |> DoseAdjust.toVarUnt)
@@ -167,7 +170,7 @@ module OrderSet =
                 let ((dq, dt, dr), (ad, at, ar)) = tot
                 match dq with
                 | vru::_ -> 
-                    let ung = vru |> VariableUnit.getUnitGroup
+                    let ung = vru |> VariableUnit.getUnit
                     let xs =  ors |> getOrderableVarUnts ung
                     xs 
                     |> List.fold (fun acc tot' ->
@@ -296,7 +299,7 @@ module OrderSet =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * v: the values to be set
-    let solve n p v u ors =
+    let solve n p vs u ors =
         let n = [n] |> Name.create
 
         let toEql (prod, sum) =
@@ -309,17 +312,14 @@ module OrderSet =
             | EQ.ProductEquation(y, xs) 
             | EQ.SumEquation(y, xs) -> y::xs)
 
-        let createUnit = Order.createUnit Some (fun _ -> None)
-
         let prod, sum = ors |> toEqs
 
-        match (sum @ prod) |> createUnit n u with
-        | Some cu ->
-            (prod, sum) 
-            |> toEql
-            |> Solver.solve n p v cu
-            |> toVars
-            |> fromEqs ors
-        | None -> ors
+        let vus = vs |> List.map (ValueUnit.create u)
+        
+        (prod, sum) 
+        |> toEql
+        |> Solver.solve n p vus
+        |> toVars
+        |> fromEqs ors
 
 

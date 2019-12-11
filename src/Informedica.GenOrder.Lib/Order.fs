@@ -103,7 +103,7 @@ module Order =
 
     open Informedica.GenUtils.Lib.BCL
     open Informedica.GenUnits.Lib
-    open Informedica.GenWrap.Lib.WrappedString
+    open WrappedString
 
     module LT = Literals
     module ID = Id
@@ -170,10 +170,11 @@ module Order =
     /// * orb_un: the unit name for the `Orderable` and its `Component`s
     /// * cmp_un: the unit for the `Component`
     /// * adj_un: the unit used to adjust doses
+    /// * tme_un: the unit for time
     /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
     /// * route: the route of administration
-    let createNew id nm cil orb_un cmp_un adj_un tme_un str_prs route = 
-        let orb = OB.createNew id nm cil orb_un cmp_un adj_un tme_un
+    let createNew id n cil orb_un cmp_un tme_un adj_un str_prs route = 
+        let orb = OB.createNew id n cil orb_un cmp_un tme_un adj_un
         let nm  = orb |> OB.getName
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
         let adj = adj_un |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
@@ -267,11 +268,11 @@ module Order =
 
         let prod, sum = o |> toEqs
 
-        let vu = vs |> List.map (ValueUnit.create u)
+        let vus = vs |> List.map (ValueUnit.create u)
 
         (prod, sum) 
         |> toEql
-        |> SV.solve n p vu
+        |> SV.solve n p vus
         |> toVars
         |> fromEqs o
 

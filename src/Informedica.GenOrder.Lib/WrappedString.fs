@@ -1,4 +1,4 @@
-﻿namespace Informedica.GenWrap.Lib
+﻿namespace Informedica.GenOrder.Lib
 
 /// Types and functions to deal with
 /// value primitives

@@ -9,12 +9,14 @@
 
 #time
     
-open Informedica.GenUtils.Lib.BCL
 open Informedica.GenUnits.Lib
 open Informedica.GenOrder.Lib
 
+module Quantity = VariableUnit.Quantity
+
 ValueUnit.Units.Mass.milliGram
 |> VariableUnit.Quantity.quantity ["gentamicin"] 
+|> Quantity.toString
 
 VariableUnit.RateAdjust.rateAdjust 
     ["dopamin"]

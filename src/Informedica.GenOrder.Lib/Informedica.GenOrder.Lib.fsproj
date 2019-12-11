@@ -14,7 +14,10 @@
     <Compile Include="Prescription.fs" />
     <Compile Include="Order.fs" />
     <Compile Include="OrderSet.fs" />
-    <None Include="Scripts/Script.fsx" />
+    <None Include="Scripts\VariableUnit.fsx" />
+    <None Include="Scripts\Orderable.fsx" />
+    <None Include="Scripts/Lab.fsx" />
+    <None Include="Scripts/OrderSet.fsx" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

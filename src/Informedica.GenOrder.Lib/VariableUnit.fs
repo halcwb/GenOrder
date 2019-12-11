@@ -3,10 +3,12 @@
 /// Functions that deal with the `VariableUnit` type
 module VariableUnit =
 
+    open MathNet.Numerics
+
     open Informedica.GenUtils.Lib
     open Informedica.GenUtils.Lib.BCL
-    open Informedica.GenWrap.Lib.WrappedString
     open Informedica.GenUnits.Lib
+    open WrappedString
     
     module Variable    = Informedica.GenSolver.Lib.Variable
     module VariableDto = Informedica.GenSolver.Lib.Dtos.Variable
@@ -31,23 +33,23 @@ module VariableUnit =
          
     /// Create a new `VariableUnit` with
     /// `Name` **nm** and `Unit` **un**
-    let createNew nm un = 
+    let createNew n un = 
         let var = 
-            Variable.createSucc nm ValueRange.unrestricted
+            Variable.createSucc n ValueRange.unrestricted
             |> Variable.setNonZeroOrNegative
         { Variable = var; Unit = un } 
         
     /// Create a `VariableUnit` with preset values
-    let create nm unr vs min incr max un =
+    let create n vs min incr max un =
         let succ = Some
         let fail = Option.none
 
-        ValueRange.create succ fail unr vs min incr max
+        ValueRange.create succ fail true vs min incr max
         |> function
         | Some vlr ->
-            let var = Variable.create id nm vlr        
+            let var = Variable.create id n vlr        
             { Variable = var; Unit = un }
-        | None -> createNew nm un
+        | None -> createNew n un
 
     /// Create a `VariableUnit` with
     /// `Variable` **var** and `Unit` **un**
@@ -136,32 +138,105 @@ module VariableUnit =
         |> Variable.getValueRange
         |> ValueRange.toString) + " " + us
 
+    let getUnits vu =
+        (vu |> get).Unit
+        |> ValueUnit.getUnits []
+
+    /// Helper functions for `Informedica.GenSolver.Variable.Name` type
+    module Name =
+     
+        module N = Informedica.GenSolver.Lib.Variable.Name
+
+        type Name = N.Name
+
+        /// Create a `Name` from a list of strings that 
+        let create ns = ns |> String.concat "." |> N.createExc
+
+        let toString = N.toString
+
     /// Type and functions to handle the `Dto` 
     /// data transfer type for a `VariableUnit`
     module Dto =
+
+        module ValueRange = Variable.ValueRange
                     
-        type Dto = 
-            {
-                Id: string
-                Name: string
-                Mapping: string
-                Unit: string
-                Variable: VariableDto.Dto
-            }
+        type Dto () = 
+            member val Name = "" with get, set
+            member val Unit = "" with get, set
+            member val Vals : BigRational list = [] with get, set
+            member val Min : BigRational option = None with get, set
+            member val MinIncl = false with get, set
+            member val Incr : BigRational option = None with get, set
+            member val Max : BigRational option = None with get, set
+            member val MaxIncl = false with get, set 
+
+        let dto () = Dto ()
 
         let fromDto (dto: Dto) =
             let map  = Option.map
             let none = Option.none
             let bind = Option.bind
-            let var  = dto.Variable
 
-            let nm   = [dto.Id; dto.Name; dto.Mapping] |> Name.create 
-            let vals = var.Vals |> Set.ofList
-            let min  = var.Min  |> map  (Variable.ValueRange.createMin  var.MinIncl)
-            let incr = var.Incr |> bind (Variable.ValueRange.createIncr Some none)
-            let max  = var.Max  |> map  (Variable.ValueRange.createMax  var.MaxIncl)
+            let n    = [ dto.Name ] |> Name.create 
+            let vals = dto.Vals |> Set.ofList
+            let min  = dto.Min  |> map  (ValueRange.createMin  dto.MinIncl)
+            let incr = dto.Incr |> bind (ValueRange.createIncr Some none)
+            let max  = dto.Max  |> map  (ValueRange.createMax  dto.MaxIncl)
 
-            create nm dto.Variable.Unr vals min incr max
+            let un =
+                dto.Unit
+                |> ValueUnit.Units.fromString
+                |> function
+                | Some u -> u
+                | None -> ValueUnit.NoUnit
+
+            create n vals min incr max un
+
+        let toDto vu =
+            let dto = dto ()
+            let vr =
+                vu 
+                |> getVar 
+                |> Variable.getValueRange
+            let min, inclMin = 
+                vr 
+                |> ValueRange.getMin
+                |> function 
+                | Some m -> 
+                    m 
+                    |> ValueRange.minToValue
+                    |> Some, m |> ValueRange.isMinIncl
+                | None -> None, false
+            let max, inclMax = 
+                vr 
+                |> ValueRange.getMax
+                |> function 
+                | Some m -> 
+                    m 
+                    |> ValueRange.maxToValue
+                    |> Some, 
+                    m |> ValueRange.isMaxIncl
+                | None -> None, false
+
+            dto.Name <- 
+                vu |> getName |> Name.toString
+            dto.Unit <-
+                vu |> getUnit |> ValueUnit.unitToString
+            dto.Vals <-
+                vr
+                |> ValueRange.getValueSet
+                |> Set.toList
+            dto.Incr <-
+                vr
+                |> ValueRange.getIncr
+                |> Option.bind (ValueRange.incrToValue >> Some)
+            dto.Min <- min
+            dto.MinIncl <- inclMin
+            dto.Max <- max
+            dto.MaxIncl <- inclMax
+
+            dto
+
 
     /// Type and functions that represent a frequency
     module Frequency =
@@ -175,13 +250,24 @@ module VariableUnit =
         /// Turn `Frequency` in a `VariableUnit`
         let toVarUnt (Frequency freq) = freq
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits = toVarUnt >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Frequency
+
         /// Set a `Frequency` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Frequency 
 
         /// Create a `Frequency` with a preset `Variable`
-        let create nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Frequency
         
         /// Create a `Frequency` with name **n**
@@ -211,20 +297,33 @@ module VariableUnit =
         /// Turn `Time` in a `VariableUnit`
         let toVarUnt (Time time) = time
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits = toVarUnt >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Time
+        
         /// Set a `Time` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Time 
 
         /// Create a `Time` with a preset `Variable`
-        let create succ fail nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Time
             
         /// Create a `Time` with name **n**
         /// with `Unit` **un**
         let time n un = 
             let n = [name] |> List.append n |> Name.create
-            createNew n un |> Time
+            
+            createNew n un 
+            |> Time
 
         /// Turn a `Time` to a string
         let toString = toVarUnt >> toString
@@ -241,13 +340,24 @@ module VariableUnit =
         /// Turn `Count` in a `VariableUnit`
         let toVarUnt (Count qty) = qty
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits = toVarUnt >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Count
+        
         /// Set a `Count` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Count 
 
         /// Create a `Count` with a preset `Variable`
-        let create nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Count
             
         /// Create a `Count` with name **n**
@@ -272,13 +382,26 @@ module VariableUnit =
         /// Turn `Quantity` in a `VariableUnit`
         let toVarUnt (Quantity qty) = qty
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+        
+        let toDto = toVarUnt >> Dto.toDto
+        
+        let fromDto dto = dto |> Dto.fromDto |> Quantity
+
         /// Set a `Quantity` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Quantity 
         
         /// Create a `Quantity` with a preset `Variable`
-        let create nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Quantity
 
         /// Create a `Quantity` with name **n**
@@ -311,13 +434,26 @@ module VariableUnit =
         /// Turn `Total` in a `VariableUnit`
         let toVarUnt (Total tot) = tot
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Total
+
         /// Set a `Total` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Total 
         
         /// Create a `Total` with a preset `Variable`
-        let create nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Total
         
         /// Create a `Total` with name **n**
@@ -352,13 +488,26 @@ module VariableUnit =
         /// Turn `Rate` in a `VariableUnit`
         let toVarUnt (Rate rate) = rate
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Rate
+
         /// Set a `Rate` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Rate 
 
         /// Create a `Rate` with a preset `Variable`
-        let create nm unr vs min incr max un = 
-            create nm unr vs min incr max un 
+        let create n vs min incr max un = 
+            create n vs min incr max un 
             |> Rate
                 
         /// Create a `Rate` with name **n**
@@ -393,14 +542,27 @@ module VariableUnit =
         /// Turn `Concentration` in a `VariableUnit`
         let toVarUnt (Concentration conc) = conc
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> Concentration
+
         /// Set a `Concentration` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt Concentration 
         
         /// Create a `Concentration` with a preset `Variable`
-        let create nm unr vs min incr max un = 
+        let create n vs min incr max un = 
             un
-            |> create nm unr vs min incr max
+            |> create n vs min incr max
             |> Concentration
                 
         /// Create a `Concentration` with name **n**
@@ -430,14 +592,27 @@ module VariableUnit =
         /// Turn `QuantityAdjust` in a `VariableUnit`
         let toVarUnt (QuantityAdjust qty) = qty
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> QuantityAdjust
+
         /// Set a `QuantityAdjust` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt QuantityAdjust 
 
         /// Create a `QuantityAdjust` with a preset `Variable`
-        let create nm unr vs min incr max un = 
+        let create n vs min incr max un = 
             un
-            |> create nm unr vs min incr max  
+            |> create n vs min incr max  
             |> QuantityAdjust
         
         /// Create a `QuantityAdjust` with name **n**
@@ -472,14 +647,27 @@ module VariableUnit =
         /// Turn `TotalAdjust` in a `VariableUnit`
         let toVarUnt (TotalAdjust tot) = tot
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> TotalAdjust
+
         /// Set a `TotalAdjust` with a `Variable`
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt TotalAdjust 
 
         /// Create a `TotalAdjust` with a preset `Variable`
-        let create nm unr vs min incr max un = 
+        let create n vs min incr max un = 
             un 
-            |> create nm unr vs min incr max  
+            |> create n vs min incr max  
             |> TotalAdjust
                 
         /// Create a `TotalAdjust` with name **n**
@@ -519,10 +707,23 @@ module VariableUnit =
         /// in a list of `Variable` lists
         let fromVar = fromVar toVarUnt RateAdjust 
 
+        let unitToString =
+            toVarUnt
+            >> getUnit
+            >> ValueUnit.unitToString
+
+        let getUnits =
+            toVarUnt
+            >> getUnits
+        
+        let toDto = toVarUnt >> Dto.toDto
+
+        let fromDto dto = dto |> Dto.fromDto |> RateAdjust
+
         /// Create a `RateAdjust` with a preset `Variable`
-        let create nm unr vs min incr max un =
+        let create n vs min incr max un =
             un
-            |> create nm unr vs min incr max
+            |> create n vs min incr max
             |> RateAdjust
         
         /// Create a `RateAdjust` with name **n**
@@ -566,6 +767,15 @@ module VariableUnit =
         let toVarUnt (Dose(qty, total, rate)) = 
             qty |> QT.toVarUnt, total |> TL.toVarUnt, rate |> RT.toVarUnt
 
+        let toDto = 
+            toVarUnt
+            >> (fun (q, t, r) -> q |> Dto.toDto, t |> Dto.toDto, r |> Dto.toDto)
+
+        let fromDto (q, t, r) =
+            (q |> Dto.fromDto |> QT.Quantity ,
+             t |> Dto.fromDto |> TL.Total ,
+             r |> Dto.fromDto |> RT.Rate) |> Dose
+
         /// Set a `Dose` with a quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
         let fromVar eqs (Dose(qty, tot, rte)) = 
@@ -576,10 +786,10 @@ module VariableUnit =
 
         /// Create a `Dose` with name **n**
         /// and `Unit` **un** per time unit **tu**
-        let dose n un tu = 
+        let dose n un ttu rtu = 
             let qty   = QT.quantity n un
-            let total = TL.total    n un tu
-            let rate  = RT.rate     n un tu
+            let total = TL.total    n un ttu
+            let rate  = RT.rate     n un rtu
 
             (qty, total, rate) 
             |> Dose 
@@ -628,6 +838,15 @@ module VariableUnit =
         let toVarUnt (DoseAdjust(qty, total, rate)) = 
             qty |> QT.toVarUnt, total |> TL.toVarUnt, rate |> RT.toVarUnt
 
+        let toDto = 
+            toVarUnt
+            >> (fun (q, t, r) -> q |> Dto.toDto, t |> Dto.toDto, r |> Dto.toDto)
+
+        let fromDto (q, t, r) =
+            (q |> Dto.fromDto |> QT.QuantityAdjust ,
+             t |> Dto.fromDto |> TL.TotalAdjust ,
+             r |> Dto.fromDto |> RT.RateAdjust) |> DoseAdjust
+
         /// Set a `DoseAdjust` with an adjusted quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
         let fromVar eqs (DoseAdjust(qty, tot, rte)) = 
@@ -638,10 +857,10 @@ module VariableUnit =
 
         /// Create a `DoseAdjust` with name **n**
         /// and `Unit` **un** per adjust **adj** per time unit **tu**
-        let doseAdjust n un adj tu = 
+        let doseAdjust n un adj ttu rtu = 
             let qty   = QT.quantityAdjust n un adj
-            let total = TL.totalAdjust    n un adj tu
-            let rate  = RT.rateAdjust     n un adj tu
+            let total = TL.totalAdjust    n un adj ttu
+            let rate  = RT.rateAdjust     n un adj rtu
 
             (qty, total, rate) 
             |> DoseAdjust

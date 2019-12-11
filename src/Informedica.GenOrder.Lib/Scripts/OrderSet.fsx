@@ -1,59 +1,76 @@
-﻿#load "load-project-release.fsx"
+﻿
+#I __SOURCE_DIRECTORY__
+
+#load "../../../.paket/load/netstandard2.1/main.group.fsx"
+#load "../WrappedString.fs"
+#load "../Solver.fs"
+#load "../ValueUnit.fs"
+#load "../VariableUnit.fs"
+#load "../Orderable.fs"
+#load "../Prescription.fs"
+#load "../Order.fs"
+#load "../OrderSet.fs"
 
 #time
-    
-open Informedica.GenUtils.Lib
+
+open MathNet.Numerics
+open Informedica.GenUnits.Lib
 open Informedica.GenOrder.Lib
 
-
-
 module Name = VariableUnit.Name
-module Id = Primitives.Id
+module Units = ValueUnit.Units
 module Map = Order.Mapping
 
-let lab id frq unt itms =
-    let getItmNm itm =
-        [id; itm |> Name.toString] |> Name.create |> Name.toString
+let lab id itms =
 
     let items =
-        itms |> List.map (fun i -> ([i] |> Name.create, "Count"))
+        itms |> List.map (fun i -> 
+            [i] |> Name.create,
+            ValueUnit.NoUnit
+        )
 
     let ord =
         Order.createNew 
-            (id |> Id.create)
+            (id |> WrappedString.Id.create)
             (["lab"] |> Name.create)
-            ([["lab"] |> Name.create, items])
-            "Count" 
-            "Weight" 
-            Prescription.discontinuous
+            [ ["lab"] |> Name.create, items ]
+            Units.Count.times 
+            Units.Count.times
+            ValueUnit.NoUnit 
+            Units.Time.day
+            (Prescription.discontinuous Units.Time.day Units.Time.day)
             "None"
     ord
 
 let test1 =
-    lab "1" 3N "x/day" ["gluc"; "Na"]  
+    lab "1" ["gluc"; "Na"]  
 
 let pcm =
     Order.createNew 
-        ("2" |> Id.create)
+        ("2" |> WrappedString.Id.create)
         (["paracetamol"] |> Name.create)
         ([["paracetamol"] |> Name.create, [
-            ["paracetamol"] |> Name.create, "Mass"
+            ["paracetamol"] |> Name.create, Units.Mass.milliGram
         ]])
-        "Tablet"
-        "Weight"
-        Prescription.discontinuous
+        (Units.General.general "piece")
+        (Units.General.general "piece")
+        Units.Weight.kiloGram
+        Units.Time.day
+        (Prescription.discontinuous Units.Time.day Units.Time.day)
         "oral"
 
 let pcm2 =
     Order.createNew 
-        ("3" |> Id.create)
+        ("3" |> WrappedString.Id.create)
         (["paracetamol"] |> Name.create)
         ([["paracetamol"] |> Name.create, [
-            ["paracetamol"] |> Name.create, "Mass"
+            ["paracetamol"] |> Name.create, Units.Mass.milliGram
         ]])
-        "Tablet"
-        "Weight"
-        Prescription.discontinuous
+        (Units.General.general "piece")
+        (Units.General.general "piece")
+        Units.Weight.kiloGram
+        Units.Time.day
+        (Prescription.discontinuous Units.Time.day Units.Time.day)
         "oral"
 
 
@@ -72,9 +89,9 @@ let print ors =
 
 let ors' =
     ors
-    |> OrderSet.solve "1.lab.Freq" Solver.Vals [3N] "x/day"
-    |> OrderSet.solve "1.paracetamol.Freq" Solver.Vals [3N] "x/day"
-    |> OrderSet.solve "1.paracetamol.Item.Dose.Qty" Solver.Vals [120N] "mg"
+    |> OrderSet.solve "1.lab.Freq" Solver.Vals [3N] Units.Time.day
+    |> OrderSet.solve "1.paracetamol.Freq" Solver.Vals [3N] Units.Time.day
+    |> OrderSet.solve "1.paracetamol.Item.Dose.Qty" Solver.Vals [120N] Units.Mass.milliGram
 
 
 print ors
@@ -90,8 +107,9 @@ ors
 |> print
 
 ors
-|> OrderSet.solve "1.lab.Freq" Solver.Vals [3N] "x/day"
-|> OrderSet.solve "2.paracetamol.Freq" Solver.Vals [3N] "x/day"
+|> OrderSet.solve "1.lab.Freq" Solver.Vals [3N] Units.Time.day
+|> OrderSet.solve "2.paracetamol.Freq" Solver.Vals [2N..6N] Units.Time.day
 //|> OrderSet.solve "2.paracetamol.Item.Dose.Qty" Solver.Vals [120N] "mg"
-|> OrderSet.solve "paracetamol.Total" Solver.MaxIncl [4N] "g/day"
+|> OrderSet.solve "paracetamol.Total" Solver.MaxIncl [4N] Units.Mass.gram
+|> OrderSet.solve "paracetamol.TotalAdjust" Solver.MaxIncl [90N] Units.Mass.milliGram
 |> print
