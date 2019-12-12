@@ -14,8 +14,8 @@ module VariableUnit =
     module VariableDto = Informedica.GenSolver.Lib.Dtos.Variable
     module Equation    = Informedica.GenSolver.Lib.Equation
     module ValueRange  = Variable.ValueRange
-    
-    type UnitGroup = ValueUnit.Group.Group
+    module Units = ValueUnit.Units
+
     type Variable = Variable.Variable
 
     /// A `VariableUnit` is the combination of 
@@ -184,11 +184,14 @@ module VariableUnit =
             let max  = dto.Max  |> map  (ValueRange.createMax  dto.MaxIncl)
 
             let un =
-                dto.Unit
-                |> ValueUnit.Units.fromString
-                |> function
-                | Some u -> u
-                | None -> ValueUnit.NoUnit
+                if dto.Unit |> String.isNullOrWhiteSpace then 
+                    ValueUnit.NoUnit
+                else
+                    dto.Unit
+                    |> ValueUnit.unitFromString
+                    |> function
+                    | Some u -> u
+                    | None -> ValueUnit.NoUnit
 
             create n vals min incr max un
 
@@ -274,10 +277,12 @@ module VariableUnit =
         /// with `Unit` time unit **tu**
         let frequency n tu = 
             let n = [name] |> List.append n |> Name.create
-            let cu = ValueUnit.Units.Count.times
 
-            cu
-            |> ValueUnit.per tu
+            match tu with 
+            | ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ -> 
+                Units.Count.times
+                |> ValueUnit.per tu
             |> createNew n 
             |> Frequency
 
@@ -363,7 +368,7 @@ module VariableUnit =
         /// Create a `Count` with name **n**
         let count n = 
             let n = [name] |> List.append n |> Name.create
-            let un = ValueUnit.Units.Count.times
+            let un = Units.Count.times
             createNew n un |> Count
 
         /// Turn a `Count` to a string
@@ -461,8 +466,11 @@ module VariableUnit =
         let total n un tu = 
             let n = [name] |> List.append n |> Name.create
             
-            un 
-            |> ValueUnit.per tu
+            match un with
+            | ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un 
+                |> ValueUnit.per tu
             |> createNew n 
             |> Total
 
@@ -515,8 +523,12 @@ module VariableUnit =
         let rate n un1 un2 = 
             let n = [name] |> List.append n |> Name.create
             
-            un1
-            |> ValueUnit.per un2
+            match un1, un2 with
+            | ValueUnit.NoUnit, _ 
+            | _, ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un1
+                |> ValueUnit.per un2
             |> createNew n 
             |> Rate
 
@@ -570,8 +582,12 @@ module VariableUnit =
         let conc n un su = 
             let n = [name] |> List.append n |> Name.create
             
-            un
-            |> ValueUnit.per su
+            match un, su with
+            | ValueUnit.NoUnit, _
+            | _, ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un
+                |> ValueUnit.per su
             |> createNew n
             |> Concentration
 
@@ -620,8 +636,12 @@ module VariableUnit =
         let quantityAdjust n un adj = 
             let n = [name] |> List.append n |> Name.create
 
-            un
-            |> ValueUnit.per adj
+            match un, adj with
+            | ValueUnit.NoUnit, _ 
+            | _, ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un
+                |> ValueUnit.per adj
             |> createNew n 
             |> QuantityAdjust
 
@@ -675,9 +695,14 @@ module VariableUnit =
         let totalAdjust n un adj tu = 
             let n = [name] |> List.append n |> Name.create
 
-            un
-            |> ValueUnit.per adj
-            |> ValueUnit.per tu
+            match un, adj, tu with
+            | ValueUnit.NoUnit, _, _ 
+            | _, ValueUnit.NoUnit, _ 
+            | _, _, ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un
+                |> ValueUnit.per adj
+                |> ValueUnit.per tu
             |> createNew n 
             |> TotalAdjust
 
@@ -731,9 +756,14 @@ module VariableUnit =
         let rateAdjust n un adj tu = 
             let n = [name] |> List.append n |> Name.create
 
-            un
-            |> ValueUnit.per adj
-            |> ValueUnit.per tu
+            match un, adj, tu with
+            | ValueUnit.NoUnit, _, _ 
+            | _, ValueUnit.NoUnit, _ 
+            | _, _, ValueUnit.NoUnit -> ValueUnit.NoUnit
+            | _ ->
+                un
+                |> ValueUnit.per adj
+                |> ValueUnit.per tu
             |> createNew n 
             |> RateAdjust
 

@@ -53,6 +53,7 @@ module Solver =
     
     /// Solve a set of equations setting a property `p` with
     /// name `n`, to a valueset `vs`.
-    let solve (N.Name n) p vs = SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase)
+    let solve (N.Name n) p vs = 
+        SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase)
 
 

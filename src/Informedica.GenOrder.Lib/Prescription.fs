@@ -4,6 +4,8 @@
 /// process, or a continuous prescription or a discontinuous prescription
 /// with or without a time
 module Prescription =
+
+    open Informedica.GenUnits.Lib
     
     module FR = VariableUnit.Frequency
     module TM = VariableUnit.Time
@@ -74,5 +76,87 @@ module Prescription =
             | Timed(frq, tme)     -> [frq |> FR.toString; tme |> TM.toString]
         
                 
+    module Dto =
         
+        module Units = ValueUnit.Units
+        module Id = WrappedString.Id
+        module NM = WrappedString.Name
 
+        type Dto () =
+            member val IsProcess = false with get, set
+            member val IsContinuous = false with get, set
+            member val IsDiscontinuous = false with get, set
+            member val IsTimed = false with get, set
+            member val Frequency = VariableUnit.Dto.dto () with get, set
+            member val Time = VariableUnit.Dto.dto () with get, set
+
+        let fromDto (dto : Dto) =
+            match dto.IsProcess, 
+                  dto.IsContinuous, 
+                  dto.IsDiscontinuous, 
+                  dto.IsTimed with
+            | true,  false, false, false -> Process
+            | false, true,  false, false -> Continuous
+            | false, false, true,  false -> 
+                dto.Frequency
+                |> FR.fromDto
+                |> Discontinuous
+            | false, false, false, true  -> 
+                (dto.Frequency |> FR.fromDto, dto.Time |> TM.fromDto)
+                |> Timed
+            | _ -> exn "dto is neither or both process, continuous, discontinuous or timed"
+                   |> raise 
+
+        let toDto pres =
+            let dto = Dto ()
+
+            match pres with
+            | Process -> dto.IsProcess <- true
+            | Continuous -> dto.IsContinuous <- true
+            | Discontinuous freq ->
+                dto.IsDiscontinuous <- true
+                dto.Frequency <- freq |> FR.toDto
+            | Timed (freq, time) ->
+                dto.IsTimed <- true
+                dto.Frequency <- freq |> FR.toDto
+                dto.Time      <- time |> TM.toDto
+                
+            dto
+
+        let dto n =
+            let dto  = Dto ()
+            let f, t = freqTime ValueUnit.NoUnit ValueUnit.NoUnit [ n ]
+            
+            dto.Frequency <- f |> FR.toDto
+            dto.Time <- t |> TM.toDto
+            dto.IsProcess <- true
+
+            dto
+
+        let setToProcess (dto : Dto) =
+            dto.IsProcess <- true
+            dto.IsContinuous <- false
+            dto.IsDiscontinuous <- false
+            dto.IsTimed <- false
+            dto
+
+        let setToContinuous (dto : Dto) =
+            dto.IsProcess <- false
+            dto.IsContinuous <- true
+            dto.IsDiscontinuous <- false
+            dto.IsTimed <- false
+            dto
+
+        let setToDiscontinuous (dto : Dto) =
+            dto.IsProcess <- false
+            dto.IsContinuous <- false
+            dto.IsDiscontinuous <- true
+            dto.IsTimed <- false
+            dto
+
+        let setToTimed (dto : Dto) =
+            dto.IsProcess <- false
+            dto.IsContinuous <- false
+            dto.IsDiscontinuous <- false
+            dto.IsTimed <- true
+            dto

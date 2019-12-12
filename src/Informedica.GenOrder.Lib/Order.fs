@@ -173,11 +173,11 @@ module Order =
     /// * tme_un: the unit for time
     /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
     /// * route: the route of administration
-    let createNew id n cil orb_un cmp_un tme_un adj_un str_prs route = 
-        let orb = OB.createNew id n cil orb_un cmp_un tme_un adj_un
+    let createNew id n str_prs route = 
+        let orb = OB.createNew id n 
         let nm  = orb |> OB.getName
+        let adj = QT.quantity [ id |> Id.toString; n |> Name.toString;  "Adjust" ] ValueUnit.NoUnit
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
-        let adj = adj_un |> QT.quantity [id |> ID.toString; nm |> NM.toString; LT.adjust]
         let sts = DateTime.Now  |> DT.Start
 
         create id adj orb prs route sts
@@ -276,3 +276,80 @@ module Order =
         |> toVars
         |> fromEqs o
 
+    module Dto =
+        
+        type Dto (id , n) =
+            member val Id = id with get, set
+            member val Adjust = VariableUnit.Dto.dto () with get, set
+            member val Orderable = OB.Dto.dto id n with get, set
+            member val Prescription = Prescription.Dto.dto n with get, set
+            member val Route = "" with get, set
+            member val Start = DateTime.now () with get, set
+            member val Stop : DateTime option = None with get, set
+
+        let fromDto (dto : Dto) =
+            let id = dto.Id |> Id.create
+            let adj_qty = dto.Adjust |> QT.fromDto
+            let orb = dto.Orderable |> OB.Dto.fromDto
+            let prs = dto.Prescription |> Prescription.Dto.fromDto
+            let sts =
+                match dto.Stop with
+                | Some dt -> (dto.Start, dt) |> DT.StartStop
+                | None -> dto.Start |> DT.Start
+
+            create id adj_qty orb prs dto.Route sts
+
+
+        let toDto (ord : Order) =
+            let id = ord.Id |> Id.toString
+            let n = ord.Orderable.Name |> NM.toString
+            let dto = Dto (id, n)
+
+            dto.Adjust <- ord.Adjust |> QT.toDto
+            dto.Orderable <- ord.Orderable |> OB.Dto.toDto
+            dto.Prescription <- ord.Prescription |> Prescription.Dto.toDto
+            dto.Route <- ord.Route
+            let (start, stop) =
+                match ord.StartStop with
+                | DT.Start dt -> (dt, None)
+                | DT.StartStop(start, stop) -> (start, stop |> Some) 
+            dto.Start <- start
+            dto.Stop <- stop
+            
+            dto
+
+        let ``process`` id n rte = 
+            let id = id |> Id.create
+            let n = [ n ] |> Name.create
+            let str_prs = 
+                fun _ -> Prescription.``process`` 
+            
+            createNew id n str_prs rte
+            |> toDto
+
+        let continuous id n rte = 
+            let id = id |> Id.create
+            let n = [ n ] |> Name.create
+            let str_prs = 
+                Prescription.continuous ValueUnit.NoUnit ValueUnit.NoUnit
+    
+            createNew id n str_prs rte
+            |> toDto
+
+        let discontinuous id n rte = 
+            let id = id |> Id.create
+            let n = [ n ] |> Name.create
+            let str_prs = 
+                Prescription.discontinuous ValueUnit.NoUnit ValueUnit.NoUnit
+    
+            createNew id n str_prs rte
+            |> toDto
+
+        let timed id n rte = 
+            let id = id |> Id.create
+            let n = [ n ] |> Name.create
+            let str_prs = 
+                Prescription.timed ValueUnit.NoUnit ValueUnit.NoUnit
+    
+            createNew id n str_prs rte
+            |> toDto
