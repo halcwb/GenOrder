@@ -16,6 +16,8 @@
     <Compile Include="OrderSet.fs" />
     <None Include="Scripts\VariableUnit.fsx" />
     <None Include="Scripts\Orderable.fsx" />
+    <None Include="Scripts\Prescription.fsx" />
+    <None Include="Scripts\Order.fsx" />
     <None Include="Scripts/Lab.fsx" />
     <None Include="Scripts/OrderSet.fsx" />
   </ItemGroup>

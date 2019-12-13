@@ -2,7 +2,6 @@
 
 /// Types and functions that model a 
 /// set of `Order`s. 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module OrderSet =
 
     open Informedica.GenUnits.Lib
@@ -299,7 +298,7 @@ module OrderSet =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * v: the values to be set
-    let solve n p vs u ors =
+    let solve n p vs ors =
         let n = [n] |> Name.create
 
         let toEql (prod, sum) =
@@ -314,8 +313,21 @@ module OrderSet =
 
         let prod, sum = ors |> toEqs
 
-        let vus = vs |> List.map (ValueUnit.create u)
-        
+        let vus = 
+                sum 
+                |> List.append prod
+                |> List.collect id
+                |> List.tryFind (fun vru ->
+                    vru.Variable.Name = n
+                )
+                |> function 
+                | Some vru -> 
+                    vs
+                    |> List.map (ValueUnit.create vru.Unit)
+                | None -> 
+                    printfn "could not find %s" (n |> Name.toString)
+                    [] 
+
         (prod, sum) 
         |> toEql
         |> Solver.solve n p vus

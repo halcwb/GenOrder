@@ -183,7 +183,6 @@ module Orderable =
                 itm_dos_rte_adj
             ] 
             |> List.map VU.toString
-            |> List.sort
 
         
         /// The following variables are used
@@ -291,15 +290,15 @@ module Orderable =
 
         /// create an item from `eqs`, a list of
         /// variable lists
-        let fromEqs eqs (itm: Item) =
+        let fromEqs eqs units (itm: Item) =
             {
                 itm with
-                    ComponentQuantity = QT.fromVar eqs itm.ComponentQuantity
-                    OrderableQuantity = QT.fromVar eqs itm.OrderableQuantity             
-                    ComponentConcentration = CN.fromVar eqs itm.ComponentConcentration
-                    OrderableConcentration = CN.fromVar eqs itm.OrderableConcentration
-                    Dose = DS.fromVar eqs itm.Dose
-                    DoseAdjust = DA.fromVar eqs itm.DoseAdjust
+                    ComponentQuantity = QT.fromVar eqs units itm.ComponentQuantity
+                    OrderableQuantity = QT.fromVar eqs units itm.OrderableQuantity             
+                    ComponentConcentration = CN.fromVar eqs units itm.ComponentConcentration
+                    OrderableConcentration = CN.fromVar eqs units itm.OrderableConcentration
+                    Dose = DS.fromVar eqs units itm.Dose
+                    DoseAdjust = DA.fromVar eqs units itm.DoseAdjust
             }  
             
         module Dto =
@@ -662,17 +661,20 @@ module Orderable =
 
         /// Create a `Component` from a list
         /// of variable list eqs 
-        let fromEqs eqs (cmp: Component) =
+        let fromEqs eqs units (cmp: Component) =
             let items = 
                 cmp.Items
-                |> List.map (IT.fromEqs eqs)
+                |> List.map (IT.fromEqs eqs units)
             {
                 cmp with
-                    ComponentQuantity = QT.fromVar eqs cmp.ComponentQuantity
-                    OrderableQuantity = QT.fromVar eqs cmp.OrderableQuantity             
-                    OrderableConcentration = CN.fromVar eqs cmp.OrderableConcentration
-                    Dose = DS.fromVar eqs cmp.Dose
-                    DoseAdjust = DA.fromVar eqs cmp.DoseAdjust
+                    ComponentQuantity = QT.fromVar eqs units cmp.ComponentQuantity
+                    OrderableQuantity = QT.fromVar eqs units cmp.OrderableQuantity
+                    OrderableCount = CT.fromVar eqs units cmp.OrderableCount
+                    OrderQuantity = QT.fromVar eqs units cmp.OrderQuantity
+                    OrderCount = CT.fromVar eqs units cmp.OrderCount
+                    OrderableConcentration = CN.fromVar eqs units cmp.OrderableConcentration
+                    Dose = DS.fromVar eqs units cmp.Dose
+                    DoseAdjust = DA.fromVar eqs units cmp.DoseAdjust
                     Items = items
             }    
 
@@ -740,7 +742,7 @@ module Orderable =
                     cmp.OrderableQuantity
                     |> QT.toDto
                 dto.OrderableCount <-
-                    cmp.OrderCount
+                    cmp.OrderableCount
                     |> CT.toDto
                 dto.OrderQuantity <-
                     cmp.OrderQuantity
@@ -933,6 +935,7 @@ module Orderable =
         ]
         |> List.map VU.toString
         |> List.append (cc |> List.collect CM.toString )
+        |> List.sort
 
     /// The following variables are used:
     ///
@@ -1012,16 +1015,17 @@ module Orderable =
         , orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
 
 
-    let fromEqs eqs (ord: Orderable) =
+    let fromEqs eqs units (ord: Orderable) =
         let cmps = 
             ord.Components
-            |> List.map (CM.fromEqs eqs)
+            |> List.map (CM.fromEqs eqs units)
         {
             ord with
-                OrderableQuantity = QT.fromVar eqs ord.OrderableQuantity             
-                OrderQuantity = QT.fromVar eqs ord.OrderQuantity
-                Dose = DS.fromVar eqs ord.Dose
-                DoseAdjust = DA.fromVar eqs ord.DoseAdjust
+                OrderableQuantity = QT.fromVar eqs units ord.OrderableQuantity             
+                OrderQuantity = QT.fromVar eqs units ord.OrderQuantity
+                OrderCount = CT.fromVar eqs units ord.OrderCount
+                Dose = DS.fromVar eqs units ord.Dose
+                DoseAdjust = DA.fromVar eqs units ord.DoseAdjust
                 Components = cmps
         }
 

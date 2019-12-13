@@ -118,6 +118,8 @@ module Order =
     module FR = VU.Frequency
     module TM = VU.Time
 
+    module Units = ValueUnit.Units
+
     /// Models an order
     type Order = 
         {
@@ -176,7 +178,7 @@ module Order =
     let createNew id n str_prs route = 
         let orb = OB.createNew id n 
         let nm  = orb |> OB.getName
-        let adj = QT.quantity [ id |> Id.toString; n |> Name.toString;  "Adjust" ] ValueUnit.NoUnit
+        let adj = QT.quantity [ id |> Id.toString; n |> NM.toString; Literals.adjust ] ValueUnit.NoUnit
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
         let sts = DateTime.Now  |> DT.Start
 
@@ -189,7 +191,8 @@ module Order =
         |> (getAdjust >> QT.toVarUnt >> VU.getName)
         |> NM.toString
         |> String.split "."
-        |> List.head
+        |> List.take 2
+        |> String.concat "."
 
     let getOrderable ord = (ord |> get).Orderable
 
@@ -197,14 +200,18 @@ module Order =
     /// a `VariableUnit` list
     let toProd xs = 
         match xs with
-        | y::xs -> VU.toProdEq id (fun m -> printfn "%A" m; failwith "Oops") y xs |> EQ.nonZeroOrNegative
+        | y::xs -> 
+            let eq, units = VU.toProdEq id (fun m -> printfn "%A" m; failwith "Oops") y xs 
+            eq |> EQ.nonZeroOrNegative, units
         | _ -> failwith "Not a valid equation"
 
     /// Create a `SumEquation` from
     /// a `VariableUnit` list
     let toSum xs =
         match xs with
-        | h::tail -> VU.toSumEq  id (fun _ -> failwith "Oops") h tail |> EQ.nonZeroOrNegative
+        | h::tail -> 
+            let eq, units = VU.toSumEq  id (fun _ -> failwith "Oops") h tail 
+            eq |> EQ.nonZeroOrNegative, units
         | _ -> failwith "Not a valid equation"
 
     /// Map an `Order` *ord* to 
@@ -221,10 +228,10 @@ module Order =
 
     /// Map a list of `VariableUnit` lists
     /// to an `Order` *ord*
-    let fromEqs ord vus =        
-        let orb = ord.Orderable |> OB.fromEqs vus
-        let adj = ord.Adjust |> QT.fromVar vus
-        let prs = ord.Prescription |> PR.fromEqs vus
+    let fromEqs ord units vrs =        
+        let orb = ord.Orderable |> OB.fromEqs vrs units
+        let adj = ord.Adjust    |> QT.fromVar vrs units
+        let prs = ord.Prescription |> PR.fromEqs vrs units
 
         {
             ord with
@@ -249,32 +256,68 @@ module Order =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
-    let solve n m p vs u o =
-        let toEql (prod, sum) =
-            prod 
-            |> List.map toProd
-            |> List.append [sum |> toSum]
+    let solve n m p vs o =
+        // return eqs and name unit tuples
+        // ToDo only return those eqs that have
+        // all units
+        let toEql prod sum =
+            let peqs, pvars =
+                prod 
+                |> List.map toProd
+                |> List.unzip
+            let seqs, svars = sum |> toSum
+            let units =
+                [ svars ]
+                |> List.append pvars
+                |> List.collect id
+                |> List.map (fun vru ->
+                    vru.Variable.Name, vru.Unit
+                )
+                |> List.filter (snd >> ((<>) ValueUnit.NoUnit))
 
-        let toVars eqs = eqs |> List.map(fun e -> 
-            match e with 
-            | EQ.ProductEquation(y, xs) 
-            | EQ.SumEquation(y, xs) -> y::xs)
+            [ seqs ] |> List.append peqs, units
+
+        let toVars eqs = 
+            eqs |> List.map (fun e -> 
+                match e with 
+                | EQ.ProductEquation(y, xs) 
+                | EQ.SumEquation(y, xs) -> y::xs
+            )
 
         let dls = "."
         let n =
             match m with
-            | Mapping.Freq -> [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
-            | _ -> [n + dls + (m |> Mapping.map)] |> NM.create
+            | Mapping.Freq 
+            | Mapping.AdjustQty ->
+                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+            | _ -> 
+                [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
+                |> NM.create
 
         let prod, sum = o |> toEqs
 
-        let vus = vs |> List.map (ValueUnit.create u)
-
-        (prod, sum) 
-        |> toEql
+        let vus = 
+                [ sum ] 
+                |> List.append prod
+                |> List.collect id
+                |> List.tryFind (fun vru ->
+                    vru.Variable.Name = n
+                )
+                |> function 
+                | Some vru -> 
+                    vs
+                    |> List.map (ValueUnit.create vru.Unit)
+                | None -> 
+                    printfn "could not find %s" (n |> NM.toString)
+                    [] 
+        
+        let eqs, units =  toEql prod sum
+        
+        eqs
+        |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
         |> SV.solve n p vus
         |> toVars
-        |> fromEqs o
+        |> fromEqs o units
 
     module Dto =
         

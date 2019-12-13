@@ -11,10 +11,13 @@
 #load "../Order.fs"
 
 #time
-    
+   
+open MathNet.Numerics
+
 open Informedica.GenUnits.Lib
 open Informedica.GenOrder.Lib
 
+module Units = ValueUnit.Units
 
 // Creating a paracetamol orderable from dtos
 module Paracetamol =
@@ -24,13 +27,13 @@ module Paracetamol =
 
         let idto = IDto.dto "1" "paracetamol"
 
-        idto.ComponentQuantity.Unit <- "mg[Mass]"
+        idto.ComponentConcentration.Unit <- "mg[Mass]/piece[General]"
+        idto.ComponentQuantity.Unit <- "mg[Mass]/piece[General]"
 
         idto
         |> IDto.fromDto
         |> Item.toString
         |> List.iter (printfn "%s")
-
 
         module Component = Orderable.Component
         module CDto = Component.Dto
@@ -38,6 +41,8 @@ module Paracetamol =
         let cdto = CDto.dto "1" "paracetamol"
 
         cdto.Items <- [ idto ]
+
+        cdto.OrderableQuantity.Unit <- "piece[General]"
 
         cdto
         |> CDto.fromDto
@@ -175,4 +180,12 @@ module Dopamin =
 
 
 Paracetamol.print ()
+
+module Mapping = Order.Mapping
+
+Paracetamol.dto
+|> Order.Dto.fromDto
+|> Order.solve "paracetamol" Mapping.ItemComponentConc Solver.Vals  [60N; 120N; 240N; 500N; 1000N]
+|> Order.toString 
+|> List.iteri (fun i s -> printfn "%i\t%s" i s)
 

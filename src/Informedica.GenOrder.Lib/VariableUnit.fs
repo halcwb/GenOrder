@@ -75,16 +75,85 @@ module VariableUnit =
     /// Get the `Unit` from a `VariableUnit`
     let getUnit = apply (fun vu -> vu.Unit)
 
+    let hasUnit = getUnit >> ((<>) ValueUnit.NoUnit)
+
     /// Create an `Equation` using a constructor **cr**
     /// a result `VariableUnit` **y** and a list of 
     /// `VariableUnit` list **xs**
-    let toEq cr y xs = (y |> getVar, xs |> List.map getVar) |> cr
+    let toEq cr y xs = 
+        (y |> getVar, xs |> List.map getVar) 
+        |> cr
+
+    /// If in a product equation there is exactly one
+    /// with noUnit, this can be calculated
+    let setProdUnit y xs =
+        let noUnit = hasUnit >> not
+        
+        if y::xs |> List.filter noUnit 
+                 |> List.length = 1 then
+            printfn "found product equation with one nounit"
+
+            if y |> noUnit then 
+                let (_, un) =
+                    xs
+                    |> List.map getUnit
+                    |> List.map (fun u -> ValueUnit.create u 1N)
+                    |> List.reduce (*)
+                    |> ValueUnit.get
+                printfn "setting %A product unit %A" y.Variable.Name un
+                { y with Unit = un }, xs
+
+            else
+                let (_, un) =
+                    xs
+                    |> List.filter hasUnit
+                    |> List.append [y]
+                    |> List.map getUnit
+                    |> List.map (fun u -> ValueUnit.create u 1N)
+                    |> List.reduce (/)
+                    |> ValueUnit.get
+                y, 
+                xs |> List.map (fun x -> 
+                    if x |> hasUnit then x
+                    else 
+                        printfn "setting %A product unit %A" x.Variable.Name un
+                        { x with Unit = un }
+                )
+        else
+            y, xs
 
     /// Create a `ProdEquation` from `VariableUnit`s
-    let toProdEq succ fail = toEq (Equation.createProductEq succ fail)
+    /// ToDo only return y::xs when all have units
+    let toProdEq succ fail y xs = 
+        let y, xs = setProdUnit y xs
+        toEq (Equation.createProductEq succ fail) y xs, y::xs
+
+    /// Make sure the in a sum equation every VariableUnit has
+    /// the same unit
+    let setSumUnit y xs =
+        let noUnit = hasUnit >> not
+        
+        if xs |> List.isEmpty then y, []
+        else
+            let xs' = 
+                match y::xs |> List.tryFind hasUnit with
+                | Some v ->
+                    let un = v |> getUnit
+                    y::xs 
+                    |> List.map (fun x ->
+                        if x |> noUnit then 
+                            printfn "setting %A sum unit: %A" x.Variable.Name un
+                            { x with Unit = un } 
+                        else x
+                    )
+                | None -> y::xs
+
+            xs' |> List.head, xs' |> List.tail
 
     /// Create a `SumEquation` from `VariableUnit`s
-    let toSumEq succ fail = toEq (Equation.createSumEq succ fail)
+    let toSumEq succ fail y xs =
+        let y, xs = setSumUnit y xs
+        toEq (Equation.createSumEq succ fail) y xs, y::xs
 
     /// Set a property **p** of a `VariableUnit` **vru** 
     /// with values **vs** in a `Equation` list
@@ -113,14 +182,20 @@ module VariableUnit =
     /// **c** is used to construct the specific
     /// variable and **toVar** to extract the
     /// current variable from **vru**
-    let fromVar toVar c vrll vru = 
-        let var, ung = vru |> (toVar >> getAll)
+    let fromVar toVar c vrll units vru = 
+        let var, _ = vru |> (toVar >> getAll)
         let n = var |> Variable.getName
-        let find = tryFind Variable.getName
+        let findVar = tryFind Variable.getName
+        let findUn n = List.tryFind (fun (x, _) -> x = n)
         
-        match vrll |> find n with
-        | Some x -> x |> withVar ung |> c
-        | None   -> vru
+        match vrll |> findVar n, units |> findUn n with
+        | Some x, Some (_, un) -> 
+            x 
+            |> withVar un 
+            |> c
+        | _   -> 
+            printfn "could not find %A" n
+            vru
 
     /// Set the 'Name' to the `Variable` of the `VariableUnit`
     let setName nm vru = 
@@ -136,7 +211,7 @@ module VariableUnit =
         ns +
         (vru.Variable 
         |> Variable.getValueRange
-        |> ValueRange.toString) + " " + us
+        |> ValueRange.toStringWithUnit vru.Unit) + " " + us
 
     let getUnits vu =
         (vu |> get).Unit
@@ -173,16 +248,6 @@ module VariableUnit =
         let dto () = Dto ()
 
         let fromDto (dto: Dto) =
-            let map  = Option.map
-            let none = Option.none
-            let bind = Option.bind
-
-            let n    = [ dto.Name ] |> Name.create 
-            let vals = dto.Vals |> Set.ofList
-            let min  = dto.Min  |> map  (ValueRange.createMin  dto.MinIncl)
-            let incr = dto.Incr |> bind (ValueRange.createIncr Some none)
-            let max  = dto.Max  |> map  (ValueRange.createMax  dto.MaxIncl)
-
             let un =
                 if dto.Unit |> String.isNullOrWhiteSpace then 
                     ValueUnit.NoUnit
@@ -193,9 +258,27 @@ module VariableUnit =
                     | Some u -> u
                     | None -> ValueUnit.NoUnit
 
+            let toBase = 
+                ValueUnit.create un
+                >> ValueUnit.toBase
+
+            let map  = Option.map
+            let none = Option.none
+            let bind = Option.bind
+
+            let n    = [ dto.Name ] |> Name.create 
+            let vals = dto.Vals |> List.map toBase |> Set.ofList 
+            let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
+            let incr = dto.Incr |> bind (toBase >> ValueRange.createIncr Some none)
+            let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
+
             create n vals min incr max un
 
         let toDto vu =
+            let toUnit = 
+                ValueUnit.create vu.Unit
+                >> ValueUnit.toUnit
+
             let dto = dto ()
             let vr =
                 vu 
@@ -208,6 +291,7 @@ module VariableUnit =
                 | Some m -> 
                     m 
                     |> ValueRange.minToValue
+                    |> toUnit
                     |> Some, m |> ValueRange.isMinIncl
                 | None -> None, false
             let max, inclMax = 
@@ -217,6 +301,7 @@ module VariableUnit =
                 | Some m -> 
                     m 
                     |> ValueRange.maxToValue
+                    |> toUnit
                     |> Some, 
                     m |> ValueRange.isMaxIncl
                 | None -> None, false
@@ -229,10 +314,11 @@ module VariableUnit =
                 vr
                 |> ValueRange.getValueSet
                 |> Set.toList
+                |> List.map toUnit
             dto.Incr <-
                 vr
                 |> ValueRange.getIncr
-                |> Option.bind (ValueRange.incrToValue >> Some)
+                |> Option.bind (ValueRange.incrToValue >> toUnit >> Some)
             dto.Min <- min
             dto.MinIncl <- inclMin
             dto.Max <- max
@@ -808,10 +894,10 @@ module VariableUnit =
 
         /// Set a `Dose` with a quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
-        let fromVar eqs (Dose(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.Quantity eqs qty
-            let tot = fromVar TL.toVarUnt TL.Total    eqs tot
-            let rte = fromVar RT.toVarUnt RT.Rate     eqs rte
+        let fromVar eqs units (Dose(qty, tot, rte)) = 
+            let qty = fromVar QT.toVarUnt QT.Quantity eqs units qty
+            let tot = fromVar TL.toVarUnt TL.Total    eqs units tot
+            let rte = fromVar RT.toVarUnt RT.Rate     eqs units rte
             (qty, tot, rte) |> Dose
 
         /// Create a `Dose` with name **n**
@@ -879,10 +965,10 @@ module VariableUnit =
 
         /// Set a `DoseAdjust` with an adjusted quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
-        let fromVar eqs (DoseAdjust(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.QuantityAdjust eqs qty
-            let tot = fromVar TL.toVarUnt TL.TotalAdjust    eqs tot
-            let rte = fromVar RT.toVarUnt RT.RateAdjust     eqs rte
+        let fromVar eqs units (DoseAdjust(qty, tot, rte)) = 
+            let qty = fromVar QT.toVarUnt QT.QuantityAdjust eqs units qty
+            let tot = fromVar TL.toVarUnt TL.TotalAdjust    eqs units tot
+            let rte = fromVar RT.toVarUnt RT.RateAdjust     eqs units rte
             (qty, tot, rte) |> DoseAdjust
 
         /// Create a `DoseAdjust` with name **n**
