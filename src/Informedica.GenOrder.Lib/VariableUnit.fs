@@ -215,7 +215,7 @@ module VariableUnit =
 
     let getUnits vu =
         (vu |> get).Unit
-        |> ValueUnit.getUnits []
+        |> ValueUnit.getUnits
 
     /// Helper functions for `Informedica.GenSolver.Variable.Name` type
     module Name =

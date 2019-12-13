@@ -41,7 +41,7 @@ NUGET
     FSharp.Core (4.7)
     Informedica.GenSolver.Lib (0.3.0-beta)
       Informedica.GenUtils.Lib (>= 0.5.0-beta)
-    Informedica.GenUnits.lib (1.0.0-beta)
+    Informedica.GenUnits.lib (1.0.1-beta)
       Informedica.GenUtils.Lib (>= 0.5.0-beta)
       MathNet.Numerics.FSharp (>= 4.9)
     Informedica.GenUtils.Lib (0.5.0-beta)
