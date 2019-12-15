@@ -209,7 +209,7 @@ Paracetamol.dto
 |> Order.solve "paracetamol" Mapping.ItemDoseAdjustTotalAdjust Solver.MaxIncl  [90N]
 |> Order.solve "paracetamol" Mapping.ItemDoseTotal Solver.MaxIncl  [4000N]
 |> Order.solve "paracetamol" Mapping.ItemDoseQty Solver.MaxIncl  [1000N]
-|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 6N]
+|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 4N]
 // the patient is 10 kg
 //|> Order.solve "paracetamol" Mapping.AdjustQty Solver.Vals [10N]
 |> Order.toString 
@@ -236,14 +236,14 @@ Paracetamol.dto
 |> Order.solve "paracetamol" Mapping.ItemDoseAdjustTotalAdjust Solver.MaxIncl  [90N]
 |> Order.solve "paracetamol" Mapping.ItemDoseTotal Solver.MaxIncl  [4000N]
 |> Order.solve "paracetamol" Mapping.ItemDoseQty Solver.MaxIncl  [1000N]
-|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 6N]
+|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 4N]
 |> Order.toString 
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)
 
 
 // Find out the weight range for a 240 mg paracetamol supp
 // with a minimal effective dose of 20 mg/kg/day
-// The lower limit is 5.3 kg and the upper limit is 72 kg
+// The lower limit is 5.3 kg and the upper limit is 48 kg
 Paracetamol.dto
 |> Order.Dto.fromDto
 // the largest weight for a human being
@@ -263,6 +263,35 @@ Paracetamol.dto
 |> Order.solve "paracetamol" Mapping.ItemDoseAdjustTotalAdjust Solver.MinIncl  [20N]
 |> Order.solve "paracetamol" Mapping.ItemDoseTotal Solver.MaxIncl  [4000N]
 |> Order.solve "paracetamol" Mapping.ItemDoseQty Solver.MaxIncl  [1000N]
-|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 6N]
+|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 4N]
+|> Order.toString 
+|> List.iteri (fun i s -> printfn "%i\t%s" i s)
+
+
+
+// Calculate all possible product quantities (generic products) for a 10 kg patient
+// from this all possible prescripiption scenarios can be created
+Paracetamol.dto
+|> Order.Dto.fromDto
+// the largest weight for a human being
+|> Order.solve "paracetamol" Mapping.AdjustQty Solver.MaxIncl [635N]
+// the smallest weight for a human being
+|> Order.solve "paracetamol" Mapping.AdjustQty Solver.MinIncl [245N / 1000N]
+// a supp cannot be divided
+|> Order.solve "paracetamol" Mapping.ComponentOrderableCount Solver.Vals  [1N]
+|> Order.solve "paracetamol" Mapping.ComponentComponentQty Solver.Vals  [1N]
+|> Order.solve "paracetamol" Mapping.ComponentDoseQty Solver.Incr [1N]
+// you want to give only one supp a time
+|> Order.solve "paracetamol" Mapping.ComponentDoseQty Solver.Vals [1N]
+// available products
+|> Order.solve "paracetamol" Mapping.ItemComponentConc Solver.Vals  [60N; 120N; 240N; 500N; 1000N]
+// general dose rules
+|> Order.solve "paracetamol" Mapping.ItemDoseAdjustTotalAdjust Solver.MaxIncl  [90N]
+|> Order.solve "paracetamol" Mapping.ItemDoseAdjustTotalAdjust Solver.MinIncl  [20N]
+|> Order.solve "paracetamol" Mapping.ItemDoseTotal Solver.MaxIncl  [4000N]
+|> Order.solve "paracetamol" Mapping.ItemDoseQty Solver.MaxIncl  [1000N]
+|> Order.solve "paracetamol" Mapping.Freq Solver.Vals [2N .. 4N]
+// the patient is 10 kg
+|> Order.solve "paracetamol" Mapping.AdjustQty Solver.Vals [10N]
 |> Order.toString 
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)

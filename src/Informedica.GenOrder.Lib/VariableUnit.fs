@@ -185,17 +185,20 @@ module VariableUnit =
     let fromVar toVar c vrll units vru = 
         let var, _ = vru |> (toVar >> getAll)
         let n = var |> Variable.getName
-        let findVar = tryFind Variable.getName
-        let findUn n = List.tryFind (fun (x, _) -> x = n)
+        let v =  vrll |> tryFind Variable.getName n
+        let un = units |> List.tryFind (fun (x, _) -> x = n)
         
-        match vrll |> findVar n, units |> findUn n with
+        match v, un with
         | Some x, Some (_, un) -> 
             x 
             |> withVar un 
             |> c
         | _   -> 
-            printfn "could not find %A" n
-            vru
+                if un |> Option.isSome then 
+                    sprintf "could not find %A" n
+                    |> exn
+                    |> raise
+                vru
 
     /// Set the 'Name' to the `Variable` of the `VariableUnit`
     let setName nm vru = 
@@ -208,10 +211,12 @@ module VariableUnit =
         let ns = vru |> getName |> Variable.Name.toString
         let us = vru.Unit |> ValueUnit.unitToString
 
-        ns +
-        (vru.Variable 
-        |> Variable.getValueRange
-        |> ValueRange.toStringWithUnit vru.Unit) + " " + us
+        if us |> String.isNullOrWhiteSpace then ""
+        else
+            ns +
+            (vru.Variable 
+            |> Variable.getValueRange
+            |> ValueRange.toStringWithUnit vru.Unit) + " " + us
 
     let getUnits vu =
         (vu |> get).Unit

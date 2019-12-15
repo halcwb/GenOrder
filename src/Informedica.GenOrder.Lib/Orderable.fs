@@ -865,8 +865,7 @@ module Orderable =
     /// Utility function to facilitate type inference
     let get = apply id
 
-    /// Get the name of the `Orderable` which is 
-    /// the sum of the concatenated lists of `Item`s
+    /// Get the name of the `Orderable` 
     let getName orb = (orb |> get).Name
 
     /// Get the `Component`s in an `Orderable`

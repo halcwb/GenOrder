@@ -249,6 +249,7 @@ module Order =
         |> List.append (OB.Literals.orderable::(ord.Orderable |> OB.toString))
         |> List.append ("Prescription"::(ord.Prescription |> PR.toString))
         |> List.append ("Route"::[(ord.Route)])
+        |> List.filter (String.isNullOrWhiteSpace >> not)
         
     /// Solve an `Order` *ord* with
     /// 

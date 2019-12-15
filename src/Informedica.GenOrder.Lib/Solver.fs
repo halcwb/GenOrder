@@ -27,24 +27,28 @@ module Solver =
     [<Literal>]
     let maxexcl = "maxexcl"
 
-    /// The properties that can be set
-    /// for a variable.
-    type Prop = 
-        | Vals
-        | MinIncl
-        | MinExcl
-        | Incr
-        | MaxIncl
-        | MaxExcl
+    module Props =
 
-    /// Return a string for a property `Prop`
-    let propToString = function
-        | Vals -> vals
-        | MinIncl -> minincl
-        | MinExcl -> minexcl
-        | Incr -> incr
-        | MaxIncl -> maxincl
-        | MaxExcl -> maxexcl
+        /// The properties that can be set
+        /// for a variable.
+        type Prop = 
+            | Vals
+            | MinIncl
+            | MinExcl
+            | Incr
+            | MaxIncl
+            | MaxExcl
+
+        /// Return a string for a property `Prop`
+        let propToString = function
+            | Vals -> vals
+            | MinIncl -> minincl
+            | MinExcl -> minexcl
+            | Incr -> incr
+            | MaxIncl -> maxincl
+            | MaxExcl -> maxexcl
+
+    open Props
 
     /// Turn a set of values `vs` to base values 
     let toBase = List.map ValueUnit.toBase
