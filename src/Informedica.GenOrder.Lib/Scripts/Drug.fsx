@@ -92,12 +92,12 @@ module Drug =
                     SolidComponentOrderableCount 1N
                     SolidComponentOrderableConcentration 1N
                     SolidComponentComponentQuantityMax 1N
+                    SolidOralOrderableDoseQuantityMax 10N
+                    SuppositoryOrderableDoseQuantity 1N
                     FluidOrderableDoseQuantityMax 1000N
                     FluidOrderableDoseRateMin (1N/100N)
                     FluidOrderableDoseRateMax (1000N)
                     FluidOrderableDoseAdjustQuantityMax 20N
-                    SuppositoryOrderableDoseQuantity 1N
-                    SolidOralOrderableDoseQuantityMax 10N
                 ]
 
             let apply cs shape (o : Order.Order) =
@@ -261,6 +261,16 @@ module Drug =
                     acc
                     |> Order.solve n Mapping.ItemComponentQty Props.Vals xs
                 ) o
+            |> fun o ->
+                match shape |> RouteShape.map route with
+                | Some rs ->
+                    match rs with
+                    | RouteShape.OralFluid ->
+                        o
+                        |> Order.solve name Mapping.ComponentOrderableQty Props.Vals  qty
+                        |> Order.solve name Mapping.ComponentOrderableConc Props.Vals [ 1N ]
+                    | _ -> o
+                | _ -> o
                 
                 
         type Drug =
@@ -431,7 +441,7 @@ module Constraints = Drug.Constraints
     Drug.drug with
         Id = "1"
         Name = "paracetamol"
-        Substances = [ { Name = "paracetamol"; Quantity = [ 24N ] }]
+        Substances = [ { Name = "paracetamol"; Quantity = [ 240N ] }]
         UnitGroup = "Mass"
         Unit = "mg"
         DoseUnit = "mg"

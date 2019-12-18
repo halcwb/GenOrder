@@ -32,8 +32,111 @@ let vru2 =
         (Name.create ["B"])
         noUnit
 
+let vru3 =
+    VariableUnit.createNew
+        (Name.create ["C"])
+        noUnit
+
+let vru4 =
+    VariableUnit.createNew
+        (Name.create ["D"])
+        Units.Volume.milliLiter
+ 
+// Unit replace tests
+
+(vru1, [vru2; vru3]) 
+|> Solver.SumEquation
+|> List.singleton
+|> Solver.replaceUnit (["C"] |> Name.create) vru1.Unit
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+(vru1, [vru2; vru3]) 
+|> Solver.SumEquation
+|> List.singleton 
+|> List.append [ (vru3, [vru4; vru2]) |> Solver.ProductEquation ]
+|> Solver.replaceUnit (["C"] |> Name.create) vru1.Unit
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// Test Unit solver
+
+// no units
+(vru2, [vru3]) 
+|> Solver.SumEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// one unit in sum eq
+(vru1, [vru2]) 
+|> Solver.SumEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// one unit in 3 vru sum eq
+(vru1, [vru2; vru3]) 
+|> Solver.SumEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// no unit in prod eq
+(vru2, [vru3]) 
+|> Solver.ProductEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// one onit in 2 product eq
+(vru1, [vru2]) 
+|> Solver.ProductEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// one unit in 3 product eq
+(vru1, [vru2; vru3]) 
+|> Solver.ProductEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
+// two unit in 3 product eq
+(vru1, [vru2; vru4]) 
+|> Solver.ProductEquation
+|> List.singleton
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+|> List.collect id
+|> List.filter VariableUnit.hasUnit
+
 
 (vru1, [vru2]) 
+|> Solver.SumEquation
+|> List.singleton
+|> List.append [ (vru3, [vru4; vru2]) |> Solver.ProductEquation ]
+|> Solver.solveUnits
+|> Solver.toVariableUnits
+
+// Test solver
+
+(vru1, [vru3]) 
 |> Solver.SumEquation
 |> List.singleton
 |> Solver.solve vru2.Variable.Name Props.MaxIncl [ 10N ]
@@ -41,5 +144,5 @@ let vru2 =
 (vru1, [vru2]) 
 |> Solver.SumEquation
 |> List.singleton
-|> Solver.solveUnits
-|> Solver.toVariableUnits
+|> Solver.solve vru2.Variable.Name Props.MaxIncl [ 10N ]
+

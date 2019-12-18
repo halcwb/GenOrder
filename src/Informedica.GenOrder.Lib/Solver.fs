@@ -89,14 +89,40 @@ module Solver =
             |> List.append acc
         ) []
 
+    
+    let replaceUnit n u eqs =
+        let repl c vru vrus =
+            if vru |> VariableUnit.getName = n then
+                (vru |> VariableUnit.setUnit u, vrus)
+            else
+                vru,
+                vrus
+                |> List.map (fun vru ->
+                    if vru |> VariableUnit.getName = n then vru |> VariableUnit.setUnit u
+                    else vru
+                )
+            |> c
 
+        eqs
+        |> List.map (fun e ->
+            match e with
+            | SumEquation (vru, vrus) ->
+                repl SumEquation vru vrus
+            | ProductEquation (vru, vrus) ->
+                repl ProductEquation vru vrus
+        )
+
+
+    /// calculate the units for all vrus in
+    /// all eqs
     let solveUnits eqs =
         let hasUnit = VariableUnit.hasUnit
         let noUnit = hasUnit >> not
 
-        let rec solve acc eqs = 
+        let rec solve acc eqs =
+
             match eqs with
-            | [] -> acc
+            | []      -> acc
             | h::tail ->
                 match h with
                 | ProductEquation (y, xs) ->
@@ -113,46 +139,74 @@ module Solver =
                             // start from scratch
                             h::tail 
                             |> List.append acc
+                            |> replaceUnit y.Variable.Name y.Unit
                             |> solve []
+
                         else
-                            let xs =
-                                xs
-                                |> List.map (fun x ->
-                                    if x |> noUnit then
-                                        { x with
-                                            Unit =
-                                                xs
-                                                |> List.filter hasUnit
-                                                |> List.map VariableUnit.getUnit
-                                                |> List.reduce (ValueUnit.calcUnit (*))
-                                                |> ValueUnit.calcUnit (/) (y |> VariableUnit.getUnit)
-                                        }
-                                    else x
-                                )
+                            let xs, n, u =
+                                // actually y = x
+                                if xs |> List.length = 1 then
+                                    let x = xs.Head
+                                    [ x |> VariableUnit.setUnit y.Unit ], Some x.Variable.Name, Some y.Unit
+                                // y = x1 * x2 ... so 
+                                // the x without a unit = y / multiple of all xs with units, i.e. (x1 * x2 .. ) 
+                                else
+                                    xs
+                                    |> List.fold (fun acc x ->
+                                        let xs', n, u = acc
+                                        if x |> noUnit then // found the x without a unit
+                                            let x =
+                                                { x with
+                                                    Unit =
+                                                        xs
+                                                        |> List.filter hasUnit
+                                                        |> List.map VariableUnit.getUnit
+                                                        |> List.reduce (ValueUnit.calcUnit (*))
+                                                        |> ValueUnit.calcUnit (/) (y |> VariableUnit.getUnit)
+                                                }
+                                            (x::xs', (Some x.Variable.Name), (Some x.Unit))
+                                        else 
+                                            (x::xs', n, u)
+                                    ) ([], None, None)
+
                             let h = (y, xs) |> ProductEquation
                             // start from scratch
                             h::tail 
                             |> List.append acc
+                            |> replaceUnit (n |> Option.get) (u |> Option.get)
                             |> solve []
 
                     else
-                        solve ((ProductEquation (y, xs))::acc) tail
+                        solve (h::acc) tail
                 
                 | SumEquation (y, xs) ->
-                    if y::xs |> List.forall hasUnit then 
-                        solve (SumEquation (y, xs)::acc) tail
+                    if y::xs |> List.forall hasUnit ||
+                       y::xs |> List.forall noUnit then 
+                        solve (h::acc) tail
                     
                     else
-                        let u = 
+                        // get the names of vrus with no unit
+                        let ns =
+                            y::xs
+                            |> List.filter noUnit
+                            |> List.map (VariableUnit.getName)
+                        // find the vru with a unit
+                        let x = 
                             y::xs 
                             |> List.find hasUnit
-                            |> VariableUnit.getUnit
                         // start from scratch
-                        ({ y with Unit = u }, xs |> List.map (VariableUnit.setUnit u))
+                        ({ y with Unit = x.Unit }, xs |> List.map (VariableUnit.setUnit x.Unit))
                         |> SumEquation
                         |> List.singleton
                         |> List.append tail
                         |> List.append acc
+                        // make sure that all vrus in all eqs get the unit
+                        |> (fun eqs ->
+                            ns 
+                            |> List.fold (fun acc n ->
+                                acc |> replaceUnit n x.Unit
+                            ) eqs
+                        )
                         |> solve []
 
         solve [] eqs
@@ -207,6 +261,9 @@ module Solver =
             )
         )
 
+    // helper function to prevent setting vs to 
+    // empty list when vals have no unit, so tobase 
+    // returns an empty list
     let solveVals n p vs eqs =
         match vs with
         | [] -> eqs
@@ -228,11 +285,13 @@ module Solver =
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
     let solve (N.Name n) p vs eqs =
+        // first solve units
         let eqs =
             eqs 
             |> solveUnits
 
         eqs
+        // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
         |> solveVals n p (vs |> toBase n eqs)

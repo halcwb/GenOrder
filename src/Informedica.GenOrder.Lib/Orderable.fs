@@ -90,11 +90,6 @@ module Orderable =
         ///
         /// **id**: the order id
         /// **n**: the string name of the item
-        /// **un**: the unit of the item
-        /// **cu**: the unit of the component that contains the item
-        /// **ou**: the unit of the orderable that contains the component
-        /// **tu**: the unit of time
-        /// **adj**: the unit to adjust the item dose
         let createNew id n =
             let s = [LT.item] |> List.append [id |> ID.toString; n |> NM.toString]
             let un = ValueUnit.NoUnit
@@ -157,7 +152,7 @@ module Orderable =
 
         /// Turn an `Item` to a list of `string`s,
         /// each string containing the variable
-        /// `Name`, `ValueRange` and `UnitGroup`
+        /// `Name`, `ValueRange` and `Unit`
         let toString itm = 
             let itm_cmp_qty, 
                 itm_orb_qty, 
@@ -187,24 +182,29 @@ module Orderable =
         
         /// The following variables are used
         ///
+        /// * adj: the adjustment of the dose
+        /// * frq: the prescription frequency
+        /// * qty: the orderable dose quantity
+        /// * tot: the orderable dose total
+        /// * tme: the prescription time duration
+        /// * rte: the orderable dose rate
+        ///
+        /// * cmp\_cmp\_qty: the component quantity
+        /// * cmp\_orb\_qty: the quantity of component in an orderable
+        /// * orb\_orb\_qty: the orderable quantity
+        ///
+        /// * itm: the item from which the following can be used:
+        ///
         /// * itm\_cmp\_qty: the quantity of item in a component
         /// * itm\_orb\_qty: the quantity of item in an orderable
         /// * itm\_cmp\_cnc: the concentration of an item in a component
         /// * itm\_orb\_cnc: the concentration of an item in an orderable
-        /// * cmp\_cmp\_qty: the component quantity
-        /// * orb\_orb\_qty: the orderable quantity
-        /// * cmp\_orb\_qty: the quantity of component in an orderable
         /// * itm\_dos\_qty: the item dose quantity
         /// * itm\_dos\_tot: the item dose total
         /// * itm\_dos\_rte: the item dose rate
         /// * itm\_dos\_qty\_adj: the adjusted item dose quantity
         /// * itm\_dos\_tot\_adj: the adjusted item dose total
         /// * itm\_dos\_rte\_adj: the adjusted item dose rate
-        /// * frq: the prescription frequency
-        /// * tme: the prescription time
-        /// * qty: the orderable dose quantity
-        /// * tot: the orderable dose total
-        /// * rte: the orderable dose rate
         ///
         /// With these variables the following equations are generated
         /// depending on prescription type
@@ -431,6 +431,8 @@ module Orderable =
         
         /// Create a component with
         ///
+        /// * `id`: the order id 
+        /// * `n`: the name of the component
         /// * `cmp_qty`: quantity of component
         /// * `orb_qty`: quantity of component in orderable
         /// * `orb_cnt`: count of component in orderable
@@ -458,11 +460,6 @@ module Orderable =
         /// Create a new component with
         /// * `id`: the id of the component
         /// * `n`: the name of the component
-        /// * `un`: unit name of component
-        /// * `ou`: unit name of the orderable
-        /// * `tu`: unit name of time
-        /// * `adj`: adjust unit to adjust the dose
-        /// * `il`: list to create items
         let createNew id n =
             let s = [id |> ID.toString; n |> NM.toString; LT.``component``]
             let un = ValueUnit.NoUnit
@@ -502,6 +499,8 @@ module Orderable =
             let cmp_orb_qty = cmp.OrderableQuantity          |> QT.toVarUnt
             let cmp_orb_cnt = cmp.OrderableCount             |> CT.toVarUnt
             let cmp_orb_cnc = cmp.OrderableConcentration     |> CN.toVarUnt
+            let cmp_ord_qty = cmp.OrderQuantity              |> QT.toVarUnt
+            let cmp_ord_cnt = cmp.OrderCount                 |> CT.toVarUnt
 
             let cmp_dos_qty,     cmp_dos_tot,     cmp_dos_rte     = cmp.Dose       |> DS.toVarUnt
             let cmp_dos_qty_adj, cmp_dos_tot_adj, cmp_dos_rte_adj = cmp.DoseAdjust |> DA.toVarUnt
@@ -511,6 +510,8 @@ module Orderable =
                 cmp_orb_qty,
                 cmp_orb_cnt,
                 cmp_orb_cnc,
+                cmp_ord_qty,
+                cmp_ord_cnt,
                 cmp_dos_qty,
                 cmp_dos_tot,
                 cmp_dos_rte,
@@ -522,12 +523,14 @@ module Orderable =
         /// Create a string list from a 
         /// component where each string is
         /// a variable name with the valuerange
-        /// and the unitgroup
+        /// and the Unit
         let toString cmp = 
             let cmp_cmp_qty, 
                 cmp_orb_qty,
                 cmp_orb_cnt,
                 cmp_orb_cnc,
+                cmp_ord_qty,
+                cmp_ord_cnt,
                 cmp_dos_qty,
                 cmp_dos_tot,
                 cmp_dos_rte,
@@ -542,6 +545,8 @@ module Orderable =
                 cmp_orb_qty
                 cmp_orb_cnt
                 cmp_orb_cnc
+                cmp_ord_qty
+                cmp_ord_cnt
                 cmp_dos_qty
                 cmp_dos_tot
                 cmp_dos_rte
@@ -555,24 +560,29 @@ module Orderable =
 
         /// The following variables are used
         ///
+        /// * adj: the adjustment of the dose
+        /// * frq: the prescription frequency
+        /// * qty: the orderable dose quantity
+        /// * tot: the orderable dose total
+        /// * tme: the prescription time
+        /// * rte: the orderable dose rate
+        ///
         /// * orb\_orb\_qty: the orderable quantity
+        /// * cmp : the component
+        /// 
+        /// The following is derived from the component
         /// * cmp\_cmp\_qty: the component quantity
         /// * cmp\_orb\_qty: the quantity of component in an orderable
         /// * cmp\_orb\_cnt: the count of component in an orderable
+        /// * cmp\_orb\_cnc: the concentration of an component in an orderable
         /// * cmp\_ord\_qty: the quantity of component in an order
         /// * cmp\_ord\_cnt: the count of component in an order
-        /// * cmp\_orb\_cnc: the concentration of an component in an orderable
         /// * cmp\_dos\_qty: the component dose quantity
         /// * cmp\_dos\_tot: the component dose total
         /// * cmp\_dos\_rte: the component dose rate
         /// * cmp\_dos\_qty\_adj: the adjusted component dose quantity
         /// * cmp\_dos\_tot\_adj: the adjusted component dose total
         /// * cmp\_dos\_rte\_adj: the adjusted component dose rate
-        /// * frq: the prescription frequency
-        /// * tme: the prescription time
-        /// * qty: the orderable dose quantity
-        /// * tot: the orderable dose total
-        /// * rte: the orderable dose rate
         ///
         /// The following equations are generated:
         ///
@@ -610,6 +620,8 @@ module Orderable =
                 cmp_orb_qty,
                 cmp_orb_cnt,
                 cmp_orb_cnc,
+                cmp_ord_qty,
+                cmp_ord_cnt,
                 cmp_dos_qty,
                 cmp_dos_tot,
                 cmp_dos_rte,
