@@ -57,14 +57,14 @@ module Prescription =
             frq |> FR.toVarUnt |> Some, tme |> TM.toVarUnt |> Some
 
     /// Set a list of `Equation` **eqs** to a `Prescription` **prs** 
-    let fromEqs eqs units prs =
+    let fromEqs eqs  prs =
         match prs with
         | Process    -> Process
         | Continuous -> Continuous
         | Discontinuous (frq) -> 
-            (frq |> FR.fromVar eqs units) |> Discontinuous
+            (frq |> FR.fromVar eqs ) |> Discontinuous
         | Timed(frq, tme) -> 
-            (frq |> FR.fromVar eqs units, tme |> TM.fromVar eqs units) |> Timed
+            (frq |> FR.fromVar eqs , tme |> TM.fromVar eqs ) |> Timed
         
     /// Turn a `Prescription` **prs** into 
     /// a string list 

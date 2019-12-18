@@ -175,8 +175,8 @@ module Order =
     /// * tme_un: the unit for time
     /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
     /// * route: the route of administration
-    let createNew id n str_prs route = 
-        let orb = OB.createNew id n 
+    let createNew id n shape str_prs route = 
+        let orb = OB.createNew id n shape
         let nm  = orb |> OB.getName
         let adj = QT.quantity [ id |> Id.toString; n |> NM.toString; Literals.adjust ] ValueUnit.NoUnit
         let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
@@ -196,24 +196,6 @@ module Order =
 
     let getOrderable ord = (ord |> get).Orderable
 
-    /// Create a `ProductEquation` from
-    /// a `VariableUnit` list
-    let toProd xs = 
-        match xs with
-        | y::xs -> 
-            let eq, units = VU.toProdEq id (fun m -> printfn "%A" m; failwith "Oops") y xs 
-            eq |> EQ.nonZeroOrNegative, units
-        | _ -> failwith "Not a valid equation"
-
-    /// Create a `SumEquation` from
-    /// a `VariableUnit` list
-    let toSum xs =
-        match xs with
-        | h::tail -> 
-            let eq, units = VU.toSumEq  id (fun _ -> failwith "Oops") h tail 
-            eq |> EQ.nonZeroOrNegative, units
-        | _ -> failwith "Not a valid equation"
-
     /// Map an `Order` *ord* to 
     /// a list of `VariableUnit` lists
     let toEqs (ord: Order) =
@@ -228,10 +210,10 @@ module Order =
 
     /// Map a list of `VariableUnit` lists
     /// to an `Order` *ord*
-    let fromEqs ord units vrs =        
-        let orb = ord.Orderable |> OB.fromEqs vrs units
-        let adj = ord.Adjust    |> QT.fromVar vrs units
-        let prs = ord.Prescription |> PR.fromEqs vrs units
+    let fromEqs ord eqs =        
+        let orb = ord.Orderable |> OB.fromEqs eqs
+        let adj = ord.Adjust    |> QT.fromVar eqs
+        let prs = ord.Prescription |> PR.fromEqs eqs
 
         {
             ord with
@@ -258,32 +240,13 @@ module Order =
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
     let solve n m p vs o =
-        // return eqs and name unit tuples
-        // ToDo only return those eqs that have
-        // all units
+        // return eqs 
         let toEql prod sum =
-            let peqs, pvars =
-                prod 
-                |> List.map toProd
-                |> List.unzip
-            let seqs, svars = sum |> toSum
-            let units =
-                [ svars ]
-                |> List.append pvars
-                |> List.collect id
-                |> List.map (fun vru ->
-                    vru.Variable.Name, vru.Unit
-                )
-                |> List.filter (snd >> ((<>) ValueUnit.NoUnit))
 
-            [ seqs ] |> List.append peqs, units
+            prod 
+            |> List.map Solver.productEq
+            |> List.append [ sum |> Solver.sumEq ]
 
-        let toVars eqs = 
-            eqs |> List.map (fun e -> 
-                match e with 
-                | EQ.ProductEquation(y, xs) 
-                | EQ.SumEquation(y, xs) -> y::xs
-            )
 
         let dls = "."
         let n =
@@ -296,36 +259,20 @@ module Order =
                 |> NM.create
 
         let prod, sum = o |> toEqs
-
-        let vus = 
-                [ sum ] 
-                |> List.append prod
-                |> List.collect id
-                |> List.tryFind (fun vru ->
-                    vru.Variable.Name = n
-                )
-                |> function 
-                | Some vru -> 
-                    vs
-                    |> List.map (ValueUnit.create vru.Unit)
-                | None -> 
-                    printfn "could not find %s" (n |> NM.toString)
-                    [] 
         
-        let eqs, units =  toEql prod sum
+        let eqs = toEql prod sum
         
         eqs
         |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
-        |> SV.solve n p vus
-        |> toVars
-        |> fromEqs o units
+        |> SV.solve n p vs
+        |> fromEqs o
 
     module Dto =
         
-        type Dto (id , n) =
+        type Dto (id , n, shape) =
             member val Id = id with get, set
             member val Adjust = VariableUnit.Dto.dto () with get, set
-            member val Orderable = OB.Dto.dto id n with get, set
+            member val Orderable = OB.Dto.dto id n shape with get, set
             member val Prescription = Prescription.Dto.dto n with get, set
             member val Route = "" with get, set
             member val Start = DateTime.now () with get, set
@@ -347,7 +294,7 @@ module Order =
         let toDto (ord : Order) =
             let id = ord.Id |> Id.toString
             let n = ord.Orderable.Name |> NM.toString
-            let dto = Dto (id, n)
+            let dto = Dto (id, n, ord.Orderable.Shape)
 
             dto.Adjust <- ord.Adjust |> QT.toDto
             dto.Orderable <- ord.Orderable |> OB.Dto.toDto
@@ -362,38 +309,38 @@ module Order =
             
             dto
 
-        let ``process`` id n rte = 
+        let ``process`` id n shape rte = 
             let id = id |> Id.create
             let n = [ n ] |> Name.create
             let str_prs = 
                 fun _ -> Prescription.``process`` 
             
-            createNew id n str_prs rte
+            createNew id n shape str_prs rte
             |> toDto
 
-        let continuous id n rte = 
+        let continuous id n shape rte = 
             let id = id |> Id.create
             let n = [ n ] |> Name.create
             let str_prs = 
                 Prescription.continuous ValueUnit.NoUnit ValueUnit.NoUnit
     
-            createNew id n str_prs rte
+            createNew id n shape str_prs rte
             |> toDto
 
-        let discontinuous id n rte = 
+        let discontinuous id n shape rte = 
             let id = id |> Id.create
             let n = [ n ] |> Name.create
             let str_prs = 
                 Prescription.discontinuous ValueUnit.NoUnit ValueUnit.NoUnit
     
-            createNew id n str_prs rte
+            createNew id n shape str_prs rte
             |> toDto
 
-        let timed id n rte = 
+        let timed id n shape rte = 
             let id = id |> Id.create
             let n = [ n ] |> Name.create
             let str_prs = 
                 Prescription.timed ValueUnit.NoUnit ValueUnit.NoUnit
     
-            createNew id n str_prs rte
+            createNew id n shape str_prs rte
             |> toDto

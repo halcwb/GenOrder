@@ -3,8 +3,9 @@
 
 #load "../../../.paket/load/netstandard2.1/main.group.fsx"
 #load "../WrappedString.fs"
-#load "../Solver.fs"
+#load "../List.fs"
 #load "../ValueUnit.fs"
+#load "../ValueRange.fs"
 #load "../VariableUnit.fs"
 
 #time

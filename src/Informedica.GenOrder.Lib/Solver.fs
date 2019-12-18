@@ -13,6 +13,21 @@ module Solver =
     module VR = Informedica.GenSolver.Lib.Variable
     module VL = VR.ValueRange
     module EQ = Informedica.GenSolver.Lib.Equation
+
+    type VariableUnit = VariableUnit.VariableUnit
+    
+
+    type Equation =
+        | ProductEquation of VariableUnit * VariableUnit list
+        | SumEquation of VariableUnit * VariableUnit list
+
+    let productEq = function
+    | h::tail -> (h, tail) |> ProductEquation
+    | _ -> "not a valid product equation" |> failwith
+
+    let sumEq = function
+    | h::tail -> (h, tail) |> SumEquation
+    | _ -> "not a valid sum equation" |> failwith
     
     [<Literal>]
     let vals = "vals"
@@ -50,91 +65,176 @@ module Solver =
 
     open Props
 
+    /// Create an `Equation` using a constructor **cr**
+    /// a result `VariableUnit` **y** and a list of 
+    /// `VariableUnit` list **xs**
+    let toEq cr y xs = 
+        (y |> VariableUnit.getVar, xs |> List.map VariableUnit.getVar) 
+        |> cr
+
+    /// Create a `ProdEquation` from `VariableUnit`s
+    let toProdEq succ fail y xs = 
+        toEq (EQ.createProductEq succ fail) y xs
+
+    /// Create a `SumEquation` from `VariableUnit`s
+    let toSumEq succ fail y xs =
+        toEq (EQ.createSumEq succ fail) y xs
+
+    let mapToSolverEqs =
+        List.fold (fun acc eq ->
+            match eq with 
+            | ProductEquation (y, xs) -> toProdEq id (string >> exn >> raise) y xs
+            | SumEquation (y, xs)     -> toSumEq id  (string >> exn >> raise) y xs
+            |> List.singleton
+            |> List.append acc
+        ) []
+
+
+    let solveUnits eqs =
+        let hasUnit = VariableUnit.hasUnit
+        let noUnit = hasUnit >> not
+
+        let rec solve acc eqs = 
+            match eqs with
+            | [] -> acc
+            | h::tail ->
+                match h with
+                | ProductEquation (y, xs) ->
+                    if y::xs  |> List.hasExactlyOne noUnit then
+                        if y |> noUnit then
+                            let y =
+                                { y with 
+                                    Unit =
+                                        xs 
+                                        |> List.map VariableUnit.getUnit
+                                        |> List.reduce (ValueUnit.calcUnit (*))
+                                }
+                            let h = (y, xs) |> ProductEquation
+                            // start from scratch
+                            h::tail 
+                            |> List.append acc
+                            |> solve []
+                        else
+                            let xs =
+                                xs
+                                |> List.map (fun x ->
+                                    if x |> noUnit then
+                                        { x with
+                                            Unit =
+                                                xs
+                                                |> List.filter hasUnit
+                                                |> List.map VariableUnit.getUnit
+                                                |> List.reduce (ValueUnit.calcUnit (*))
+                                                |> ValueUnit.calcUnit (/) (y |> VariableUnit.getUnit)
+                                        }
+                                    else x
+                                )
+                            let h = (y, xs) |> ProductEquation
+                            // start from scratch
+                            h::tail 
+                            |> List.append acc
+                            |> solve []
+
+                    else
+                        solve ((ProductEquation (y, xs))::acc) tail
+                
+                | SumEquation (y, xs) ->
+                    if y::xs |> List.forall hasUnit then 
+                        solve (SumEquation (y, xs)::acc) tail
+                    
+                    else
+                        let u = 
+                            y::xs 
+                            |> List.find hasUnit
+                            |> VariableUnit.getUnit
+                        // start from scratch
+                        ({ y with Unit = u }, xs |> List.map (VariableUnit.setUnit u))
+                        |> SumEquation
+                        |> List.singleton
+                        |> List.append tail
+                        |> List.append acc
+                        |> solve []
+
+        solve [] eqs
+        
+
+    let toVariableUnits =
+        List.map (fun eq ->
+            match eq with
+            | ProductEquation (y, xs) | SumEquation (y, xs) -> y::xs
+        )
+
+
     /// Turn a set of values `vs` to base values 
-    let toBase = List.map ValueUnit.toBase
-    
-    /// Solve a set of equations setting a property `p` with
-    /// name `n`, to a valueset `vs`.
-    let solve (N.Name n) p vs = 
-        SV.solve (fun s -> printfn "%s" s) n (p |> propToString) (vs |> toBase)
+    let toBase n eqs vs = 
+        eqs 
+        |> toVariableUnits
+        |> List.tryFindInList (VariableUnit.getName >> N.toString >> ((=) n))
+        |> function 
+        | Some vru ->
+            vru
+            |> VariableUnit.getUnit
+            |> fun u -> 
+                vs
+                |> List.map (ValueUnit.create u)
+                |> List.map ValueUnit.toBase
+        | None -> 
+            printf "could not find %A in toBase n eqs vs" n
+            []    
 
 
-module ValueRange =
+    let mapFromSolverEqs orig eqs =
+        let vrusl = orig |> toVariableUnits
+        let vars = 
+            eqs
+            |> List.collect EQ.toVars 
+            |> List.distinct
 
-    open Informedica.GenUnits.Lib
-    open Informedica.GenSolver.Lib.Variable.ValueRange
+        vrusl
+        |> List.map (fun vrus ->
+            vrus 
+            |> List.map (fun vru ->
+                { vru with 
+                    Variable =
+                        vars
+                        |> List.tryFind (fun v -> v.Name = vru.Variable.Name)
+                        |> function 
+                        | Some v -> v
+                        | None -> 
+                            printfn "could not find %A" vru.Variable.Name
+                            vru.Variable
+                }
+            )
+        )
 
-    /// Convert a `ValueRange` to a `string`.
-    let toStringWithUnit un vr =
-        let fVs vs = 
-            let vs = 
-                vs 
-                |> Set.toList
-                |> List.map (ValueUnit.create un)
-                |> List.map ValueUnit.toUnit
+    let solveVals n p vs eqs =
+        match vs with
+        | [] -> eqs
+        | _  ->
+            eqs
+            |> SV.solve (fun s -> printfn "%s" s) n (p |> propToString) vs
+         
 
-            print false vs None false None None false
-    
-        let some =
-            ValueUnit.create un
-            >> ValueUnit.toUnit
-            >> Some
-
-        let fRange =
-            let print min minincl incr max maxincl = 
-                print false [] min minincl incr max maxincl
-
-            let fMin min =
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some, false  
-                print min minincl None None false
-
-            let fMax max =
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
-
-                print None false None max maxincl
-
-            let fMinIncr (min, incr)  = 
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some ,false  
-
-                let incr = incr |> incrToValue |> some
+    let filterEqsWithUnits = 
+        List.filter (fun eq ->
+            match eq with
+            | ProductEquation(y, xs) 
+            | SumEquation (y, xs) ->
+                y::xs |> List.forall VariableUnit.hasUnit
+                
+        )
         
-                print min minincl incr None false
 
-            let fIncrMax (incr, max)  = 
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
+    // Solve a set of equations setting a property `p` with
+    // name `n`, to a valueset `vs`.
+    let solve (N.Name n) p vs eqs =
+        let eqs =
+            eqs 
+            |> solveUnits
 
-                let incr = incr |> incrToValue |> some
-        
-                print None false incr max maxincl
-
-            let fMinMax (min, max) =
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some ,false  
-
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
-
-                print min minincl None max maxincl
-
-            applyRange fMin fMax fMinIncr fIncrMax fMinMax
-
-        let unr = print true [] None false None None false
-    
-        vr |> apply unr fVs fRange 
+        eqs
+        |> filterEqsWithUnits
+        |> mapToSolverEqs
+        |> solveVals n p (vs |> toBase n eqs)
+        |> mapFromSolverEqs eqs
 

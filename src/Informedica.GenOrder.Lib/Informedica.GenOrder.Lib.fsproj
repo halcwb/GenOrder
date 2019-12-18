@@ -7,18 +7,21 @@
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="WrappedString.fs" />
-    <Compile Include="Solver.fs" />
+    <Compile Include="List.fs" />
     <Compile Include="ValueUnit.fs" />
+    <Compile Include="ValueRange.fs" />
     <Compile Include="VariableUnit.fs" />
+    <Compile Include="Solver.fs" />
     <Compile Include="Orderable.fs" />
     <Compile Include="Prescription.fs" />
     <Compile Include="Order.fs" />
     <Compile Include="OrderSet.fs" />
     <None Include="Scripts\VariableUnit.fsx" />
+    <None Include="Scripts\Solver.fsx" />
     <None Include="Scripts\Orderable.fsx" />
     <None Include="Scripts\Prescription.fsx" />
     <None Include="Scripts\Order.fsx" />
-    <None Include="Scripts\DrugNonFluid.fsx" />
+    <None Include="Scripts\Drug.fsx" />
     <None Include="Scripts/Lab.fsx" />
     <None Include="Scripts/OrderSet.fsx" />
   </ItemGroup>

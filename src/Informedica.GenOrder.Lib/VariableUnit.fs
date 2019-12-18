@@ -17,6 +17,7 @@ module VariableUnit =
     module Units = ValueUnit.Units
 
     type Variable = Variable.Variable
+    type Unit = ValueUnit.Unit
 
     /// A `VariableUnit` is the combination of 
     /// an `Informedica.GenSolver.Lib.Variable` with
@@ -28,9 +29,10 @@ module VariableUnit =
             /// Stores the values/range
             Variable:  Variable
             /// Stores the unit group
-            Unit: ValueUnit.Unit
+            Unit: Unit
         }  
-         
+             
+
     /// Create a new `VariableUnit` with
     /// `Name` **nm** and `Unit` **un**
     let createNew n un = 
@@ -72,92 +74,12 @@ module VariableUnit =
     /// Get the `Variable.Name` from a `VariableUnit` **vru**
     let getName vru = (vru |> getVar).Name
 
+
     /// Get the `Unit` from a `VariableUnit`
     let getUnit = apply (fun vu -> vu.Unit)
 
     let hasUnit = getUnit >> ((<>) ValueUnit.NoUnit)
 
-    /// Create an `Equation` using a constructor **cr**
-    /// a result `VariableUnit` **y** and a list of 
-    /// `VariableUnit` list **xs**
-    let toEq cr y xs = 
-        (y |> getVar, xs |> List.map getVar) 
-        |> cr
-
-    /// If in a product equation there is exactly one
-    /// with noUnit, this can be calculated
-    let setProdUnit y xs =
-        let noUnit = hasUnit >> not
-        
-        if y::xs |> List.filter noUnit 
-                 |> List.length = 1 then
-            printfn "found product equation with one nounit"
-
-            if y |> noUnit then 
-                let (_, un) =
-                    xs
-                    |> List.map getUnit
-                    |> List.map (fun u -> ValueUnit.create u 1N)
-                    |> List.reduce (*)
-                    |> ValueUnit.get
-                printfn "setting %A product unit %A" y.Variable.Name un
-                { y with Unit = un }, xs
-
-            else
-                let (_, un) =
-                    xs
-                    |> List.filter hasUnit
-                    |> List.append [y]
-                    |> List.map getUnit
-                    |> List.map (fun u -> ValueUnit.create u 1N)
-                    |> List.reduce (/)
-                    |> ValueUnit.get
-                y, 
-                xs |> List.map (fun x -> 
-                    if x |> hasUnit then x
-                    else 
-                        printfn "setting %A product unit %A" x.Variable.Name un
-                        { x with Unit = un }
-                )
-        else
-            y, xs
-
-    /// Create a `ProdEquation` from `VariableUnit`s
-    /// ToDo only return y::xs when all have units
-    let toProdEq succ fail y xs = 
-        let y, xs = setProdUnit y xs
-        toEq (Equation.createProductEq succ fail) y xs, y::xs
-
-    /// Make sure the in a sum equation every VariableUnit has
-    /// the same unit
-    let setSumUnit y xs =
-        let noUnit = hasUnit >> not
-        
-        if xs |> List.isEmpty then y, []
-        else
-            let xs' = 
-                match y::xs |> List.tryFind hasUnit with
-                | Some v ->
-                    let un = v |> getUnit
-                    y::xs 
-                    |> List.map (fun x ->
-                        if x |> noUnit then 
-                            printfn "setting %A sum unit: %A" x.Variable.Name un
-                            { x with Unit = un } 
-                        else x
-                    )
-                | None -> y::xs
-
-            xs' |> List.head, xs' |> List.tail
-
-    /// Create a `SumEquation` from `VariableUnit`s
-    let toSumEq succ fail y xs =
-        let y, xs = setSumUnit y xs
-        toEq (Equation.createSumEq succ fail) y xs, y::xs
-
-    /// Set a property **p** of a `VariableUnit` **vru** 
-    /// with values **vs** in a `Equation` list
-    let setProp vru p vs eqs = eqs |> Solver.solve (vru |> getName) p vs
 
     /// Try find the first element with **n**
     /// in a list of list **xsl**
@@ -168,6 +90,7 @@ module VariableUnit =
         match xsl |> List.filter (fun xs -> xs |> List.exists pred) with
         | [] -> None
         | xs::_ -> xs |> List.find pred |> Some   
+
 
     /// Try find the first `VariableUnit` with 
     /// a specific `Name` in a list of lists
@@ -182,28 +105,28 @@ module VariableUnit =
     /// **c** is used to construct the specific
     /// variable and **toVar** to extract the
     /// current variable from **vru**
-    let fromVar toVar c vrll units vru = 
-        let var, _ = vru |> (toVar >> getAll)
-        let n = var |> Variable.getName
-        let v =  vrll |> tryFind Variable.getName n
-        let un = units |> List.tryFind (fun (x, _) -> x = n)
+    let fromVar tovru c eqs a = 
+        let n =
+            a 
+            |> tovru
+            |> getName
+        let v =  eqs |> tryFindVarUnt n
         
-        match v, un with
-        | Some x, Some (_, un) -> 
+        match v with
+        | Some x -> 
             x 
-            |> withVar un 
             |> c
         | _   -> 
-                if un |> Option.isSome then 
-                    sprintf "could not find %A" n
-                    |> exn
-                    |> raise
-                vru
+            a 
+
 
     /// Set the 'Name' to the `Variable` of the `VariableUnit`
     let setName nm vru = 
         { vru with
-            Variable = vru.Variable |> Variable.setName nm }        
+            Variable = vru.Variable |> Variable.setName nm }   
+           
+    let setUnit u vru =
+        { vru with Unit = u }
 
 
     /// Get the string representation of a `VariableUnit` **vru**
@@ -222,6 +145,7 @@ module VariableUnit =
         (vu |> get).Unit
         |> ValueUnit.getUnits
 
+
     /// Helper functions for `Informedica.GenSolver.Variable.Name` type
     module Name =
      
@@ -233,6 +157,21 @@ module VariableUnit =
         let create ns = ns |> String.concat "." |> N.createExc
 
         let toString = N.toString
+
+
+    let calcUnit op (vru1, vru2) =
+        let u1 = vru1 |> getUnit
+        let u2 = vru2 |> getUnit
+
+        ValueUnit.calcUnit op u1 u2
+        |> createNew ("result" |> Variable.Name.createExc)
+
+    type VariableUnit with
+
+        static member (*) (vru1, vru2) = calcUnit (*) (vru1, vru2)
+        static member (/) (vru1, vru2) = calcUnit (/) (vru1, vru2)
+        static member (+) (vru1, vru2) = calcUnit (+) (vru1, vru2)
+        static member (-) (vru1, vru2) = calcUnit (-) (vru1, vru2)
 
     /// Type and functions to handle the `Dto` 
     /// data transfer type for a `VariableUnit`
@@ -356,7 +295,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Frequency
 
         /// Set a `Frequency` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Frequency 
 
         /// Create a `Frequency` with a preset `Variable`
@@ -405,7 +344,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Time
         
         /// Set a `Time` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Time 
 
         /// Create a `Time` with a preset `Variable`
@@ -448,7 +387,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Count
         
         /// Set a `Count` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Count 
 
         /// Create a `Count` with a preset `Variable`
@@ -492,7 +431,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Quantity
 
         /// Set a `Quantity` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Quantity 
         
         /// Create a `Quantity` with a preset `Variable`
@@ -544,7 +483,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Total
 
         /// Set a `Total` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Total 
         
         /// Create a `Total` with a preset `Variable`
@@ -601,7 +540,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Rate
 
         /// Set a `Rate` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Rate 
 
         /// Create a `Rate` with a preset `Variable`
@@ -659,7 +598,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> Concentration
 
         /// Set a `Concentration` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt Concentration 
         
         /// Create a `Concentration` with a preset `Variable`
@@ -713,7 +652,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> QuantityAdjust
 
         /// Set a `QuantityAdjust` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt QuantityAdjust 
 
         /// Create a `QuantityAdjust` with a preset `Variable`
@@ -772,7 +711,7 @@ module VariableUnit =
         let fromDto dto = dto |> Dto.fromDto |> TotalAdjust
 
         /// Set a `TotalAdjust` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt TotalAdjust 
 
         /// Create a `TotalAdjust` with a preset `Variable`
@@ -820,7 +759,7 @@ module VariableUnit =
         let toVarUnt (RateAdjust rate) = rate
 
         /// Set a `RateAdjust` with a `Variable`
-        /// in a list of `Variable` lists
+        /// in a list fromVariable` lists
         let fromVar = fromVar toVarUnt RateAdjust 
 
         let unitToString =
@@ -899,10 +838,10 @@ module VariableUnit =
 
         /// Set a `Dose` with a quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
-        let fromVar eqs units (Dose(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.Quantity eqs units qty
-            let tot = fromVar TL.toVarUnt TL.Total    eqs units tot
-            let rte = fromVar RT.toVarUnt RT.Rate     eqs units rte
+        let fromVar eqs (Dose(qty, tot, rte)) = 
+            let qty = fromVar QT.toVarUnt QT.Quantity eqs qty
+            let tot = fromVar TL.toVarUnt TL.Total    eqs tot
+            let rte = fromVar RT.toVarUnt RT.Rate     eqs rte
             (qty, tot, rte) |> Dose
 
         /// Create a `Dose` with name **n**
@@ -941,6 +880,7 @@ module VariableUnit =
                 rte |> RT.toString
             ]
 
+
     /// Type and functions that represent an adjusted dose,
     /// and a dose is an adjusted dose quantity, total and rate
     module DoseAdjust =
@@ -970,10 +910,10 @@ module VariableUnit =
 
         /// Set a `DoseAdjust` with an adjusted quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
-        let fromVar eqs units (DoseAdjust(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.QuantityAdjust eqs units qty
-            let tot = fromVar TL.toVarUnt TL.TotalAdjust    eqs units tot
-            let rte = fromVar RT.toVarUnt RT.RateAdjust     eqs units rte
+        let fromVar eqs (DoseAdjust(qty, tot, rte)) = 
+            let qty = fromVar QT.toVarUnt QT.QuantityAdjust eqs qty
+            let tot = fromVar TL.toVarUnt TL.TotalAdjust    eqs tot
+            let rte = fromVar RT.toVarUnt RT.RateAdjust     eqs rte
             (qty, tot, rte) |> DoseAdjust
 
         /// Create a `DoseAdjust` with name **n**

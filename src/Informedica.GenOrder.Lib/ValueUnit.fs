@@ -5,8 +5,12 @@ namespace Informedica.GenOrder.Lib
 /// `Informedica.GenUnits.Lib`
 module ValueUnit =
 
+    open MathNet.Numerics
+
     open Informedica.GenUtils.Lib.BCL
     open Informedica.GenUnits.Lib
+    
+    open ValueUnit
 
     module Units = ValueUnit.Units
 
@@ -26,6 +30,19 @@ module ValueUnit =
             | _ -> 
                 printfn "could not parse to unit: %s" s
                 None
+
+    let calcUnit op u1 u2 = 
+        
+        match u1, u2 with
+        | NoUnit, _ 
+        | _, NoUnit -> NoUnit
+        | u1, u2 ->
+            let vu1 = 1N |> create u1
+            let vu2 = 1N |> create u2
+
+            vu1 |> op <| vu2
+            |> get
+            |> snd
 
     module Units =
         

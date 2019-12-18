@@ -39,7 +39,7 @@ NUGET
       System.Runtime.Loader (>= 4.0)
       System.Security.Cryptography.Algorithms (>= 4.3)
     FSharp.Core (4.7)
-    Informedica.GenSolver.Lib (0.3.0-beta)
+    Informedica.GenSolver.Lib (0.3.1-beta)
       Informedica.GenUtils.Lib (>= 0.5.0-beta)
     Informedica.GenUnits.lib (1.0.1-beta)
       Informedica.GenUtils.Lib (>= 0.5.0-beta)
