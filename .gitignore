@@ -30,6 +30,8 @@ publishnuget.cmd
 # Add paket bootstrapper
 !/.paket/
 !/.paket/paket.bootstrapper.exe
+!/.paket/paket.exe
+!/.paket/Paket.Restore.targets
 
 # Add dependencies file
 !paket.dependencies

@@ -211,33 +211,33 @@ module Orderable =
         ///
         /// *Process*
         ///
-        /// * itm\_cmp\_qty = itm\_cmp\_cnc \* cmp\_cmp\_qty
-        /// * itm\_orb\_qty = itm\_orb\_cnc \* orb\_orb\_qty
-        /// * itm\_orb\_qty = itm\_cmp\_cnc \* cmp\_orb\_qty
+        /// * itm\_cmp\_qty = itm\_cmp\_cnc \* cmp\_cmp\_qty ItemComponentQuantiy = ItemComponentConcentration * CompoentQuantity
+        /// * itm\_orb\_qty = itm\_orb\_cnc \* orb\_orb\_qty ItemOrderableQuantity = ItemOrderableConcentration * OrderableQuantity
+        /// * itm\_orb\_qty = itm\_cmp\_cnc \* cmp\_orb\_qty ItemOrderableQuantity = ItemComponentConcentration * ComponentOrderableQuantity
         ///
         /// *Discontinuous Timed*
         ///
-        /// * itm\_dos\_tot = itm\_dos\_qty \* frq 
-        /// * itm\_dos\_qty = itm\_dos\_rte \* tme
-        /// * itm\_dos\_qty = itm\_orb\_cnc \* qty
-        /// * itm\_dos\_tot = itm\_orb\_cnc \* tot
-        /// * itm\_dos\_rte = itm\_orb\_cnc \* rte
-        /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj
-        /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj
-        /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
+        /// * itm\_dos\_tot = itm\_dos\_qty \* frq ItemDoseTotal = ItemDoseQuantity * Frequency
+        /// * itm\_dos\_qty = itm\_dos\_rte \* tme ItemDoseQuantity = ItemDoseRate * Time
+        /// * itm\_dos\_qty = itm\_orb\_cnc \* qty ItemDoseQuantity = ItemOrderableConcentration * OrderableDoseQuantity
+        /// * itm\_dos\_tot = itm\_orb\_cnc \* tot ItemDoseTotal = ItemOrderableConcentration * OrderableDoseTotal
+        /// * itm\_dos\_rte = itm\_orb\_cnc \* rte ItemDoseRate = ItemOrderableConcentration * OrderableDoseRate
+        /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj ItemDoseQuantity = ItemDoseQuantityAdjust * Adjust
+        /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj ItemDoseTotal = ItemDoseTotalAdjust * Adjust
+        /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj ItemDoseRate = ItemDoseRate * Adjust
         ///
         /// *Discontinuous*
         ///
-        /// * itm\_dos\_tot = itm\_dos\_qty \* frq 
-        /// * itm\_dos\_qty = itm\_orb\_cnc \* qty
-        /// * itm\_dos\_tot = itm\_orb\_cnc \* tot
-        /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj
-        /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj
+        /// * itm\_dos\_tot = itm\_dos\_qty \* frq ItemDoseTotal = ItemDoseQuantity * Frequency
+        /// * itm\_dos\_qty = itm\_orb\_cnc \* qty ItemDoseQuantity = ItemOrderableConcentration * OrderableDoseQuantity
+        /// * itm\_dos\_tot = itm\_orb\_cnc \* tot ItemDoseTotal = ItemOrderableConcentration * OrderableDoseTotal
+        /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj ItemDoseQuantity = ItemDoseQuantityAdjust * Adjust
+        /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj ItemDoseTotal = ItemDoseTotalAdjust * Adjust
         ///
         /// *Continuous*
         ///
-        /// * itm\_dos\_rte = itm\_orb\_cnc \* rte
-        /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj
+        /// * itm\_dos\_rte = itm\_orb\_cnc \* rte ItemDoseRate = ItemOrderableConcentration * OrderableDoseRate
+        /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj = ItemDoseRate = ItemDoseRateAdjust * Adjust
         let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty itm =
             let itm_cmp_qty, 
                 itm_orb_qty, 

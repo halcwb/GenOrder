@@ -85,10 +85,10 @@ module Drug =
                 [
                     FreqPerDayMin 1N
                     FreqPerDayMax 12N
-                    PatientWeightMin (245N / 1000N)
-                    PatientWeightMax 635N
-                    PatientHeightMin 23N
-                    PatientHeightMax 272N
+//                    PatientWeightMin (245N / 1000N)
+//                    PatientWeightMax 635N
+//                    PatientHeightMin 23N
+//                    PatientHeightMax 272N
                     SolidComponentOrderableCount 1N
                     SolidComponentOrderableConcentration 1N
                     SolidComponentComponentQuantityMax 1N
@@ -390,7 +390,7 @@ module Constraints = Drug.Constraints
             MaxDoseTotal = Some 4000N
             MaxDoseTotalAdjust = Some 90N
     }
-|> Drug.setAdjust "paracetamol" 10N
+// |> Drug.setAdjust "paracetamol" 10N
 |> Order.toString 
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)
 
@@ -441,7 +441,7 @@ module Constraints = Drug.Constraints
     Drug.drug with
         Id = "1"
         Name = "paracetamol"
-        Substances = [ { Name = "paracetamol"; Quantity = [ 240N ] }]
+        Substances = [ { Name = "paracetamol"; Quantity = [ 24N ] }]
         UnitGroup = "Mass"
         Unit = "mg"
         DoseUnit = "mg"
@@ -450,7 +450,6 @@ module Constraints = Drug.Constraints
         Route = "or"
 }
 |> Drug.toOrder
-|> Drug.setConstraints Constraints.constraints
 |> Drug.setDoseLimits
     {   Drug.doseLimits with
             Name = "paracetamol"
@@ -460,6 +459,7 @@ module Constraints = Drug.Constraints
             MaxDoseTotalAdjust = Some 90N
     }
 |> Drug.setAdjust "paracetamol" 10N
+|> Drug.setConstraints Constraints.constraints
 |> Order.toString 
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)
 
