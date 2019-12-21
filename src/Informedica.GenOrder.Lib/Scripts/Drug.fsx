@@ -83,8 +83,8 @@ module Drug =
 
             let constraints =
                 [
-                    FreqPerDayMin 1N
-                    FreqPerDayMax 12N
+//                    FreqPerDayMin 1N
+//                    FreqPerDayMax 12N
 //                    PatientWeightMin (245N / 1000N)
 //                    PatientWeightMax 635N
 //                    PatientHeightMin 23N
@@ -201,7 +201,7 @@ module Drug =
         module Mapping = Order.Mapping
         module Props = Solver.Props
 
-        let create id name substs qty ug un du tu shape div route =
+        let create id name substs ug un du tu shape div route =
             let su = 
                 match shape |> RouteShape.map route with
                 | Some sr ->
@@ -253,13 +253,25 @@ module Drug =
             dto
             |> Order.Dto.fromDto
             |> Order.solve name Mapping.ComponentComponentQty Props.Incr [ 1N/div ]
-            |> Order.solve name Mapping.ComponentComponentQty Props.MaxIncl qty
             |> Order.solve name Mapping.OrderableDoseQty Props.Incr [ 1N/div ]
             |> fun o ->
                 substs
                 |> Seq.fold (fun acc (n, xs) ->
                     acc
                     |> Order.solve n Mapping.ItemComponentQty Props.Vals xs
+                    |> (fun o ->
+                        match shape |> RouteShape.map route with
+                        | Some rs ->
+                            match rs with
+                            | RouteShape.OralFluid
+                            | RouteShape.OralSolid
+                            | RouteShape.RectalSolid ->
+                                o
+                                |> Order.solve name Mapping.ItemOrderableConc Props.Vals xs
+                            | _ -> o
+                        | _ -> o
+                    )
+
                 ) o
             |> fun o ->
                 match shape |> RouteShape.map route with
@@ -267,7 +279,6 @@ module Drug =
                     match rs with
                     | RouteShape.OralFluid ->
                         o
-                        |> Order.solve name Mapping.ComponentOrderableQty Props.Vals  qty
                         |> Order.solve name Mapping.ComponentOrderableConc Props.Vals [ 1N ]
                     | _ -> o
                 | _ -> o
@@ -278,7 +289,6 @@ module Drug =
                 Id:  string
                 Name : string
                 Substances : Substance list
-                Quantity : BigRational
                 UnitGroup : string
                 Unit : string
                 DoseUnit : string
@@ -287,14 +297,13 @@ module Drug =
                 Divisible : BigRational
                 Route : string
             }
-        and Substance = { Name : string; Quantity : BigRational list }
+        and Substance = { Name : string; Concentrations : BigRational list }
 
         let drug =
             {
                 Id = ""
                 Name = ""
                 Substances = []
-                Quantity = 1N
                 UnitGroup = ""
                 Unit = ""
                 DoseUnit = ""
@@ -307,8 +316,7 @@ module Drug =
         let toOrder (d : Drug) =
             create d.Id 
                    d.Name 
-                   (d.Substances |> List.map (fun s -> s.Name, s.Quantity))
-                   [d.Quantity]
+                   (d.Substances |> List.map (fun s -> s.Name, s.Concentrations))
                    d.UnitGroup
                    d.Unit
                    d.DoseUnit
@@ -372,7 +380,7 @@ module Constraints = Drug.Constraints
         Id = "1"
         Name = "paracetamol"
         Substances = 
-            [ { Name = "paracetamol"; Quantity =  [60N; 120N; 240N; 500N; 1000N] }]
+            [ { Name = "paracetamol"; Concentrations =  [60N; 120N; 240N; 500N; 1000N] }]
         UnitGroup = "Mass"
         Unit = "mg"
         DoseUnit = "mg"
@@ -395,15 +403,16 @@ module Constraints = Drug.Constraints
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)
 
 
+// Drug with multiple items
 {
     Drug.drug with
         Id = "1"
         Name = "cotrimoxazol"
         Substances = 
             [ { Name = "sulfamethoxazol"; 
-                Quantity = [ 20N; 80N; 160N ] }
+                Concentrations = [ 20N; 80N; 160N ] }
               { Name = "trimethoprim"; 
-                Quantity = [ 100N; 400N; 800N ] }
+                Concentrations = [ 100N; 400N; 800N ] }
             ]
         UnitGroup = "Mass"
         Unit = "mg"
@@ -441,7 +450,7 @@ module Constraints = Drug.Constraints
     Drug.drug with
         Id = "1"
         Name = "paracetamol"
-        Substances = [ { Name = "paracetamol"; Quantity = [ 24N ] }]
+        Substances = [ { Name = "paracetamol"; Concentrations = [ 24N ] }]
         UnitGroup = "Mass"
         Unit = "mg"
         DoseUnit = "mg"
@@ -450,6 +459,8 @@ module Constraints = Drug.Constraints
         Route = "or"
 }
 |> Drug.toOrder
+// Need to set adjust first to limit number of possible scenario's
+|> Drug.setAdjust "paracetamol" 10N
 |> Drug.setDoseLimits
     {   Drug.doseLimits with
             Name = "paracetamol"
@@ -458,7 +469,6 @@ module Constraints = Drug.Constraints
             MaxDoseTotal = Some 4000N
             MaxDoseTotalAdjust = Some 90N
     }
-|> Drug.setAdjust "paracetamol" 10N
 |> Drug.setConstraints Constraints.constraints
 |> Order.toString 
 |> List.iteri (fun i s -> printfn "%i\t%s" i s)
