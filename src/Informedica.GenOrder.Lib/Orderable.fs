@@ -184,13 +184,22 @@ module Orderable =
         ///
         /// * adj: the adjustment of the dose
         /// * frq: the prescription frequency
+        /// * tme: the prescription time duration
         /// * qty: the orderable dose quantity
         /// * tot: the orderable dose total
-        /// * tme: the prescription time duration
         /// * rte: the orderable dose rate
+        /// * qty_adj: the orderable adjusted dose quantity
+        /// * tot_ajd: the orderable adjusted dose total
+        /// * rte_adj: the orderable adjusted dose rate
         ///
         /// * cmp\_cmp\_qty: the component quantity
         /// * cmp\_orb\_qty: the quantity of component in an orderable
+        /// * cmp\_dos\_qty: the component dose quantity
+        /// * cmp\_dos\_tot: the component dose total
+        /// * cmp\_dos\_rte: the component dose rate
+        /// * cmp\_dos\_qty_adj: the component adjusted dose quantity
+        /// * cmp\_dos\_tot_ajd: the component adjusted dose total
+        /// * cmp\_dos\_rte_adj: the component adjusted dose rate
         /// * orb\_orb\_qty: the orderable quantity
         ///
         /// * itm: the item from which the following can be used:
@@ -222,6 +231,17 @@ module Orderable =
         /// * itm\_dos\_qty = itm\_orb\_cnc \* qty ItemDoseQuantity = ItemOrderableConcentration * OrderableDoseQuantity
         /// * itm\_dos\_tot = itm\_orb\_cnc \* tot ItemDoseTotal = ItemOrderableConcentration * OrderableDoseTotal
         /// * itm\_dos\_rte = itm\_orb\_cnc \* rte ItemDoseRate = ItemOrderableConcentration * OrderableDoseRate
+        /// * itm\_dos\_qty\_adj = itm\_orb\_cnc \* qty\_adj ItemDoseQuantityAdjust = ItemOrderableConcentration * OrderableDoseQuantityAdjust
+        /// * itm\_dos\_tot\_adj = itm\_orb\_cnc \* tot\_adj ItemDoseTotalAdjust = ItemOrderableConcentration * OrderableDoseTotalAdjust
+        /// * itm\_dos\_rte\_adj = itm\_orb\_cnc \* rte\_adj ItemDoseRateAdjust = ItemOrderableConcentration * OrderableDoseRateAdjust
+        /// * itm\_dos\_qty = itm\_cmp\_cnc \* qty ItemDoseQuantity = ItemComponentConcentration * ComponentDoseQuantity
+        /// * itm\_dos\_tot = itm\_cmp\_cnc \* tot ItemDoseTotal = ItemComponentConcentration * ComponentDoseTotal
+        /// * itm\_dos\_rte = itm\_cmp\_cnc \* rte ItemDoseRate = ItemComponentConcentration * ComponentDoseRate
+        /// * itm\_dos\_qty\_adj = itm\_cmp\_cnc \* qty\_adj ItemDoseQuantityAdjust = ItemComponentConcentration * ComponentDoseQuantityAdjust
+        /// * itm\_dos\_tot\_adj = itm\_cmp\_cnc \* tot\_adj ItemDoseTotalAdjust = ItemComponentConcentration * ComponentDoseTotalAdjust
+        /// * itm\_dos\_rte\_adj = itm\_cmp\_cnc \* rte\_adj ItemDoseRateAdjust = ItemComponentConcentration * ComponentDoseRateAdjust
+        /// * itm\_dos\_tot\_adj = itm\_dos\_qty\_adj \* frq = ItemDoseTotalAdjust = ItemDoseQuantityAdjust * frq
+        /// * itm\_dos\_qty\_adj = itm\_dos\_rte \* tme = ItemDoseQuantityAdjust = ItemDoseRateAdjust * tme
         /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj ItemDoseQuantity = ItemDoseQuantityAdjust * Adjust
         /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj ItemDoseTotal = ItemDoseTotalAdjust * Adjust
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj ItemDoseRate = ItemDoseRate * Adjust
@@ -231,6 +251,13 @@ module Orderable =
         /// * itm\_dos\_tot = itm\_dos\_qty \* frq ItemDoseTotal = ItemDoseQuantity * Frequency
         /// * itm\_dos\_qty = itm\_orb\_cnc \* qty ItemDoseQuantity = ItemOrderableConcentration * OrderableDoseQuantity
         /// * itm\_dos\_tot = itm\_orb\_cnc \* tot ItemDoseTotal = ItemOrderableConcentration * OrderableDoseTotal
+        /// * itm\_dos\_qty\_adj = itm\_orb\_cnc \* qty\_adj ItemDoseQuantityAdjust = ItemOrderableConcentration * OrderableDoseQuantityAdjust
+        /// * itm\_dos\_tot\_adj = itm\_orb\_cnc \* tot\_adj ItemDoseTotalAdjust = ItemOrderableConcentration * OrderableDoseTotalAdjust
+        /// * itm\_dos\_qty = itm\_cmp\_cnc \* qty ItemDoseQuantity = ItemComponentConcentration * ComponentDoseQuantity
+        /// * itm\_dos\_tot = itm\_cmp\_cnc \* tot ItemDoseTotal = ItemComponentConcentration * ComponentDoseTotal
+        /// * itm\_dos\_qty\_adj = itm\_cmp\_cnc \* qty\_adj ItemDoseQuantityAdjust = ItemComponentConcentration * ComponentDoseQuantityAdjust
+        /// * itm\_dos\_tot\_adj = itm\_cmp\_cnc \* tot\_adj ItemDoseTotalAdjust = ItemComponentConcentration * ComponentDoseTotalAdjust
+        /// * itm\_dos\_tot\_adj = itm\_dos\_qty\_adj \* frq = ItemDoseTotalAdjust = ItemDoseQuantityAdjust * frq
         /// * itm\_dos\_qty = itm\_dos\_qty\_adj \* adj ItemDoseQuantity = ItemDoseQuantityAdjust * Adjust
         /// * itm\_dos\_tot = itm\_dos\_tot\_adj \* adj ItemDoseTotal = ItemDoseTotalAdjust * Adjust
         ///
@@ -238,7 +265,13 @@ module Orderable =
         ///
         /// * itm\_dos\_rte = itm\_orb\_cnc \* rte ItemDoseRate = ItemOrderableConcentration * OrderableDoseRate
         /// * itm\_dos\_rte = itm\_dos\_rte\_adj \* adj = ItemDoseRate = ItemDoseRateAdjust * Adjust
-        let toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty itm =
+        /// * itm\_dos\_rte\_adj = itm\_orb\_cnc \* rte\_adj ItemDoseRateAdjust = ItemOrderableConcentration * OrderableDoseRateAdjust
+        /// * itm\_dos\_rte = itm\_cmp\_cnc \* rte ItemDoseRate = ItemComponentConcentration * ComponentDoseRate
+        /// * itm\_dos\_rte\_adj = itm\_cmp\_cnc \* rte\_adj ItemDoseRateAdjust = ItemComponentConcentration * ComponentDoseRateAdjust
+        let toEqs adj frq tme qty tot rte qty_adj tot_adj rte_adj 
+                  cmp_cmp_qty cmp_orb_qty 
+                  cmp_dos_qty cmp_dos_tot cmp_dos_rte cmp_dos_qty_adj cmp_dos_tot_adj cmp_dos_rte_adj 
+                  orb_orb_qty itm =
             let itm_cmp_qty, 
                 itm_orb_qty, 
                 itm_cmp_cnc, 
@@ -257,33 +290,54 @@ module Orderable =
                     [ itm_orb_qty; itm_cmp_cnc; cmp_orb_qty ]
                 ]
 
-            match rte, frq, tme with
+            match rte, frq, tme, rte_adj, cmp_dos_rte, cmp_dos_rte_adj with
             // Discontinuous timed
-            | Some rte, Some frq, Some tme ->
+            | Some rte, Some frq, Some tme, Some rte_adj, Some cmp_dos_rte, Some cmp_dos_rte_adj ->
                 [
-                    [ itm_dos_tot; itm_dos_qty;     frq ] 
-                    [ itm_dos_qty; itm_dos_rte;     tme ]
-                    [ itm_dos_qty; itm_orb_cnc;     qty ]
-                    [ itm_dos_tot; itm_orb_cnc;     tot ]
-                    [ itm_dos_rte; itm_orb_cnc;     rte ]
-                    [ itm_dos_qty; itm_dos_qty_adj; adj ]
-                    [ itm_dos_tot; itm_dos_tot_adj; adj ]
-                    [ itm_dos_rte; itm_dos_rte_adj; adj ]
+                    [ itm_dos_tot;     itm_dos_qty;     frq ] 
+                    [ itm_dos_qty;     itm_dos_rte;     tme ]
+                    [ itm_dos_qty;     itm_orb_cnc;     qty ]
+                    [ itm_dos_tot;     itm_orb_cnc;     tot ]
+                    [ itm_dos_rte;     itm_orb_cnc;     rte ]
+                    [ itm_dos_qty_adj; itm_orb_cnc;     qty_adj ]
+                    [ itm_dos_tot_adj; itm_orb_cnc;     tot_adj ]
+                    [ itm_dos_rte_adj; itm_orb_cnc;     rte_adj ]
+                    [ itm_dos_qty;     itm_cmp_cnc;     cmp_dos_qty ]
+                    [ itm_dos_tot;     itm_cmp_cnc;     cmp_dos_tot ]
+                    [ itm_dos_rte;     itm_cmp_cnc;     cmp_dos_rte ]
+                    [ itm_dos_qty_adj; itm_cmp_cnc;     cmp_dos_qty_adj ]
+                    [ itm_dos_tot_adj; itm_cmp_cnc;     cmp_dos_tot_adj ]
+                    [ itm_dos_rte_adj; itm_cmp_cnc;     cmp_dos_rte_adj ]
+                    [ itm_dos_tot_adj; itm_dos_qty_adj; frq ]
+                    [ itm_dos_qty_adj; itm_dos_rte_adj; tme ]
+                    [ itm_dos_qty;     itm_dos_qty_adj; adj ]
+                    [ itm_dos_tot;     itm_dos_tot_adj; adj ]
+                    [ itm_dos_rte;     itm_dos_rte_adj; adj ]
                 ] |> List.append eqs
             // Discontinuous
-            | None, Some frq, None   ->
+            | None, Some frq, None, None, None, None   ->
                 [
-                    [ itm_dos_tot; itm_dos_qty;     frq ] 
-                    [ itm_dos_qty; itm_orb_cnc;     qty ]
-                    [ itm_dos_tot; itm_orb_cnc;     tot ]
-                    [ itm_dos_qty; itm_dos_qty_adj; adj ]
-                    [ itm_dos_tot; itm_dos_tot_adj; adj ]
+                    [ itm_dos_tot;     itm_dos_qty;     frq ] 
+                    [ itm_dos_qty;     itm_orb_cnc;     qty ]
+                    [ itm_dos_tot;     itm_orb_cnc;     tot ]
+                    [ itm_dos_qty_adj; itm_orb_cnc;     qty_adj ]
+                    [ itm_dos_tot_adj; itm_orb_cnc;     tot_adj ]
+                    [ itm_dos_qty;     itm_cmp_cnc;     cmp_dos_qty ]
+                    [ itm_dos_tot;     itm_cmp_cnc;     cmp_dos_tot ]
+                    [ itm_dos_qty_adj; itm_cmp_cnc;     cmp_dos_qty_adj ]
+                    [ itm_dos_tot_adj; itm_cmp_cnc;     cmp_dos_tot_adj ]
+                    [ itm_dos_tot_adj; itm_dos_qty_adj; frq ]
+                    [ itm_dos_qty;     itm_dos_qty_adj; adj ]
+                    [ itm_dos_tot;     itm_dos_tot_adj; adj ]
                 ] |> List.append eqs
             // Continuous
-            | Some rte, _, _ ->
+            | Some rte, _, _, Some rte_adj, Some cmp_dos_rte, Some cmp_dos_rte_adj ->
                 [
                     [ itm_dos_rte; itm_orb_cnc;     rte ]
                     [ itm_dos_rte; itm_dos_rte_adj; adj ]
+                    [ itm_dos_rte_adj; itm_orb_cnc; rte_adj ]
+                    [ itm_dos_rte;     itm_cmp_cnc; cmp_dos_rte ]
+                    [ itm_dos_rte_adj; itm_cmp_cnc; cmp_dos_rte_adj ]
                 ] |> List.append eqs   
             // Process             
             | _ -> eqs
@@ -562,10 +616,13 @@ module Orderable =
         ///
         /// * adj: the adjustment of the dose
         /// * frq: the prescription frequency
+        /// * tme: the prescription time
         /// * qty: the orderable dose quantity
         /// * tot: the orderable dose total
-        /// * tme: the prescription time
         /// * rte: the orderable dose rate
+        /// * qty_adj: the orderable adjusted dose quantity
+        /// * tot_adj: the orderable adjusted dose total
+        /// * rte_adj: the orderable adjusted dose rate
         ///
         /// * orb\_orb\_qty: the orderable quantity
         /// * cmp : the component
@@ -599,6 +656,10 @@ module Orderable =
         /// * cmp\_dos\_qty = cmp\_orb\_cnc \* qty
         /// * cmp\_dos\_tot = cmp\_orb\_cnc \* tot
         /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
+        /// * cmp\_dos\_qty\_adj = cmp\_orb\_cnc \* qty\_adj
+        /// * cmp\_dos\_tot\_adj = cmp\_orb\_cnc \* tot\_adj
+        /// * cmp\_dos\_rte\_adj = cmp\_orb\_cnc \* rte\_adj
+        /// * cmp\_dos\_tot\_adj = cmp\_dos\_qty\_adj \* frq
         /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
         /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
@@ -608,6 +669,9 @@ module Orderable =
         /// * cmp\_dos\_tot = cmp\_dos\_qty \* frq 
         /// * cmp\_dos\_qty = cmp\_orb\_cnc \* qty
         /// * cmp\_dos\_tot = cmp\_orb\_cnc \* tot
+        /// * cmp\_dos\_qty\_adj = cmp\_orb\_cnc \* qty\_adj
+        /// * cmp\_dos\_tot\_adj = cmp\_orb\_cnc \* tot\_adj
+        /// * cmp\_dos\_tot\_adj = cmp\_dos\_qty\_adj \* frq
         /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
         /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
         ///
@@ -615,7 +679,8 @@ module Orderable =
         ///
         /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
-        let toEqs adj frq qty tot tme rte orb_orb_qty cmp =
+        /// * cmp\_dos\_rte\_adj = cmp\_orb\_cnc \* rte\_adj
+        let toEqs adj frq tme qty tot rte qty_adj tot_adj rte_adj orb_orb_qty cmp =
             let cmp_cmp_qty, 
                 cmp_orb_qty,
                 cmp_orb_cnt,
@@ -629,7 +694,16 @@ module Orderable =
                 cmp_dos_tot_adj,
                 cmp_dos_rte_adj = cmp |> toVar
 
-            let map = IT.toEqs adj frq qty tot tme rte cmp_cmp_qty cmp_orb_qty orb_orb_qty
+            let map = 
+                let cmp_dos_rte, cmp_dos_rte_adj =
+                    match rte with
+                    | Some _ -> (Some cmp_dos_rte, Some cmp_dos_rte_adj)
+                    | _      -> (None, None)
+                IT.toEqs 
+                    adj frq tme qty tot rte qty_adj tot_adj rte_adj 
+                    cmp_cmp_qty cmp_orb_qty 
+                    cmp_dos_qty cmp_dos_tot cmp_dos_rte cmp_dos_qty_adj cmp_dos_tot_adj cmp_dos_rte_adj
+                    orb_orb_qty
             let ii = cmp.Items
 
             let eqs =
@@ -639,33 +713,44 @@ module Orderable =
 //                    [ orb_ord_qty; cmp_cmp_qty; cmp_ord_cnt ]
                 ] 
 
-            match rte, frq, tme with
+            match rte, frq, tme, rte_adj with
             // Discontinuous timed
-            | Some rte, Some frq, Some tme ->
+            | Some rte, Some frq, Some tme, Some rte_adj ->
                 [
-                    [ cmp_dos_tot; cmp_dos_qty;     frq  ]
-                    [ cmp_dos_qty; cmp_dos_rte;     tme ]
-                    [ cmp_dos_qty; cmp_orb_cnc;     qty ]
-                    [ cmp_dos_tot; cmp_orb_cnc;     tot ]
-                    [ cmp_dos_rte; cmp_orb_cnc;     rte ]
-                    [ cmp_dos_qty; cmp_dos_qty_adj; adj ]
-                    [ cmp_dos_tot; cmp_dos_tot_adj; adj ]
-                    [ cmp_dos_rte; cmp_dos_rte_adj; adj ]
+                    [ cmp_dos_tot;     cmp_dos_qty;     frq ]
+                    [ cmp_dos_qty;     cmp_dos_rte;     tme ]
+                    [ cmp_dos_qty;     cmp_orb_cnc;     qty ]
+                    [ cmp_dos_tot;     cmp_orb_cnc;     tot ]
+                    [ cmp_dos_rte;     cmp_orb_cnc;     rte ]
+                    [ cmp_dos_qty_adj; cmp_orb_cnc;     qty_adj ]
+                    [ cmp_dos_tot_adj; cmp_orb_cnc;     tot_adj ]
+                    [ cmp_dos_rte_adj; cmp_orb_cnc;     rte_adj ]
+                    [ cmp_dos_tot_adj; cmp_dos_qty_adj; frq ]
+                    [ cmp_dos_qty_adj; cmp_dos_rte_adj; tme ]
+                    [ cmp_dos_qty;     cmp_dos_qty_adj; adj ]
+                    [ cmp_dos_tot;     cmp_dos_tot_adj; adj ]
+                    [ cmp_dos_rte;     cmp_dos_rte_adj; adj ]
                 ] |> List.append eqs
             // Discontinuous
-            | None, Some frq, None   ->
+            | None, Some frq, None, None   ->
                 [
-                    [ cmp_dos_tot; cmp_dos_qty;     frq ]
-                    [ cmp_dos_qty; cmp_orb_cnc;     qty ]
-                    [ cmp_dos_tot; cmp_orb_cnc;     tot ]
-                    [ cmp_dos_qty; cmp_dos_qty_adj; adj ]
-                    [ cmp_dos_tot; cmp_dos_tot_adj; adj ]
+                    [ cmp_dos_tot;     cmp_dos_qty;     frq ]
+                    [ cmp_dos_qty;     cmp_orb_cnc;     qty ]
+                    [ cmp_dos_tot;     cmp_orb_cnc;     tot ]
+                    [ cmp_dos_qty_adj; cmp_orb_cnc;     qty_adj ]
+                    [ cmp_dos_tot_adj; cmp_orb_cnc;     tot_adj ]
+                    [ cmp_dos_tot_adj; cmp_dos_qty_adj; frq ]
+                    [ cmp_dos_tot_adj; cmp_dos_qty_adj; frq ]
+                    [ cmp_dos_qty;     cmp_dos_qty_adj; adj ]
+                    [ cmp_dos_tot;     cmp_dos_tot_adj; adj ]
                 ] |> List.append eqs
             // Continuous
-            | Some rte, _, _ ->
+            | Some rte, _, Some tme, Some rte_adj ->
                 [
                     [ cmp_dos_rte; cmp_orb_cnc;     rte ]
                     [ cmp_dos_rte; cmp_dos_rte_adj; adj ]
+                    [ cmp_dos_rte_adj; cmp_orb_cnc; rte_adj ]
+                    [ cmp_dos_qty_adj; cmp_dos_rte_adj; tme ]
                 ] |> List.append eqs
             // Process
             | _ -> eqs
@@ -973,14 +1058,16 @@ module Orderable =
     ///
     /// *Discontinuous Timed*
     ///
-    /// * dot\_tot = dos\_qty \* frq
+    /// * dos\_tot = dos\_qty \* frq
     /// * dos\_qty = dos\_rte \* tme
-    /// * dot\_tot\_adj = dos\_qty\_adj \* frq
+    /// * dos\_tot\_adj = dos\_qty\_adj \* frq
+    /// * dos\_tot = dos\_tot\_adj \* adj
     /// * dos\_qty\_adj = dos\_rte\_adj \* tme
+    /// * dos\_qty = dos\_qty\_adj \* adj
     /// 
     /// *Discontinuous*
     ///
-    /// * dot\_tot = dos\_qty \* frq
+    /// * dos\_tot = dos\_qty \* frq
     /// * dot\_tot\_adj = dos\_qty\_adj \* frq
     let toEqs hasRte adj frq tme orb =
         let ord_qty,
@@ -997,9 +1084,9 @@ module Orderable =
 
         let qty_adj = dos_qty_adj
         let tot_adj = dos_tot_adj
-        let rte_adj = dos_rte_adj
+        let rte_adj = if hasRte then Some dos_rte_adj else None
 
-        let map = CM.toEqs adj frq dos_qty dos_tot tme rte orb_qty
+        let map = CM.toEqs adj frq tme dos_qty dos_tot rte qty_adj tot_adj rte_adj orb_qty
         let cc = orb.Components
 
         let eqs = 
@@ -1010,20 +1097,22 @@ module Orderable =
 
         match rte, frq, tme with
         // Discontinuous timed
-        | Some rte, Some frq, Some tme ->
+        | Some _, Some frq, Some tme ->
             [
-                [dos_tot;     dos_qty;     frq]
-                [dos_qty;     dos_rte;     tme]
-                [dos_tot_adj; dos_qty_adj; frq]
-                [dos_qty_adj; dos_rte_adj; tme]
+                [ dos_tot;     dos_qty;     frq ]
+                [ dos_qty;     dos_rte;     tme ]
+                [ dos_tot;     dos_tot_adj; adj ]
+                [ dos_qty;     dos_qty_adj; adj ]
+                [ dos_tot_adj; dos_qty_adj; frq ]
+                [ dos_qty_adj; dos_rte_adj; tme ]
             ] |> List.append eqs
         // Discontinuous
         | None, Some frq, None   ->
             [
-                [dos_tot;     dos_qty;     frq]
-                [dos_tot_adj; dos_qty_adj; frq]
+                [ dos_tot;     dos_qty;     frq ]
+                [ dos_tot_adj; dos_qty_adj; frq ]
             ] |> List.append eqs
-        // Continuous or Process
+        // Process or continuous
         | _ -> eqs
         |> List.append (cc |> List.collect map)
         , orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
