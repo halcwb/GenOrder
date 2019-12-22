@@ -333,8 +333,8 @@ module Orderable =
             // Continuous
             | Some rte, _, _, Some rte_adj, Some cmp_dos_rte, Some cmp_dos_rte_adj ->
                 [
-                    [ itm_dos_rte; itm_orb_cnc;     rte ]
                     [ itm_dos_rte; itm_dos_rte_adj; adj ]
+                    [ itm_dos_rte; itm_orb_cnc;     rte ]
                     [ itm_dos_rte_adj; itm_orb_cnc; rte_adj ]
                     [ itm_dos_rte;     itm_cmp_cnc; cmp_dos_rte ]
                     [ itm_dos_rte_adj; itm_cmp_cnc; cmp_dos_rte_adj ]
@@ -660,6 +660,7 @@ module Orderable =
         /// * cmp\_dos\_tot\_adj = cmp\_orb\_cnc \* tot\_adj
         /// * cmp\_dos\_rte\_adj = cmp\_orb\_cnc \* rte\_adj
         /// * cmp\_dos\_tot\_adj = cmp\_dos\_qty\_adj \* frq
+        /// * cmp\_dos\_qty\_ajd = cmp\_dos\_rte\_adj \* tme
         /// * cmp\_dos\_qty = cmp\_dos\_qty\_adj \* adj
         /// * cmp\_dos\_tot = cmp\_dos\_tot\_adj \* adj
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
@@ -680,7 +681,8 @@ module Orderable =
         /// * cmp\_dos\_rte = cmp\_orb\_cnc \* rte
         /// * cmp\_dos\_rte = cmp\_dos\_rte\_adj \* adj
         /// * cmp\_dos\_rte\_adj = cmp\_orb\_cnc \* rte\_adj
-        let toEqs adj frq tme qty tot rte qty_adj tot_adj rte_adj orb_orb_qty cmp =
+        let toEqs adj frq tme qty tot rte qty_adj tot_adj rte_adj 
+                  orb_orb_qty cmp =
             let cmp_cmp_qty, 
                 cmp_orb_qty,
                 cmp_orb_cnt,
@@ -740,17 +742,15 @@ module Orderable =
                     [ cmp_dos_qty_adj; cmp_orb_cnc;     qty_adj ]
                     [ cmp_dos_tot_adj; cmp_orb_cnc;     tot_adj ]
                     [ cmp_dos_tot_adj; cmp_dos_qty_adj; frq ]
-                    [ cmp_dos_tot_adj; cmp_dos_qty_adj; frq ]
                     [ cmp_dos_qty;     cmp_dos_qty_adj; adj ]
                     [ cmp_dos_tot;     cmp_dos_tot_adj; adj ]
                 ] |> List.append eqs
             // Continuous
-            | Some rte, _, Some tme, Some rte_adj ->
+            | Some rte, None, _, Some rte_adj ->
                 [
                     [ cmp_dos_rte; cmp_orb_cnc;     rte ]
                     [ cmp_dos_rte; cmp_dos_rte_adj; adj ]
                     [ cmp_dos_rte_adj; cmp_orb_cnc; rte_adj ]
-                    [ cmp_dos_qty_adj; cmp_dos_rte_adj; tme ]
                 ] |> List.append eqs
             // Process
             | _ -> eqs
@@ -1061,14 +1061,17 @@ module Orderable =
     /// * dos\_tot = dos\_qty \* frq
     /// * dos\_qty = dos\_rte \* tme
     /// * dos\_tot\_adj = dos\_qty\_adj \* frq
-    /// * dos\_tot = dos\_tot\_adj \* adj
     /// * dos\_qty\_adj = dos\_rte\_adj \* tme
+    /// * dos\_tot = dos\_tot\_adj \* adj
     /// * dos\_qty = dos\_qty\_adj \* adj
+    /// * dos\_rte = dos\_rte\_adj \* adj
     /// 
     /// *Discontinuous*
     ///
     /// * dos\_tot = dos\_qty \* frq
-    /// * dot\_tot\_adj = dos\_qty\_adj \* frq
+    /// * dos\_tot\_adj = dos\_qty\_adj \* frq
+    /// * dos\_tot = dos\_tot\_adj \* adj
+    /// * dos\_qty = dos\_qty\_adj \* adj
     let toEqs hasRte adj frq tme orb =
         let ord_qty,
             orb_qty,
@@ -1081,10 +1084,10 @@ module Orderable =
             dos_rte_adj = orb |> toVarUnt
 
         let rte = if hasRte then dos_rte |> Some else None
+        let rte_adj = if hasRte then Some dos_rte_adj else None
 
         let qty_adj = dos_qty_adj
         let tot_adj = dos_tot_adj
-        let rte_adj = if hasRte then Some dos_rte_adj else None
 
         let map = CM.toEqs adj frq tme dos_qty dos_tot rte qty_adj tot_adj rte_adj orb_qty
         let cc = orb.Components
@@ -1101,18 +1104,25 @@ module Orderable =
             [
                 [ dos_tot;     dos_qty;     frq ]
                 [ dos_qty;     dos_rte;     tme ]
-                [ dos_tot;     dos_tot_adj; adj ]
-                [ dos_qty;     dos_qty_adj; adj ]
                 [ dos_tot_adj; dos_qty_adj; frq ]
                 [ dos_qty_adj; dos_rte_adj; tme ]
+                [ dos_tot;     dos_tot_adj; adj ]
+                [ dos_qty;     dos_qty_adj; adj ]
+                [ dos_rte;     dos_rte_adj; adj ]
             ] |> List.append eqs
         // Discontinuous
         | None, Some frq, None   ->
             [
                 [ dos_tot;     dos_qty;     frq ]
                 [ dos_tot_adj; dos_qty_adj; frq ]
+                [ dos_tot;     dos_tot_adj; adj ]
+                [ dos_qty;     dos_qty_adj; adj ]
             ] |> List.append eqs
-        // Process or continuous
+        // Continuous
+        | Some _, None, None ->
+            [
+                [ dos_rte; dos_rte_adj; adj ]
+            ]
         | _ -> eqs
         |> List.append (cc |> List.collect map)
         , orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))

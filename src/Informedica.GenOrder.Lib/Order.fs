@@ -344,3 +344,27 @@ module Order =
     
             createNew id n shape str_prs rte
             |> toDto
+
+        let setToProcess (dto : Dto) =
+            dto.Prescription <-
+                dto.Prescription 
+                |> Prescription.Dto.setToProcess 
+            dto
+
+        let setToContinuous (dto : Dto) =
+            dto.Prescription <-
+                dto.Prescription 
+                |> Prescription.Dto.setToContinuous 
+            dto
+
+        let setToDiscontinuous (dto : Dto) =
+            dto.Prescription <-
+                dto.Prescription 
+                |> Prescription.Dto.setToDiscontinuous 
+            dto
+
+        let setToTimed (dto : Dto) =
+            dto.Prescription <-
+                dto.Prescription 
+                |> Prescription.Dto.setToTimed 
+            dto

@@ -91,6 +91,7 @@ module Solver =
 
     
     let replaceUnit n u eqs =
+        printfn "replacing %A units: %A" n u
         let repl c vru vrus =
             if vru |> VariableUnit.getName = n then
                 (vru |> VariableUnit.setUnit u, vrus)
@@ -284,7 +285,7 @@ module Solver =
 
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let solve (N.Name n) p vs eqs =
+    let solve_ (N.Name n) p vs eqs =
         // first solve units
         let eqs =
             eqs 
@@ -297,3 +298,15 @@ module Solver =
         |> solveVals n p (vs |> toBase n eqs)
         |> mapFromSolverEqs eqs
 
+
+    let memSolve f =
+        let cache = ref Map.empty
+        fun n p vs eqs ->
+            match (!cache).TryFind(n, p, vs, eqs) with
+            | Some r -> r
+            | None ->
+                let r = f n p vs eqs
+                cache := (!cache).Add((n, p, vs, eqs), r)
+                r
+
+    let solve = memSolve solve_

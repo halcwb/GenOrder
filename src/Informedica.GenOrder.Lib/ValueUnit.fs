@@ -21,6 +21,14 @@ module ValueUnit =
         if s |> String.isNullOrWhiteSpace then None
         else
             try
+                // ugly hack need to fix this
+                // in the units lib
+                let s = 
+                    s 
+                    |> String.replace "x[Count]" "#"
+                    |> String.replace "x" "/"
+                    |> String.replace "#" "x[Count]"
+
                 "1 " + s
                 |> ValueUnit.fromString
                 |> ValueUnit.get
