@@ -130,6 +130,7 @@ module Order =
     module QT = VU.Quantity
     module FR = VU.Frequency
     module TM = VU.Time
+    module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
 
     module Units = ValueUnit.Units
 
@@ -245,6 +246,33 @@ module Order =
         |> List.append ("Prescription"::(ord.Prescription |> PR.toString))
         |> List.append ("Route"::[(ord.Route)])
         |> List.filter (String.isNullOrWhiteSpace >> not)
+
+
+    let isEmpty n m o =
+        let dls = "."
+
+        let n =
+            match m with
+            | Mapping.Freq 
+            | Mapping.AdjustQty ->
+                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+            | _ -> 
+                [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
+                |> NM.create
+
+        let prod, sum = o |> toEqs
+
+        sum::prod 
+        |> List.collect id
+        |> List.tryFind (VariableUnit.getName >> ((=) n))
+        |> function 
+        | Some vru -> 
+            vru.Variable.Values
+            |> ValueRange.isEmpty
+        | None -> 
+            sprintf "could not find %A with mapping %A" n m
+            |> failwith
+        
         
     /// Solve an `Order` *ord* with
     /// 

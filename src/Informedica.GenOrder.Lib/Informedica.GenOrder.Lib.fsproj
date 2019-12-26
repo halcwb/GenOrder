@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Compile Include="DateTime.fs" />
     <Compile Include="WrappedString.fs" />
     <Compile Include="List.fs" />
     <Compile Include="ValueUnit.fs" />

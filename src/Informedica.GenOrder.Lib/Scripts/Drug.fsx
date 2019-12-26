@@ -46,16 +46,123 @@ module Order =
     module Name = WrappedString.Name
     module Props = Solver.Props
 
+    let calcScenarios (o : Order) =
+
+        let calc get mo mc mi o =
+            [
+
+                // orderable doses
+                let ods = 
+                    o.Orderable.Dose
+                    |> Dose.toVarUnt
+                    |> get
+                    |> VariableUnit.getUnitValues
+                    |> Seq.distinct
+
+                printfn "going to process %i orderable dose" (ods |> Seq.length)
+
+                for v in ods do
+                    let o =
+                        o
+                        |> Order.solve 
+                            (o.Orderable.Name |> Name.toString)
+                            mo Props.Vals [ v ]
+        
+
+                    // component doses
+                    let cds =
+                        o.Orderable.Components
+                        |> Seq.collect (fun c ->
+                            c.Dose
+                            |> Dose.toVarUnt
+                            |> get
+                            |> VariableUnit.getUnitValues
+                            |> Seq.map (fun v ->
+                                c.Name, v
+                            )
+                        )
+                        |> Seq.distinct
+
+                    printfn "going to process %i component dose" (cds |> Seq.length)
+
+                    for (n, v) in cds do
+                        let o =
+                            o
+                            |> Order.solve 
+                                (n |> Name.toString)
+                                mc Props.Vals [ v ]
+                
+
+                        // item doses
+                        let ids =
+                            o.Orderable.Components
+                            |> Seq.filter (fun c -> c.Name = n)
+                            |> Seq.collect (fun c ->
+                                c.Items
+                                |> Seq.collect (fun i ->
+                                    i.Dose
+                                    |> Dose.toVarUnt
+                                    |> get
+                                    |> VariableUnit.getUnitValues
+                                    |> Seq.map (fun v ->
+                                        i.Name, v
+                                    )
+                                )
+                            )
+                            |> Seq.distinct
+
+                        printfn "going to process %i item dose" (ids |> Seq.length)
+
+                        for (n, v) in ids do
+                            o
+                            |> Order.solve 
+                                (n |> Name.toString)
+                                mi Props.Vals [ v ]
+            
+            ]
+        
+        match o.Prescription with
+        | Prescription.Discontinuous fr ->
+
+            [
+
+                // frequencies
+                let frs = fr |> Frequency.getUnitValues
+
+                printfn "going to process %i freqs" (frs |> Seq.length)
+                for v in frs do
+                    o
+                    |> Order.solve 
+                        (o.Orderable.Name |> Name.toString) 
+                        Mapping.Freq Props.Vals [v]
+                    |> calc (fun (dq, _, _) -> dq)
+                            Mapping.OrderableDoseQty
+                            Mapping.ComponentDoseQty
+                            Mapping.ItemDoseQty
+
+            ]
+            |> List.collect id
+
+        | Prescription.Continuous ->
+            o
+            |> calc (fun (_, _, dr) -> dr)
+                    Mapping.OrderableDoseRate
+                    Mapping.ComponentDoseRate
+                    Mapping.ItemDoseRate
+
+        | _ -> []
+        |> (fun xs -> xs |> List.length |> printfn "found %i scenarios"; xs)
+        |> List.distinct
+
     let printPrescriptions sn (o : Order) =
 
         match o.Prescription with
         | Prescription.Discontinuous fr ->
             [
+                // frequencies
                 let frs =
                     fr
                     |> Frequency.toValueUnitStringList None
-                    |> Seq.zip (fr |> Frequency.toVarUnt 
-                                   |> VariableUnit.getValues)
 
                 for (v, f) in frs do
 
@@ -64,8 +171,8 @@ module Order =
                         |> Order.solve 
                             (o.Orderable.Name |> Name.toString) 
                             Mapping.Freq Props.Vals [v]
-
-                    for (s, q, ta) in o.Orderable.Components
+                    // item dose quantities
+                    for (sn, q, ta) in o.Orderable.Components
                              |> List.collect (fun c ->
                                 c.Items
                              )
@@ -79,7 +186,7 @@ module Order =
                                 item.Name |> Name.toString, q, ta
                              ) do
                         
-                        for dt, dq in 
+                        for (_, dt), (_, dq) in 
                             q 
                             |> Quantity.toValueUnitStringList (Some 2)
                             |> Seq.zip (ta |> TotalAdjust.toValueUnitStringList (Some 2)) do
@@ -95,24 +202,24 @@ module Order =
         | Prescription.Continuous ->
             [
                 let on = o.Orderable.Name |> Name.toString
+                // orderable dose rates
                 let rts =
                     o.Orderable.Dose
                         |> Dose.toVarUnt
                     |> fun (_, _, vru) ->
                         vru
                         |> VariableUnit.toValueUnitStringList id None
-                        |> Seq.zip (vru |> VariableUnit.getValues)
 
                 for (rv, rt) in rts do
                     let o =
                         o
                         |> Order.solve on Mapping.OrderableDoseRate Props.Vals [ rv ]
-                    
+                    // component orderable quantities
                     for c in o.Orderable.Components do
                         let cqs =
                             c.OrderableQuantity
                             |> Quantity.toVarUnt
-                            |> VariableUnit.getValues
+                            |> VariableUnit.getUnitValues
 
                         for cq in cqs do
 
@@ -123,7 +230,7 @@ module Order =
                                     Mapping.ComponentOrderableQty
                                     Props.Vals
                                     [ cq ]
-
+                            // item dose quantities
                             for itm in (o.Orderable.Components
                                         |> List.collect (fun c -> c.Items)
                                         |> List.filter (fun i -> i.Name |> Name.toString = sn)) do
@@ -131,9 +238,6 @@ module Order =
                                 let oq =
                                     o.Orderable.OrderableQuantity
                                     |> Quantity.toValueUnitStringList None
-                                    |> Seq.zip (o.Orderable.OrderableQuantity
-                                                |> Quantity.toVarUnt
-                                                |> VariableUnit.getValues)
 
                                 let da = 
                                     itm.DoseAdjust
@@ -146,12 +250,9 @@ module Order =
                                 let iq =
                                     itm.OrderableQuantity
                                     |> Quantity.toValueUnitStringList None
-                                    |> Seq.zip (itm.OrderableQuantity
-                                                |> Quantity.toVarUnt
-                                                |> VariableUnit.getValues)
 
                                 match da |> Seq.tryHead, iq |> Seq.tryHead, oq |> Seq.tryHead with
-                                | Some da, Some (iv, iq), Some (ov, oq) ->
+                                | Some (_, da), Some (iv, iq), Some (ov, oq) ->
                                     
                                     sprintf "%s %s in %s, %s = %s" sn iq oq rt da, rv, (iv / ov)
 
@@ -167,7 +268,7 @@ module Order =
 
 
 
-// Creating a non fluid drug
+// Creating a drug order
 module DrugOrder =
 
         module RouteShape =
@@ -662,7 +763,15 @@ module Constraints = DrugOrder.Constraints
             MaxDoseTotalAdjust = Some 90N
     }
 |> DrugOrder.setAdjust "paracetamol" 10N
-|> Order.printPrescriptions "paracetamol"
+//|> Order.printPrescriptions "paracetamol"
+|> Order.calcScenarios
+//|> List.length
+|> List.iteri (fun i o ->
+    printfn "--- scenario %i" i
+    o
+    |> Order.toString
+    |> List.iteri (fun i s -> printfn "%i\t%s" i s)
+)
 
 
 // Drug with multiple items
@@ -735,8 +844,14 @@ module Constraints = DrugOrder.Constraints
             MaxDoseTotal = Some 320N
             MaxDoseTotalAdjust = Some 6N
     }
-|> Order.toString 
-|> List.iteri (fun i s -> printfn "%i\t%s" i s)
+|> Order.calcScenarios
+//|> List.length
+|> List.iteri (fun i o ->
+    printfn "--- scenario %i" i
+    o
+    |> Order.toString
+    |> List.iteri (fun i s -> printfn "%i\t%s" i s)
+)
 
 
 
@@ -784,8 +899,15 @@ module Constraints = DrugOrder.Constraints
             MinDoseTotalAdjust = Some 20N
             MaxDoseTotalAdjust = Some 90N
     }
-|> Order.printPrescriptions "paracetamol"
-//|> List.iteri (fun i s -> printfn "%i\t%s" i s)
+|> Order.calcScenarios
+//|> List.length
+|> List.iteri (fun i o ->
+    printfn "--- scenario %i" i
+    o
+    |> Order.toString
+    |> List.iteri (fun i s -> printfn "%i\t%s" i s)
+)
+
 
 
 
@@ -795,7 +917,7 @@ module Constraints = DrugOrder.Constraints
     DrugOrder.drugOrder with
         Id = "1"
         Name = "dopamin infusion"
-        Quantities = [ 24N; 50N ]
+        Quantities = [ 50N ]
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -864,8 +986,18 @@ module Constraints = DrugOrder.Constraints
     }
 |> DrugOrder.setAdjust "dopamin infusion" 10N
 |> DrugOrder.setConstraints [ DrugOrder.Constraints.FluidOrderableDoseRateIncr (1N / 10N) ]
-|> Order.printPrescriptions "dopamin"
-|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+//|> Order.printPrescriptions "dopamin"
+//|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+|> Order.calcScenarios
+//|> List.length
+|> List.iteri (fun i o ->
+    printfn "--- scenario %i" i
+    o
+    |> Order.toString
+    |> List.iteri (fun i s -> printfn "%i\t%s" i s)
+)
+
+
 
 
 // Dopamin infusion calculate scenario's 
@@ -943,8 +1075,20 @@ module Constraints = DrugOrder.Constraints
             MaxDoseRateAdjust = Some 20N
     }
 |> DrugOrder.setAdjust "dopamin infusion" 10N
-|> Order.solve "dopamin infusion" Order.Mapping.OrderableDoseRate Solver.Props.Vals [ 1N ]
-|> Order.solve "dopamin" Order.Mapping.ComponentOrderableQty Solver.Props.Incr [ 1N/10N ]
-|> Order.printPrescriptions "dopamin"
-|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+|> Order.solve "dopamin infusion" 
+    Order.Mapping.OrderableDoseRate 
+    Solver.Props.Vals [ 1N ]
+|> Order.solve "dopamin" 
+    Order.Mapping.ComponentOrderableQty 
+    Solver.Props.Incr [ 1N/10N ]
+//|> Order.printPrescriptions "dopamin"
+//|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+|> Order.calcScenarios
+//|> List.length
+|> List.iteri (fun i o ->
+    printfn "--- scenario %i" i
+    o
+    |> Order.toString
+    |> List.iteri (fun i s -> printfn "%i\t%s" i s)
+)
 

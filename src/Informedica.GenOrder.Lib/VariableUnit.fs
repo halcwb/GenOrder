@@ -142,11 +142,20 @@ module VariableUnit =
             |> ValueRange.toStringWithUnit vru.Unit) + " " + us
 
 
-    let getValues vru =
+    let getBaseValues =
+        getVar
+        >> Variable.getValueRange
+        >> Variable.ValueRange.getValueSet
+        >> Set.toList
+    
+
+    let hasBaseValue v =
+        getBaseValues
+        >> List.exists ((=) v)
+
+    let getUnitValues vru =
         vru
-        |> getVar
-        |> Variable.getValueRange
-        |> Variable.ValueRange.getValueSet
+        |> getBaseValues
         |> Seq.map (fun vs -> 
             vs, vru |> getUnit
         )
@@ -156,7 +165,6 @@ module VariableUnit =
             |> ValueUnit.toUnit
         )
         
-
     let toValueUnitStringList get n x =
         x
         |> get
@@ -170,9 +178,9 @@ module VariableUnit =
             v
             |> ValueUnit.create u
             |> ValueUnit.toUnit
-            |> fun i ->
-                let i =
-                    i
+            |> fun v ->
+                let vs =
+                    v
                     |> BigRational.toFloat
                     |> fun x ->
                         match n with
@@ -183,7 +191,7 @@ module VariableUnit =
                 u
                 |> ValueUnit.unitToString
                 |> String.removeTextBetweenBrackets
-                |> sprintf "%s %s" i
+                |> fun us -> v, sprintf "%s %s" vs us
         )
 
 
@@ -368,6 +376,10 @@ module VariableUnit =
         /// Print a `Frequency` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
 
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
+
 
     /// Type and functions that represent a time
     module Time = 
@@ -415,6 +427,10 @@ module VariableUnit =
         /// Print a `Time` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
 
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
+
 
     /// Type and functions that represent a count
     module Count =    
@@ -460,7 +476,9 @@ module VariableUnit =
         /// Print a `Count` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
 
+        let getBaseValues = toVarUnt >> getBaseValues
 
+        let getUnitValues = toVarUnt >> getUnitValues
 
     /// Type and functions that represent a quantity
     module Quantity =    
@@ -515,6 +533,9 @@ module VariableUnit =
         /// Print a `Quantity` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
 
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
     /// Type and functions that represent a total,
@@ -575,6 +596,10 @@ module VariableUnit =
 
         /// Print a `Total` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
 
@@ -637,6 +662,11 @@ module VariableUnit =
 
         /// Print a `Rate` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+        
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
+
 
 
     /// Type and functions that represent a concentration,
@@ -694,6 +724,10 @@ module VariableUnit =
 
         /// Print a `Concentration` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
     /// Type and functions that represent a adjusted quantity,
@@ -756,6 +790,10 @@ module VariableUnit =
 
         /// Print a `QuantityAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
     /// Type and functions that represent a adjusted total,
@@ -820,6 +858,10 @@ module VariableUnit =
 
         /// Print a `TotalAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
 
@@ -888,6 +930,10 @@ module VariableUnit =
 
         /// Print a `RateAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
+
+        let getBaseValues = toVarUnt >> getBaseValues
+
+        let getUnitValues = toVarUnt >> getUnitValues
 
 
 
