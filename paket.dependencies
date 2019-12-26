@@ -8,7 +8,6 @@ clitool dotnet-fake
 nuget MathNet.Numerics.FSharp
 
 nuget Informedica.GenUtils.Lib
-nuget Informedica.GenSolver.Lib
 nuget Informedica.GenUnits.Lib
 
 // group build
@@ -33,4 +32,3 @@ group Test
 	nuget Expecto.FsCheck
 	nuget Expecto.Hopac
 	nuget FSharp.Quotations.Evaluator
-

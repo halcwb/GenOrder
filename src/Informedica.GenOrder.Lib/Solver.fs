@@ -234,7 +234,7 @@ module Solver =
                 |> List.map (ValueUnit.create u)
                 |> List.map ValueUnit.toBase
         | None -> 
-            printf "could not find %A in toBase n eqs vs" n
+            printfn "could not find %A in toBase n eqs vs" n
             []    
 
 
@@ -270,7 +270,7 @@ module Solver =
         | [] -> eqs
         | _  ->
             eqs
-            |> SV.solve (fun s -> printfn "%s" s) n (p |> propToString) vs
+            |> SV.solve (printfn "%s") n (p |> propToString) vs
          
 
     let filterEqsWithUnits = 
@@ -309,4 +309,4 @@ module Solver =
                 cache := (!cache).Add((n, p, vs, eqs), r)
                 r
 
-    let solve = memSolve solve_
+    let solve = solve_ // memSolve solve_

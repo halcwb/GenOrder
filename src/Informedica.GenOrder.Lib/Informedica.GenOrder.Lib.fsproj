@@ -15,7 +15,6 @@
     <Compile Include="Orderable.fs" />
     <Compile Include="Prescription.fs" />
     <Compile Include="Order.fs" />
-    <Compile Include="OrderSet.fs" />
     <None Include="Scripts\VariableUnit.fsx" />
     <None Include="Scripts\Solver.fsx" />
     <None Include="Scripts\Orderable.fsx" />
@@ -24,6 +23,9 @@
     <None Include="Scripts\Drug.fsx" />
     <None Include="Scripts/Lab.fsx" />
     <None Include="Scripts/OrderSet.fsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\GenSolver\src\Informedica.GenSolver.Lib\Informedica.GenSolver.Lib.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

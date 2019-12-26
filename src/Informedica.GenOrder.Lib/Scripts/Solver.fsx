@@ -41,6 +41,11 @@ let vru4 =
     VariableUnit.createNew
         (Name.create ["D"])
         Units.Volume.milliLiter
+
+let vru5 =
+    VariableUnit.createNew
+        (Name.create ["E"])
+        Units.Volume.milliLiter
  
 // Unit replace tests
 
@@ -146,3 +151,65 @@ let vru4 =
 |> List.singleton
 |> Solver.solve vru2.Variable.Name Props.MaxIncl [ 10N ]
 
+
+let toEq  vrus =
+    vrus
+    |> List.collect (fun vrul ->
+        
+        vrul
+        |> function 
+        | h::tail -> [ (h, tail) |> Solver.SumEquation ]
+        | _ -> "oops" |> failwith
+    )
+
+// Test sum equations with increments
+(vru1, [vru2; vru3])
+|> Solver.SumEquation
+|> List.singleton
+|> Solver.solve vru1.Variable.Name Props.Vals [ 10N ]
+|> toEq
+|> Solver.solve vru2.Variable.Name Props.Incr [ 1N ]
+|> toEq
+|> Solver.solve vru3.Variable.Name Props.Vals [ 3N ]
+
+
+module SumTests =
+
+    let vru1 = 
+        VariableUnit.createNew
+            (Name.create ["A"])
+            Units.Mass.gram
+
+    let vru2 = 
+        VariableUnit.createNew
+            (Name.create ["B"])
+            noUnit
+
+    let vru3 =
+        VariableUnit.createNew
+            (Name.create ["C"])
+            noUnit
+
+    let vru4 =
+        VariableUnit.createNew
+            (Name.create ["D"])
+            Units.Mass.gram
+
+    let vru5 =
+        VariableUnit.createNew
+            (Name.create ["E"])
+            Units.Mass.gram
+
+    // Test sum equations with increments
+    // And product equation
+    (vru1, [vru2; vru3])
+    |> Solver.SumEquation
+    |> List.singleton 
+    |> List.append [ (vru2, [vru4; vru5]) |> Solver.SumEquation ]
+    |> Solver.solve vru1.Variable.Name Props.Vals [ 10N ]
+    |> toEq
+    |> Solver.solve vru2.Variable.Name Props.Incr [ 1N ]
+    |> toEq
+    |> Solver.solve vru5.Variable.Name Props.Vals [ 3N ]
+    |> toEq 
+    |> Solver.solve vru4.Variable.Name Props.Vals [ 2N ]

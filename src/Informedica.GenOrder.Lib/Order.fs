@@ -6,6 +6,8 @@
 /// stop date.
 module Order =
 
+    open Informedica.GenUtils.Lib.BCL
+
     /// Contains literals used
     /// to generate `Variable` names
     module Literals =
@@ -98,6 +100,17 @@ module Order =
         type StartStop =
             | Start of DateTime
             | StartStop of DateTime * DateTime
+
+        let toString stst =
+            match stst with
+            | Start dt ->
+                dt
+                |> DateTime.formattedString "dd-MM-yy"
+                |> sprintf "%s"
+            | StartStop (start, stop) ->
+                stop
+                |> DateTime.formattedString "dd-MM-yy"
+                |> sprintf "%s - %s" (start |> DateTime.formattedString "dd-MM-yy")
 
     open System
 
