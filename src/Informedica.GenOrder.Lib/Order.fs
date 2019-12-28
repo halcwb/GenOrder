@@ -262,7 +262,7 @@ module Order =
 
         let prod, sum = o |> toEqs
 
-        sum::prod 
+        sum @ prod 
         |> List.collect id
         |> List.tryFind (VariableUnit.getName >> ((=) n))
         |> function 
@@ -286,7 +286,7 @@ module Order =
 
             prod 
             |> List.map Solver.productEq
-            |> List.append [ sum |> Solver.sumEq ]
+            |> List.append (sum |> List.map Solver.sumEq)
 
 
         let dls = "."

@@ -309,4 +309,4 @@ module Solver =
                 cache := (!cache).Add((n, p, vs, eqs), r)
                 r
 
-    let solve = solve_ (printfn "%s") |> memSolve
+    let solve = solve_ (printfn "%s") //|> memSolve

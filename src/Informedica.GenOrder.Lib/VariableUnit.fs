@@ -953,7 +953,14 @@ module VariableUnit =
 
         let get (Dose(qty, tot, rte)) = qty, tot, rte
 
+        let getQuantity = get >> (fun (qty, _, _) -> qty)
+
+        let getTotal = get >> (fun (_, tot, _) -> tot)
+
+        let getRate = get >> (fun (_, _, rte) -> rte)
+
         /// Turn `Dose` in a dose quantity, total and rate `VariableUnit`
+        let getQty = get >> (fun (qty, _, _) -> qty)
         let toVarUnt (Dose(qty, total, rate)) = 
             qty |> QT.toVarUnt, total |> TL.toVarUnt, rate |> RT.toVarUnt
 
@@ -993,6 +1000,7 @@ module VariableUnit =
             |> String.split "." 
             |> List.head
 
+
         /// Set the `Name` **n** to the dose `Variable`s
         let setName n (Dose(qty, tot, rte)) =
             (
@@ -1026,6 +1034,12 @@ module VariableUnit =
         let create qty tot rte = (qty, tot, rte) |> DoseAdjust
 
         let get (DoseAdjust(qty, tot, rte)) = qty, tot, rte
+
+        let getQuantity = get >> (fun (qty, _, _) -> qty)
+
+        let getTotal = get >> (fun (_, tot, _) -> tot)
+
+        let getRate = get >> (fun (_, _, rte) -> rte)
 
         /// Turn `DoseAdjust` in an adjusted quantity, total and rate `VariableUnit`
         let toVarUnt (DoseAdjust(qty, total, rate)) = 

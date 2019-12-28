@@ -887,6 +887,9 @@ module Orderable =
     module DS = VU.Dose
     module DA = VU.DoseAdjust
     module CM = Component
+    module QA = VU.QuantityAdjust
+    module TA = VU.TotalAdjust
+    module RA = VU.RateAdjust
 
     type Id = ID.Id
     type Name = NM.Name
@@ -1097,6 +1100,34 @@ module Orderable =
                 [ ord_qty; ord_cnt; orb_qty ]
             ] 
             
+        let sum =
+            match rte, frq, tme with
+            // Discontinuous timed
+            | Some _, Some frq, Some tme ->
+                [   
+                    dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
+                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
+                    dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
+                    dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate     |> RA.toVarUnt)) 
+                ] 
+            // Discontinuous
+            | None, Some frq, None   ->
+                [   
+                    dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
+                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
+                    dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
+                ] 
+            // Continuous
+            | Some _, None, None ->
+                [   
+                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate     |> RA.toVarUnt)) 
+                ] 
+            | _ -> []
+            |> List.append [ orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt)) ]
 
         match rte, frq, tme with
         // Discontinuous timed
@@ -1125,7 +1156,7 @@ module Orderable =
             ]
         | _ -> eqs
         |> List.append (cc |> List.collect map)
-        , orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt))
+        , sum
 
 
     let fromEqs eqs  (ord: Orderable) =

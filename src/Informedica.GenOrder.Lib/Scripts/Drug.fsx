@@ -309,7 +309,12 @@ module DrugOrder =
             let apply cs shape (o : Order.Order) =
                 let n = o.Orderable.Name |> Name.toString
                 let os = RouteShape.map o.Route shape
-                printfn "setting constraints" 
+
+                let solve c n m p v o = 
+                    printfn "setting constraint %A" c
+                    o
+                    |> Order.solve n m p v 
+                 
 
                 cs
                 |> List.fold (fun acc c ->
@@ -319,35 +324,35 @@ module DrugOrder =
                         |> function
                         |  RouteShape.OralFluid |  RouteShape.IntravenousFluid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseQty Props.MaxIncl [x]
+                            |> solve c n Mapping.OrderableDoseQty Props.MaxIncl [x]
                         | _ -> acc
                     | FluidOrderableDoseRateIncr x -> 
                         os
                         |> function
                         |  RouteShape.OralFluid |  RouteShape.IntravenousFluid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseRate Props.Incr [x]
+                            |> solve c n Mapping.OrderableDoseRate Props.Incr [x]
                         | _ -> acc
                     | FluidOrderableDoseRateMax x -> 
                         os
                         |> function
                         |  RouteShape.OralFluid |  RouteShape.IntravenousFluid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseRate Props.MaxIncl [x]
+                            |> solve c n Mapping.OrderableDoseRate Props.MaxIncl [x]
                         | _ -> acc
                     | FluidOrderableDoseRateAdjustedMax x -> 
                         os
                         |> function
                         |  RouteShape.OralFluid |  RouteShape.IntravenousFluid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseAdjustRateAdjust Props.MaxIncl [x]
+                            |> solve c n Mapping.OrderableDoseAdjustRateAdjust Props.MaxIncl [x]
                         | _ -> acc
                     | FluidOrderableDoseAdjustQuantityMax x -> 
                         os
                         |> function
                         |  RouteShape.OralFluid |  RouteShape.IntravenousFluid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseAdjustQtyAdjust Props.MaxIncl [x]
+                            |> solve c n Mapping.OrderableDoseAdjustQtyAdjust Props.MaxIncl [x]
                         | _ -> acc
                     | FluidOrderableQuantityIncrement x ->
                         os
@@ -359,7 +364,7 @@ module DrugOrder =
                                     c.Name
                                     |> Name.toString
                                 acc
-                                |> Order.solve n Mapping.ComponentOrderableQty Props.Incr [ x ]
+                                |> solve c n Mapping.ComponentOrderableQty Props.Incr [ x ]
                             ) acc
                         | _ -> acc
                     | SuppositoryOrderableDoseQuantity x -> 
@@ -367,14 +372,14 @@ module DrugOrder =
                         |> function
                         |  RouteShape.RectalSolid ->
                             acc
-                            |> Order.solve n Mapping.OrderableDoseQty Props.Vals [x]
+                            |> solve c n Mapping.OrderableDoseQty Props.Vals [x]
                         | _ -> acc
                     | SolidOralOrderableDoseQuantityMax x -> 
                         os
                         |> function
                         |  RouteShape.OralSolid ->                
                             acc
-                            |> Order.solve n Mapping.OrderableDoseQty Props.MaxIncl [x]
+                            |> solve c n Mapping.OrderableDoseQty Props.MaxIncl [x]
                         | _ -> acc
 
                 ) o
@@ -387,6 +392,7 @@ module DrugOrder =
 
         module Mapping = Order.Mapping
         module Props = Solver.Props
+        module Name = WrappedString.Name
 
         type OrderType =
             | Process
@@ -658,6 +664,26 @@ module DrugOrder =
                 MinDoseRateAdjust = None
             }
 
+        type SolutionLimits =
+            {
+                Name : string
+                Component : string
+                MinConcentration : BigRational option
+                MaxConcentration : BigRational option
+                DoseQuantityCount : BigRational option
+                Increment : BigRational option
+            }
+
+        let solutionLimits =
+            {
+                Name = ""
+                Component = ""
+                MinConcentration = None
+                MaxConcentration = None
+                DoseQuantityCount = None
+                Increment = Some 1N
+            }
+
         let setConstraints constraints (o : Order.Order) =
             o
             |> Constraints.apply constraints o.Orderable.Shape
@@ -684,6 +710,59 @@ module DrugOrder =
             |> set Mapping.ItemDoseRate Props.MinIncl dl.MinDoseRate
             |> set Mapping.ItemDoseAdjustRateAdjust Props.MaxIncl dl.MaxDoseRateAdjust
             |> set Mapping.ItemDoseAdjustRateAdjust Props.MinIncl dl.MinDoseRateAdjust
+
+
+        let setSolutionLimits (sl : SolutionLimits) (o : Order.Order) =
+            let set n m p l o =
+                match l with
+                | Some l -> 
+                    o
+                    |> Order.solve n m p [ l ]
+                | None -> o
+
+            
+            o
+            |> set sl.Name Mapping.ItemOrderableConc Props.MinIncl sl.MinConcentration
+            |> set sl.Name Mapping.ItemOrderableConc Props.MaxIncl sl.MaxConcentration
+            |> fun o ->
+
+                let dq = 
+                    o.Orderable.Components
+                    |> List.filter (fun c ->
+                        c.Items
+                        |> List.exists (fun i -> i.Name |> Name.toString = sl.Name)
+                    )
+                    |> List.collect (fun c ->
+                        c.Dose
+                        |> VariableUnit.Dose.toVarUnt
+                        |> (fun (dq, _, _) ->
+                            dq
+                            |> VariableUnit.getUnitValues
+                            |> Seq.toList
+                            |> List.map (fun v -> c.Name, v)
+                        )
+                    )
+                printfn "collected %i component dose qtys" (dq |> List.length)
+
+                match dq with
+                | (n, _)::_ -> 
+                    o
+                    |> Order.solve (n |> Name.toString)
+                                   Mapping.ComponentOrderableQty Props.Vals
+                                   (dq |> List.map snd)
+                | _ -> o
+            |> fun o ->
+                let dq =
+                    o.Orderable.Dose
+                    |> VariableUnit.Dose.getQuantity
+                    |> VariableUnit.Quantity.getUnitValues
+                    |> Seq.toList
+
+                o
+                |> Order.solve (o.Orderable.Name |> Name.toString)
+                               Mapping.OrderableOrderableQty Props.Vals
+                               dq
+            |> set sl.Component Mapping.ComponentOrderableQty Props.Incr sl.Increment
 
 
         let setAdjust n a o =
@@ -1146,3 +1225,103 @@ module Constraints = DrugOrder.Constraints
     |> printfn "%i\t%s" (i + 1)
 )
 
+
+
+
+// gentamicin
+{
+    DrugOrder.drugOrder with
+        Id = "1"
+        Name = "gentamicin"
+        Quantities = [ ]
+        Unit = "ml"
+        TimeUnit = "day"
+        Shape = "infusion fluid"
+        Route = "iv"
+        Products = 
+            [
+                { 
+                    DrugOrder.productComponent with
+                        Name = "gentamicin"
+                        Quantities = [ 2N; 10N ]
+                        TimeUnit = "day"
+                        Substances = 
+                            [
+                                {
+                                    DrugOrder.substanceItem with
+                                        Name = "gentamicin"
+                                        Concentrations = [ 10N; 40N ]
+                                        Unit = "mg"
+                                        DoseUnit = "mg"
+                                        TimeUnit = "day"
+                                }
+                            ]
+
+                }
+                { 
+                    DrugOrder.productComponent with
+                        Name = "saline"
+                        Quantities = [ 5000N ]
+                        TimeUnit = "day"
+                        Substances = 
+                            [
+                                {
+                                    DrugOrder.substanceItem with
+                                        Name = "sodium"
+                                        Concentrations = [ 155N / 1000N ]
+                                        Unit = "mmol"
+                                        DoseUnit = "mmol"
+                                        TimeUnit = "day"
+                                }
+                                {
+                                    DrugOrder.substanceItem with
+                                        Name = "chloride"
+                                        Concentrations = [ 155N / 1000N ]
+                                        Unit = "mmol"
+                                        DoseUnit = "mmol"
+                                        TimeUnit = "day"
+                                }
+                            ]
+
+                }
+
+            ]
+        OrderType = DrugOrder.Timed
+    }
+|> DrugOrder.create
+|> Order.Dto.toDto
+//|> Order.Dto.setToTimed
+|> Order.Dto.fromDto
+|> DrugOrder.setAdjust "gentamicin" 10N
+|> DrugOrder.setConstraints Constraints.constraints
+|> DrugOrder.setDoseLimits
+    {   DrugOrder.doseLimits with
+            Name = "gentamicin"
+            SubstanceName = "gentamicin"
+            Frequencies = [ 1N ]
+            MinDoseTotalAdjust = Some 5N
+            MaxDoseTotalAdjust = Some 8N
+    }
+|> DrugOrder.setSolutionLimits 
+    {
+        DrugOrder.solutionLimits with
+            Name = "gentamicin"
+            Component = "gentamicin"
+            MinConcentration = Some (1N)
+            MaxConcentration = Some (2N)
+            DoseQuantityCount = Some (1N)
+
+    }
+//|> Order.solve "gentamicin" 
+//               Order.Mapping.ComponentOrderableQty 
+//               Solver.Props.Incr [1N / 10N]
+|> Order.toString
+|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+//|> Order.calcScenarios
+//|> List.sort
+////|> List.length
+//|> List.iteri (fun i o ->
+//    o
+//    |> Order.printPrescription ["gentamicin"]
+//    |> printfn "%i\t%s" (i + 1)
+//)
