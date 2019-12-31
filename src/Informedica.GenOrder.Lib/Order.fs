@@ -47,6 +47,7 @@ module Order =
             | OrderableOrderableQty
             | OrderableOrderQty
             | OrderableOrderCount
+            | OrderableDoseCount
             | OrderableDoseQty
             | OrderableDoseTotal
             | OrderableDoseRate
@@ -82,6 +83,7 @@ module Order =
             | OrderableOrderableQty -> "Orderable.Orderable.Qty"
             | OrderableOrderQty -> "Orderable.Order.Qty"
             | OrderableOrderCount -> "Orderable.Order.Count"
+            | OrderableDoseCount -> "Orderable.Dose.Count"
             | OrderableDoseQty -> "Orderable.Dose.Qty"
             | OrderableDoseTotal -> "Orderable.Dose.Total"
             | OrderableDoseRate -> "Orderable.Dose.Rate"

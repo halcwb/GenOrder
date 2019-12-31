@@ -806,7 +806,7 @@ module DrugOrder =
                 Component : string
                 MinConcentration : BigRational option
                 MaxConcentration : BigRational option
-                DoseQuantityCount : BigRational option
+                DoseCount : BigRational option
                 MinTime : BigRational option
                 MaxTime : BigRational option
             }
@@ -817,7 +817,7 @@ module DrugOrder =
                 Component = ""
                 MinConcentration = None
                 MaxConcentration = None
-                DoseQuantityCount = None
+                DoseCount = Some 1N
                 MinTime = None
                 MaxTime = None
             }
@@ -843,6 +843,9 @@ module DrugOrder =
                     Constraint.create ([dl.Name] |> Name.create) 
                         Mapping.OrderableDoseRate Props.Vals 
                         dl.Rates RouteShape.Any OrderType.Timed 
+                    Constraint.create ([dl.Name] |> Name.create) 
+                        Mapping.Freq Props.Vals 
+                        dl.Frequencies RouteShape.Any OrderType.Timed 
                     Constraint.create ([dl.Name] |> Name.create) 
                         Mapping.Freq Props.Vals 
                         dl.Frequencies RouteShape.Any OrderType.Timed 
@@ -872,6 +875,7 @@ module DrugOrder =
                 | None -> co
 
             co
+            |> set sl.Name Mapping.OrderableDoseCount Props.Vals sl.DoseCount
             |> set sl.Name Mapping.ItemOrderableConc Props.MinIncl sl.MinConcentration
             |> set sl.Name Mapping.ItemOrderableConc Props.MaxIncl sl.MaxConcentration
             |> set sl.Name Mapping.Time Props.MinIncl sl.MinTime
@@ -1436,7 +1440,7 @@ WrappedString.Name.create ["test"]
             Component = "gentamicin"
             MinConcentration = Some (1N)
             MaxConcentration = Some (2N)
-            DoseQuantityCount = Some (1N)
+            DoseCount = Some (1N)
 //            MaxTime = (Some 10N)
 
     }

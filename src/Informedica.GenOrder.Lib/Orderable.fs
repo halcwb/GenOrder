@@ -914,6 +914,8 @@ module Orderable =
             OrderQuantity: Quantity
             /// The orderable count in an order
             OrderCount: Count
+            // The count of doses in an orderable quantity
+            DoseCount: Count
             /// The dose of an orderable
             Dose: Dose
             /// The adjusted dose of an orderable
@@ -931,7 +933,7 @@ module Orderable =
     /// * orb\_cnt: the count of orderable in the order 
     /// * dos: the orderable dose
     /// * dos\_adj: the adjusted orderable dose
-    let create id n shape orb_qty ord_qty ord_cnt dos dos_adj cc = 
+    let create id n shape orb_qty ord_qty ord_cnt dos_cnt dos dos_adj cc = 
         { 
             OrderId = id
             Name = n
@@ -939,6 +941,7 @@ module Orderable =
             OrderableQuantity = orb_qty
             OrderQuantity = ord_qty
             OrderCount = ord_cnt
+            DoseCount = dos_cnt
             Dose = dos
             DoseAdjust = dos_adj 
             Components = cc
@@ -954,13 +957,14 @@ module Orderable =
         let s =  [id |> ID.toString; n |> NM.toString; LT.orderable]
         let un = ValueUnit.NoUnit
 
-        let orb_qty = let s = [LT.orderable]  |> List.append s in QT.quantity s un
-        let ord_qty = let s = [LT.order]      |> List.append s in QT.quantity s un
-        let orb_cnt = let s = [LT.order]      |> List.append s in CT.count s
-        let dos     = let s = [LT.dose]       |> List.append s in DS.dose s un un un
-        let dos_ajd = let s = [LT.doseAdjust] |> List.append s in DA.doseAdjust s un un un un
+        let orb_qty = let s = [LT.orderable]    |> List.append s in QT.quantity s un
+        let ord_qty = let s = [LT.order]        |> List.append s in QT.quantity s un
+        let orb_cnt = let s = [LT.order]        |> List.append s in CT.count s
+        let dos_cnt = let s = [LT.dose]         |> List.append s in CT.count s
+        let dos     = let s = [LT.dose]         |> List.append s in DS.dose s un un un
+        let dos_ajd = let s = [LT.doseAdjust]   |> List.append s in DA.doseAdjust s un un un un
 
-        create id n shape orb_qty ord_qty orb_cnt dos dos_ajd []
+        create id n shape orb_qty ord_qty orb_cnt dos_cnt dos dos_ajd []
 
     /// Apply **f** to `Orderable` `ord`
     let apply f (orb: Orderable) = orb |> f
@@ -992,6 +996,7 @@ module Orderable =
         let ord_qty = (orb |> get).OrderQuantity |> QT.toVarUnt
         let orb_qty = orb.OrderableQuantity      |> QT.toVarUnt
         let ord_cnt = orb.OrderCount             |> CT.toVarUnt
+        let dos_cnt = orb.DoseCount              |> CT.toVarUnt
 
         let dos_qty,     dos_tot,     dos_rte     = orb.Dose       |> DS.toVarUnt
         let dos_qty_adj, dos_tot_adj, dos_rte_adj = orb.DoseAdjust |> DA.toVarUnt
@@ -1000,6 +1005,7 @@ module Orderable =
             ord_qty,
             orb_qty,
             ord_cnt,
+            dos_cnt,
             dos_qty,
             dos_tot,
             dos_rte,
@@ -1015,6 +1021,7 @@ module Orderable =
         let ord_qty,
             orb_qty,
             ord_cnt,
+            dos_cnt,
             dos_qty,
             dos_tot,
             dos_rte,
@@ -1028,6 +1035,7 @@ module Orderable =
             ord_qty
             orb_qty
             ord_cnt
+            dos_cnt
             dos_qty
             dos_tot
             dos_rte
@@ -1079,6 +1087,7 @@ module Orderable =
         let ord_qty,
             orb_qty,
             ord_cnt,
+            dos_cnt,
             dos_qty,
             dos_tot,
             dos_rte,
@@ -1140,6 +1149,7 @@ module Orderable =
                 [ dos_tot;     dos_tot_adj; adj ]
                 [ dos_qty;     dos_qty_adj; adj ]
                 [ dos_rte;     dos_rte_adj; adj ]
+                [ orb_qty;     dos_qty;     dos_cnt]
             ] |> List.append eqs
         // Discontinuous
         | None, Some frq, None   ->
@@ -1192,6 +1202,7 @@ module Orderable =
             member val OrderableQuantity = VariableUnit.Dto.dto () with get, set
             member val OrderQuantity = VariableUnit.Dto.dto () with get, set
             member val OrderCount = VariableUnit.Dto.dto () with get, set
+            member val DoseCount = VariableUnit.Dto.dto () with get, set
             member val DoseQuantity = VariableUnit.Dto.dto () with get, set
             member val DoseTotal = VariableUnit.Dto.dto () with get, set
             member val DoseRate = VariableUnit.Dto.dto () with get, set
@@ -1206,8 +1217,10 @@ module Orderable =
             let n = [ dto.Name ] |> NM.create
             
             let orb_qty = dto.OrderableQuantity |> QT.fromDto 
-            let ord_qty = dto.OrderQuantity |> QT.fromDto
-            let ord_cnt = dto.OrderCount    |> CT.fromDto
+            let ord_qty = dto.OrderQuantity     |> QT.fromDto
+            let ord_cnt = dto.OrderCount        |> CT.fromDto
+            let dos_cnt = dto.DoseCount         |> CT.fromDto
+
             let cc =
                 dto.Components
                 |> List.map Component.Dto.fromDto
@@ -1219,7 +1232,7 @@ module Orderable =
                 (dto.DoseQuantityAdjust, dto.DoseTotalAdjust, dto.DoseRateAdjust)
                 |> DA.fromDto
 
-            create id n dto.Shape orb_qty ord_qty ord_cnt dos dos_adj cc
+            create id n dto.Shape orb_qty ord_qty ord_cnt dos_cnt dos dos_adj cc
 
         let toDto (orb : Orderable) =
             let dto = Dto ()
@@ -1236,6 +1249,9 @@ module Orderable =
                 |> QT.toDto
             dto.OrderCount <-
                 orb.OrderCount
+                |> CT.toDto
+            dto.DoseCount <-
+                orb.DoseCount
                 |> CT.toDto
 
             let (q, t, r) = orb.Dose |> DS.toDto
