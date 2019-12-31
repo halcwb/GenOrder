@@ -47,6 +47,110 @@ module Order =
     module RateAdjust = VariableUnit.RateAdjust
     module Name = WrappedString.Name
     module Props = Solver.Props
+    module Solver = Informedica.GenOrder.Lib.Solver
+
+
+    let validScenario (o: Order) =
+        o
+        |> Order.toEqs
+        |> function
+        | (vrus1, vrus2) ->
+            vrus1
+            |> List.append vrus2
+            |> List.collect id
+            |> List.exists (fun vru ->
+                vru 
+                |> VariableUnit.getBaseValues
+                |> List.length > 1
+            )
+            |> not
+
+
+    let inValidScenario (o: Order) =
+        o
+        |> Order.toEqs
+        |> function
+        | (vrus1, vrus2) ->
+            vrus1
+            |> List.append vrus2
+            |> List.collect id
+            |> List.exists (fun vru ->
+                vru 
+                |> VariableUnit.getVar
+                |> Variable.getValueRange
+                |> Variable.ValueRange.isEmpty 
+            )
+
+
+    let calcScenarios2 (o : Order) =
+
+        let solve n v o =
+            o
+            |> Order.toEqs
+            |> function 
+            | (prod, sum) ->
+                prod 
+                |> List.map Solver.productEq
+                |> List.append (sum |> List.map Solver.sumEq)
+    
+            |> Solver.solve n Props.Vals [v]
+            |> Order.fromEqs o
+
+        let smallest o =
+            o
+            |> Order.toEqs
+            |> function
+            | (vrus1, vrus2) ->
+                vrus1
+                |> List.append vrus2
+                |> List.collect id
+                |> List.filter (fun vru ->
+                    vru
+                    |> VariableUnit.getBaseValues
+                    |> List.length > 1
+                )
+            |> List.map (fun vru ->
+                vru.Variable.Name, vru |> VariableUnit.getUnitValues 
+            )
+            |> function 
+            | [] -> None
+            | xs ->
+                xs
+                |> List.sortBy (fun (_, vs) -> vs |> Seq.length)
+                |> List.rev
+                |> List.tryHead
+
+            
+        let rec calc os sc =
+
+            match sc with
+            | None         -> os
+            | Some (n, vs) ->
+                [
+                    for v in vs do
+                        if os |> List.isEmpty then
+                            o 
+                            |> solve n v
+                        else 
+                            for o in os do
+                                o
+                                |> solve n v
+                ]       
+                |> List.filter (inValidScenario >> not)
+                |> fun xs -> xs |> List.length |> printfn "number of scenarios: %i"; xs
+                |> List.distinct
+                |> fun xs -> xs |> List.length |> printfn "number of distinct scenarios: %i"; xs
+                |> List.map (fun o ->
+                    o
+                    |> smallest
+                    |> calc [o]
+                )
+                |> List.collect id
+
+        o
+        |> smallest
+        |> calc []
+
 
     let calcScenarios (o : Order) =
 
@@ -117,10 +221,29 @@ module Order =
                         |> printfn "going to process %i item dose" 
 
                         for (n, v) in ids do
-                            o
-                            |> Order.solve 
-                                (n |> Name.toString)
-                                mi Props.Vals [ v ]
+                            let o =
+                                o
+                                |> Order.solve 
+                                    (n |> Name.toString)
+                                    mi Props.Vals [ v ]
+
+                            let oqs =
+                                o.Orderable.OrderableQuantity
+                                |> Quantity.toVarUnt
+                                |> VariableUnit.getUnitValues
+                                |> Seq.distinct
+
+                            if oqs |> Seq.length >= 1 then
+
+                                for v in oqs do
+                                    let o =
+                                        o
+                                        |> Order.solve 
+                                            (o.Orderable.Name |> Name.toString)
+                                            Mapping.OrderableOrderableQty
+                                            Props.Vals [ v ]
+                                    
+                                    if o |> validScenario then o
             
             ]
         
@@ -306,6 +429,8 @@ module Order =
                     (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
                     (VariableUnit.TotalAdjust.toValueUnitStringList None)
 
+            if oq = "1.8 ml" then 
+                printfn "Oops:\n%A" o
             sprintf "%s %s %s = (%s) in %s" 
                 (o.Orderable.Name |> Name.toString) fr dq dt oq
 
@@ -725,11 +850,11 @@ module DrugOrder =
                                     RouteShape.Any OrderType.Any
                                 Constraint.create n 
                                     Mapping.ComponentOrderableQty 
-                                    Props.Incr [ d.Divisible ]
+                                    Props.Incr [ 1N / d.Divisible ]
                                     RouteShape.Any OrderType.Any
                                 Constraint.create n 
                                     Mapping.ComponentDoseQty 
-                                    Props.Incr [ d.Divisible ]
+                                    Props.Incr [ 1N / d.Divisible ]
                                     RouteShape.Any OrderType.Any
                             ]
 
@@ -991,7 +1116,7 @@ WrappedString.Name.create ["test"]
 |> DrugOrder.setAdjust "paracetamol" 10N
 //|> Order.printPrescriptions "paracetamol"
 |> DrugOrder.evaluate
-|> Order.calcScenarios
+|> Order.calcScenarios2
 //|> List.length
 |> List.iteri (fun i o ->
     o
@@ -1369,6 +1494,7 @@ WrappedString.Name.create ["test"]
         Id = "1"
         Name = "gentamicin"
         Quantities = [ ]
+        Divisible = 2N 
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1424,31 +1550,57 @@ WrappedString.Name.create ["test"]
         OrderType = DrugOrder.OrderType.Timed
     }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "gentamicin" 10N
+|> DrugOrder.setAdjust "gentamicin" (1N)
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "gentamicin"
             SubstanceName = "gentamicin"
             Frequencies = [ 1N ]
-            MinDoseTotalAdjust = Some 5N
-            MaxDoseTotalAdjust = Some 8N
+            MinDoseTotalAdjust = Some (5N * (9N/10N))
+            MaxDoseTotalAdjust = Some (5N * (10N/9N))
     }
 |> DrugOrder.setSolutionLimits 
     {
         DrugOrder.solutionLimits with
             Name = "gentamicin"
             Component = "gentamicin"
-            MinConcentration = Some (1N)
+//            MinConcentration = Some (1N)
             MaxConcentration = Some (2N)
             DoseCount = Some (1N)
 //            MaxTime = (Some 10N)
 
     }
 |> DrugOrder.evaluate
-|> Order.calcScenarios
-|> List.sort
+|> Order.calcScenarios2
 |> List.iteri (fun i o ->
     o
     |> Order.printPrescription ["gentamicin"]
     |> printfn "%i\t%s" (i + 1)
 )
+
+
+
+let product xs =
+    xs 
+    |> List.fold (fun acc (n, vs) ->
+        let xs =
+            vs
+            |> List.map (fun v -> 
+                (n, v)
+            )
+        if acc |> List.length = 0 then [ xs ]
+        else
+            [
+                for x in acc do
+                    for nv in xs do
+                        nv::x
+            ]
+    ) []
+
+[
+    ("1", [1..4])
+    ("2", [5..7])
+    ("3", [8..20])
+]
+|> product
+|> List.length
