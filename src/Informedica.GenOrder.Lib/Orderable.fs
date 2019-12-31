@@ -1130,7 +1130,7 @@ module Orderable =
             |> List.append [ orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt)) ]
 
         match rte, frq, tme with
-        // Discontinuous timed
+        // Timed
         | Some _, Some frq, Some tme ->
             [
                 [ dos_tot;     dos_qty;     frq ]

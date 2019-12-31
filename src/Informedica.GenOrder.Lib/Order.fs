@@ -22,6 +22,7 @@ module Order =
 
         type Map =
             | Freq
+            | Time
             | ItemComponentQty
             | ItemOrderableQty
             | ItemComponentConc
@@ -56,6 +57,7 @@ module Order =
 
         let map = function
             | Freq -> "Freq"
+            | Time -> "Time"
             | ItemComponentQty -> "Item.Component.Qty"
             | ItemOrderableQty -> "Item.Orderable.Qty"
             | ItemComponentConc -> "Item.Component.Conc"
