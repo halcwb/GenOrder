@@ -252,6 +252,33 @@ module Order =
         |> List.filter (String.isNullOrWhiteSpace >> not)
 
 
+    let hasUnitValue n m v o =
+        let dls = "."
+
+        let n =
+            match m with
+            | Mapping.Freq 
+            | Mapping.AdjustQty ->
+                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+            | _ -> 
+                [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
+                |> NM.create
+
+        let prod, sum = o |> toEqs
+
+        sum @ prod 
+        |> List.collect id
+        |> List.tryFind (VariableUnit.getName >> ((=) n))
+        |> function 
+        | Some vru -> 
+            vru
+            |> VariableUnit.containsUnitValue v
+        | None -> 
+            sprintf "could not find %A with mapping %A" n m
+            |> failwith
+    
+
+
     let isEmpty n m o =
         let dls = "."
 
@@ -284,7 +311,7 @@ module Order =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
-    let solve n m p vs o =
+    let solve solveE n m p vs o =
         // return eqs 
         let toEql prod sum =
 
@@ -308,8 +335,8 @@ module Order =
         let eqs = toEql prod sum
         
         eqs
-        |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
-        |> SV.solve n p vs
+//        |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
+        |> SV.solve solveE n p vs
         |> fromEqs o
 
     module Dto =

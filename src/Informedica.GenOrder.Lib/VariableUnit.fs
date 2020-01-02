@@ -148,10 +148,24 @@ module VariableUnit =
         >> Variable.ValueRange.getValueSet
         >> Set.toList
     
-
+    // ToDo change this to valuerange contains!!
     let hasBaseValue v =
         getBaseValues
         >> List.exists ((=) v)
+
+
+    let containsUnitValue v vru =
+        let u = vru |> getUnit
+        // ToDo create util function in GenUnits.Lib
+        let v = 
+            ValueUnit.create u v
+            |> ValueUnit.toBase
+        
+        vru
+        |> getVar
+        |> Variable.getValueRange
+        |> ValueRange.contains v
+
 
     let getUnitValues vru =
         vru

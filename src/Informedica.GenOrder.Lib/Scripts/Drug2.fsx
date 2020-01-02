@@ -75,14 +75,23 @@ module Order =
             |> List.append vrus2
             |> List.collect id
             |> List.exists (fun vru ->
-                vru 
-                |> VariableUnit.getVar
-                |> Variable.getValueRange
-                |> Variable.ValueRange.isEmpty 
+                let b =
+                    vru 
+                    |> VariableUnit.getVar
+                    |> Variable.getValueRange
+                    |> Variable.ValueRange.isEmpty 
+
+                if b then 
+                    o
+                    |> Order.toString
+                    |> String.concat ","
+                    |> printfn "invalid scenario:\n%s"
+
+                b
             )
 
 
-    let calcScenarios2 (o : Order) =
+    let calcScenarios solveE (o : Order) =
 
         let solve n v o =
             o
@@ -93,7 +102,7 @@ module Order =
                 |> List.map Solver.productEq
                 |> List.append (sum |> List.map Solver.sumEq)
     
-            |> Solver.solve n Props.Vals [v]
+            |> Solver.solve solveE n Props.Vals [v]
             |> Order.fromEqs o
 
         let smallest o =
@@ -117,7 +126,6 @@ module Order =
             | xs ->
                 xs
                 |> List.sortBy (fun (_, vs) -> vs |> Seq.length)
-                |> List.rev
                 |> List.tryHead
 
             
@@ -126,20 +134,15 @@ module Order =
             match sc with
             | None         -> os
             | Some (n, vs) ->
+                (vs |> Seq.map BigRational.toString |> String.concat ",")
+                |> printfn "scenario: %A, with %A" n 
                 [
                     for v in vs do
-                        if os |> List.isEmpty then
-                            o 
+                        for o in os do
+                            o
                             |> solve n v
-                        else 
-                            for o in os do
-                                o
-                                |> solve n v
-                ]       
+                ]     
                 |> List.filter (inValidScenario >> not)
-                |> fun xs -> xs |> List.length |> printfn "number of scenarios: %i"; xs
-                |> List.distinct
-                |> fun xs -> xs |> List.length |> printfn "number of distinct scenarios: %i"; xs
                 |> List.map (fun o ->
                     o
                     |> smallest
@@ -149,173 +152,7 @@ module Order =
 
         o
         |> smallest
-        |> calc []
-
-
-    let calcScenarios (o : Order) =
-
-        let calc get mo mc mi o =
-            [
-
-                // orderable doses
-                let ods = 
-                    o.Orderable.Dose
-                    |> Dose.toVarUnt
-                    |> get
-                    |> VariableUnit.getUnitValues
-                    |> Seq.distinct
-
-                printfn "going to process %i orderable dose" (ods |> Seq.length)
-
-                for v in ods do
-                    let o =
-                        o
-                        |> Order.solve 
-                            (o.Orderable.Name |> Name.toString)
-                            mo Props.Vals [ v ]
-        
-
-                    // component doses
-                    let cds =
-                        o.Orderable.Components
-                        |> Seq.collect (fun c ->
-                            c.Dose
-                            |> Dose.toVarUnt
-                            |> get
-                            |> VariableUnit.getUnitValues
-                            |> Seq.map (fun v ->
-                                c.Name, v
-                            )
-                        )
-                        |> Seq.distinct
-
-                    (cds |> Seq.length)
-                    |> printfn "going to process %i component dose" 
-
-                    for (n, v) in cds do
-                        let o =
-                            o
-                            |> Order.solve 
-                                (n |> Name.toString)
-                                mc Props.Vals [ v ]
-                
-
-                        // item doses
-                        let ids =
-                            o.Orderable.Components
-                            |> Seq.filter (fun c -> c.Name = n)
-                            |> Seq.collect (fun c ->
-                                c.Items
-                                |> Seq.collect (fun i ->
-                                    i.Dose
-                                    |> Dose.toVarUnt
-                                    |> get
-                                    |> VariableUnit.getUnitValues
-                                    |> Seq.map (fun v ->
-                                        i.Name, v
-                                    )
-                                )
-                            )
-                            |> Seq.distinct
-                        (ids |> Seq.length)
-                        |> printfn "going to process %i item dose" 
-
-                        for (n, v) in ids do
-                            let o =
-                                o
-                                |> Order.solve 
-                                    (n |> Name.toString)
-                                    mi Props.Vals [ v ]
-
-                            let oqs =
-                                o.Orderable.OrderableQuantity
-                                |> Quantity.toVarUnt
-                                |> VariableUnit.getUnitValues
-                                |> Seq.distinct
-
-                            if oqs |> Seq.length >= 1 then
-
-                                for v in oqs do
-                                    let o =
-                                        o
-                                        |> Order.solve 
-                                            (o.Orderable.Name |> Name.toString)
-                                            Mapping.OrderableOrderableQty
-                                            Props.Vals [ v ]
-                                    
-                                    if o |> validScenario then o
-            
-            ]
-        
-        match o.Prescription with
-        | Prescription.Discontinuous fr ->
-
-            [
-
-                // frequencies
-                let frs = fr |> Frequency.getUnitValues
-
-                printfn "going to process %i freqs" (frs |> Seq.length)
-                for v in frs do
-                    o
-                    |> Order.solve 
-                        (o.Orderable.Name |> Name.toString) 
-                        Mapping.Freq Props.Vals [v]
-                    |> calc (fun (dq, _, _) -> dq)
-                            Mapping.OrderableDoseQty
-                            Mapping.ComponentDoseQty
-                            Mapping.ItemDoseQty
-
-            ]
-            |> List.collect id
-
-        | Prescription.Continuous ->
-            o
-            |> calc (fun (_, _, dr) -> dr)
-                    Mapping.OrderableDoseRate
-                    Mapping.ComponentDoseRate
-                    Mapping.ItemDoseRate
-
-        | Prescription.Timed (frq, tme) ->
-            [
-
-                // frequencies
-                let frs = frq |> Frequency.getUnitValues
-                let tms = tme |> Time.getUnitValues
-
-                printfn "going to process %i freqs" (frs |> Seq.length)
-                for v in frs do
-                    let o =
-                        o
-                        |> Order.solve 
-                            (o.Orderable.Name |> Name.toString) 
-                            Mapping.Freq Props.Vals [v]
-
-                    if tms |> Seq.length = 0 then
-                        o
-                        |> calc (fun (dq, _, _) -> dq)
-                                Mapping.OrderableDoseQty
-                                Mapping.ComponentDoseQty
-                                Mapping.ItemDoseQty
-
-                    else
-                        for v in tms do
-                            o
-                            |> Order.solve 
-                                (o.Orderable.Name |> Name.toString)
-                                Mapping.Time Props.Vals [v]
-                            |> calc (fun (dq, _, _) -> dq)
-                                    Mapping.OrderableDoseQty
-                                    Mapping.ComponentDoseQty
-                                    Mapping.ItemDoseQty
-
-            ]
-            |> List.collect id
-            
-
-        | _ -> []
-        |> List.distinct
-        |> (fun xs -> xs |> List.length |> printfn "found %i scenarios"; xs)
+        |> calc [o]
 
 
     let printPrescription sn (o : Order) =
@@ -429,8 +266,9 @@ module Order =
                     (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
                     (VariableUnit.TotalAdjust.toValueUnitStringList None)
 
-            if oq = "1.8 ml" then 
-                printfn "Oops:\n%A" o
+            //if oq = "1.8 ml" then 
+            //    printfn "Oops:\n%A" o
+
             sprintf "%s %s %s = (%s) in %s" 
                 (o.Orderable.Name |> Name.toString) fr dq dt oq
 
@@ -439,7 +277,6 @@ module Order =
             o.Orderable.Name
             |> Name.toString
             |> sprintf "%s"  
-
 
 
 // Creating a drug order
@@ -531,6 +368,10 @@ module DrugOrder =
                     OrderType = ps
                 }
 
+
+            let toString (c : Constraint) =
+                sprintf "%A %A %A %A" c.Name c.Mapping c.Prop c.Values
+
             let constraints n =
                 let c m p vs rs ps =
                     create n m p vs rs ps
@@ -568,14 +409,21 @@ module DrugOrder =
             /// 3. Incr
             let orderMap (c : Constraint) =
                 match c.Prop with
-                | Props.Incr -> 1
-                | Props.Vals -> 0
-                | _ -> -1
+                | Props.Incr -> -1 //System.Int32.MaxValue
+                | Props.Vals -> c.Values |> List.length
+                | Props.MinIncl 
+                | Props.MinExcl -> System.Int32.MaxValue - 1                    
+                | _             -> System.Int32.MaxValue //-1
 
 
             let apply cs (o : Order) =
                 let rs = RouteShape.map o.Route o.Orderable.Shape
                 let ot = o |> OrderType.map
+                let mutable i = 0
+
+                let solveE =
+                    Informedica.GenSolver.Lib.Solver.memSolve 
+                        Informedica.GenSolver.Lib.Solver.solveEquation
 
                 let filter cs =
                     cs
@@ -588,19 +436,53 @@ module DrugOrder =
                 cs
                 |> filter
                 |> List.sortBy orderMap
+                // apply the constraints in the most effective order
                 |> fun cs ->
                     printfn "going to apply the following constraints in order:"
                     cs
                     |> List.iteri (fun i c ->
-                        printfn "%i.\t%A %A %A %A" i c.Name c.Mapping c.Prop c.Values
+                        c
+                        |> toString
+                        |> printfn "%i.\t%s" i 
                     )
                     cs
+                // calculate for each scenario the constraints
                 |> List.fold (fun acc c ->
-                    let n = c.Name |> Name.toString
+                    c
+                    |> toString
+                    |> printfn "calc no %i\t%s" i
+                    i <- i + 1
 
-                    acc
-                    |> Order.solve n c.Mapping c.Prop c.Values
-                ) o                
+                    let n = c.Name |> Name.toString
+                    
+                    [
+                        for o in acc do
+
+                            if c.Prop = Props.Vals then
+
+                                for v in c.Values do
+
+                                    if o |> Order.hasUnitValue n c.Mapping v then
+                                        o
+                                        |> Order.solve solveE n c.Mapping c.Prop [v]
+                                
+                            else 
+                                o 
+                                |> Order.solve solveE n c.Mapping c.Prop c.Values
+                    ]
+
+                ) [o]
+                |> fun os -> os |> List.length |> printfn "start running scenarios for %i orders"; os
+                |> List.map (fun o ->
+                    async {
+                        return Order.calcScenarios solveE o
+                    }
+                )
+                |> Async.Parallel
+                |> Async.RunSynchronously
+                |> Array.toList
+                |> List.collect id
+
 
         module Item = Orderable.Item
         module IDto = Item.Dto
@@ -1057,17 +939,24 @@ module DrugOrder =
 
         let evaluate (co : ConstrainedOrder) =
             let (cs, o) = co
-            Constraint.apply cs o
 
+            Constraint.apply cs o
 
 
 module Constraint = DrugOrder.Constraint
 
 
-// Test ordering of constrain list
-WrappedString.Name.create ["test"]
-|> DrugOrder.Constraint.constraints 
-|> List.sortBy DrugOrder.Constraint.orderMap
+let printScenarios n sc =
+    sc
+    |> List.iteri (fun i o ->
+        o
+        |> Order.printPrescription [n]
+        |> printfn "%i\t%s" (i + 1)
+
+        o
+        |> Order.toString
+        |> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+    )
 
 
 
@@ -1116,13 +1005,12 @@ WrappedString.Name.create ["test"]
 |> DrugOrder.setAdjust "paracetamol" 10N
 //|> Order.printPrescriptions "paracetamol"
 |> DrugOrder.evaluate
-|> Order.calcScenarios2
-//|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["paracetamol"]
-    |> printfn "%i\t%s" (i + 1)
-)
+|> printScenarios "paracetamol"
+//|> List.iter (fun o ->
+//    o
+//    |> Order.toString
+//    |> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+//)
 
 
 // Drug with multiple items
@@ -1188,7 +1076,7 @@ WrappedString.Name.create ["test"]
             MaxDoseTotalAdjust = Some 6N
     }
 |> DrugOrder.evaluate
-|> Order.calcScenarios
+//|> Order.calcScenarios2
 //|> List.length
 |> List.iteri (fun i o ->
     o
@@ -1242,14 +1130,9 @@ WrappedString.Name.create ["test"]
             MaxDoseTotalAdjust = Some 90N
     }
 |> DrugOrder.evaluate
-|> Order.calcScenarios
+//|> Order.calcScenarios2
 //|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["paracetamol"]
-    |> printfn "%i\t%s" (i + 1)
-)
-
+|> printScenarios "paracetamol"
 
 
 
@@ -1307,7 +1190,7 @@ WrappedString.Name.create ["test"]
     }
 |> DrugOrder.setAdjust "cotrimoxazol" 10N
 |> DrugOrder.evaluate
-|> Order.calcScenarios
+//|> Order.calcScenarios2
 //|> List.length
 |> List.iteri (fun i o ->
     o
@@ -1391,14 +1274,8 @@ WrappedString.Name.create ["test"]
 //|> Order.printPrescriptions "dopamin"
 //|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
 |> DrugOrder.evaluate
-|> Order.calcScenarios
-|> List.sort
-//|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["dopamin"]
-    |> printfn "%i\t%s" (i + 1)
-)
+//|> Order.calcScenarios2
+|> printScenarios "dopamin"
 
 
 
@@ -1476,14 +1353,8 @@ WrappedString.Name.create ["test"]
 //|> Order.printPrescriptions "dopamin"
 //|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
 |> DrugOrder.evaluate
-|> Order.calcScenarios
-|> List.sort
-//|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["dopamin"]
-    |> printfn "%i\t%s" (i + 1)
-)
+//|> Order.calcScenarios2
+|> printScenarios "dopamin"
 
 
 
@@ -1494,7 +1365,7 @@ WrappedString.Name.create ["test"]
         Id = "1"
         Name = "gentamicin"
         Quantities = [ ]
-        Divisible = 2N 
+        Divisible = 1N 
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1550,7 +1421,7 @@ WrappedString.Name.create ["test"]
         OrderType = DrugOrder.OrderType.Timed
     }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "gentamicin" (1N)
+|> DrugOrder.setAdjust "gentamicin" (800N / 1000N)
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "gentamicin"
@@ -1571,12 +1442,9 @@ WrappedString.Name.create ["test"]
 
     }
 |> DrugOrder.evaluate
-|> Order.calcScenarios2
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["gentamicin"]
-    |> printfn "%i\t%s" (i + 1)
-)
+//|> Order.calcScenarios2
+|> printScenarios "gentamicin"
+
 
 
 
@@ -1603,4 +1471,12 @@ let product xs =
     ("3", [8..20])
 ]
 |> product
+|> List.length
+
+
+[
+    for x in [1N..250N] do
+        for y in [1N..250N] do
+            x * y
+]
 |> List.length

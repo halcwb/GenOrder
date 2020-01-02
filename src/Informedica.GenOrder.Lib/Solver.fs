@@ -91,7 +91,7 @@ module Solver =
 
     
     let replaceUnit n u eqs =
-        printfn "replacing %A units: %A" n u
+        printfn "replacing units for %A with: %s" n (u |> ValueUnit.unitToString)
         let repl c vru vrus =
             if vru |> VariableUnit.getName = n then
                 (vru |> VariableUnit.setUnit u, vrus)
@@ -265,12 +265,12 @@ module Solver =
     // helper function to prevent setting vs to 
     // empty list when vals have no unit, so tobase 
     // returns an empty list
-    let solveVals f n p vs eqs =
+    let solveVals solveE f n p vs eqs =
         match vs with
         | [] -> eqs
         | _  ->
             eqs
-            |> SV.solve f n (p |> propToString) vs
+            |> SV.solve solveE f n (p |> propToString) vs
          
 
     let filterEqsWithUnits = 
@@ -285,7 +285,7 @@ module Solver =
 
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let solve_ f (N.Name n) p vs eqs =
+    let solve_ solveE f (N.Name n) p vs eqs =
         // first solve units
         let eqs =
             eqs 
@@ -295,7 +295,7 @@ module Solver =
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> solveVals f n p (vs |> toBase n eqs)
+        |> solveVals solveE f n p (vs |> toBase n eqs)
         |> mapFromSolverEqs eqs
 
 
@@ -309,4 +309,5 @@ module Solver =
                 cache := (!cache).Add((n, p, vs, eqs), r)
                 r
 
-    let solve = solve_ (printfn "%s") //|> memSolve
+    let solve solveE = 
+        solve_ solveE ignore //(printfn "%s") //|> memSolve

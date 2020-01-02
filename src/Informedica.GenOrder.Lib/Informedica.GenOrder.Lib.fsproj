@@ -16,6 +16,7 @@
     <Compile Include="Orderable.fs" />
     <Compile Include="Prescription.fs" />
     <Compile Include="Order.fs" />
+    <None Include="Scripts\Drug2.fsx" />
     <None Include="Scripts\VariableUnit.fsx" />
     <None Include="Scripts\Solver.fsx" />
     <None Include="Scripts\Orderable.fsx" />
