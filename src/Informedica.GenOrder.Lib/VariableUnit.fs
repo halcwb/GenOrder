@@ -11,7 +11,8 @@ module VariableUnit =
     open WrappedString
     
     module Variable    = Informedica.GenSolver.Lib.Variable
-    module VariableDto = Informedica.GenSolver.Lib.Dtos.Variable
+    module ValueRange  = Variable.ValueRange
+    module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
     module Equation    = Informedica.GenSolver.Lib.Equation
     module ValueRange  = Variable.ValueRange
     module Units = ValueUnit.Units
@@ -46,7 +47,7 @@ module VariableUnit =
         let succ = Some
         let fail = Option.none
 
-        ValueRange.create succ fail true vs min incr max
+        ValueRange.create succ fail vs min incr max
         |> function
         | Some vlr ->
             let var = Variable.create id n vlr        
@@ -127,6 +128,75 @@ module VariableUnit =
            
     let setUnit u vru =
         { vru with Unit = u }
+
+    let valueToBase v vru =
+        let u = vru |> getUnit
+
+        v
+        |> ValueUnit.valueToBase u
+
+
+    let setValue c set v vru =
+        let i = 
+            vru
+            |> valueToBase (v |> List.head)
+            |> c
+
+        vru
+        |> getVar
+        |> Variable.getValueRange
+        |> set i
+        |> fun vr ->
+            { vru with 
+                Variable = 
+                    vr 
+                    |> Variable.setValueRange vru.Variable }
+
+
+    let setMinIncl =
+        setValue (ValueRange.createMin true) ValueRange.setMin
+        
+
+    let setMaxIncl =
+        setValue (ValueRange.createMax true) ValueRange.setMax
+
+    let setIncr vs vru =
+        let fail = 
+            fun _ ->
+                sprintf "cannot create an increment from: %A" vs
+                |> failwith
+
+        let incr =
+            vs
+            |> List.map (fun v -> vru |> valueToBase v)
+            |> ValueRange.createIncr id fail
+
+        vru
+        |> getVar
+        |> Variable.getValueRange
+        |> ValueRange.setIncr incr
+        |> fun vr ->
+            { vru with 
+                Variable = 
+                    vr 
+                    |> Variable.setValueRange vru.Variable }
+
+
+    let setVals vs vru =
+        let vs =
+            vs
+            |> List.map (fun v -> vru |> valueToBase v)
+            |> Set.ofList
+
+        vru
+        |> getVar
+        |> Variable.getValueRange
+        |> ValueRange.setValues vs
+        |> fun vr ->
+            { vru with 
+                Variable = 
+                    vr 
+                    |> Variable.setValueRange vru.Variable }
 
 
     /// Get the string representation of a `VariableUnit` **vru**
@@ -253,7 +323,7 @@ module VariableUnit =
             member val Vals : BigRational list = [] with get, set
             member val Min : BigRational option = None with get, set
             member val MinIncl = false with get, set
-            member val Incr : BigRational option = None with get, set
+            member val Incr : BigRational list = [] with get, set
             member val Max : BigRational option = None with get, set
             member val MaxIncl = false with get, set 
 
@@ -281,7 +351,11 @@ module VariableUnit =
             let n    = [ dto.Name ] |> Name.create 
             let vals = dto.Vals |> List.map toBase |> Set.ofList 
             let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
-            let incr = dto.Incr |> bind (toBase >> ValueRange.createIncr Some none)
+            let incr = 
+                dto.Incr
+                |> List.map toBase 
+                |> ValueRange.createIncr (Some) (fun _ -> None)
+
             let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
 
             create n vals min incr max un
@@ -330,7 +404,14 @@ module VariableUnit =
             dto.Incr <-
                 vr
                 |> ValueRange.getIncr
-                |> Option.bind (ValueRange.incrToValue >> toUnit >> Some)
+                |> function
+                | None -> []
+                | Some i -> 
+                    i
+                    |> ValueRange.incrToValue 
+                    |> Set.toList
+                    |> List.map toUnit
+
             dto.Min <- min
             dto.MinIncl <- inclMin
             dto.Max <- max

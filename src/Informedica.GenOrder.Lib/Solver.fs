@@ -9,14 +9,13 @@ module Solver =
     open Informedica.GenUnits.Lib
 
     module N = Informedica.GenSolver.Lib.Variable.Name
-    module SV = Informedica.GenSolver.Api
+    module SV = Informedica.GenSolver.Lib.Api
     module VR = Informedica.GenSolver.Lib.Variable
     module VL = VR.ValueRange
     module EQ = Informedica.GenSolver.Lib.Equation
 
     type VariableUnit = VariableUnit.VariableUnit
     
-
     type Equation =
         | ProductEquation of VariableUnit * VariableUnit list
         | SumEquation of VariableUnit * VariableUnit list
@@ -216,7 +215,8 @@ module Solver =
     let toVariableUnits =
         List.map (fun eq ->
             match eq with
-            | ProductEquation (y, xs) | SumEquation (y, xs) -> y::xs
+            | ProductEquation (y, xs) 
+            | SumEquation     (y, xs) -> y::xs
         )
 
 
@@ -265,12 +265,12 @@ module Solver =
     // helper function to prevent setting vs to 
     // empty list when vals have no unit, so tobase 
     // returns an empty list
-    let solveVals solveE f n p vs eqs =
+    let solveVals solveE sortQue lim pf n p vs eqs =
         match vs with
         | [] -> eqs
         | _  ->
             eqs
-            |> SV.solve solveE f n (p |> propToString) vs
+            |> SV.solve solveE sortQue lim pf n (p |> propToString) vs
          
 
     let filterEqsWithUnits = 
@@ -285,17 +285,13 @@ module Solver =
 
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let solve_ solveE f (N.Name n) p vs eqs =
-        // first solve units
-        let eqs =
-            eqs 
-            |> solveUnits
+    let solve_ solveE sortQue lim pf (N.Name n) p vs eqs =
 
         eqs
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> solveVals solveE f n p (vs |> toBase n eqs)
+        |> solveVals solveE sortQue lim pf n p (vs |> toBase n eqs)
         |> mapFromSolverEqs eqs
 
 
@@ -309,5 +305,6 @@ module Solver =
                 cache := (!cache).Add((n, p, vs, eqs), r)
                 r
 
-    let solve solveE = 
-        solve_ solveE ignore //(printfn "%s") //|> memSolve
+    let solve solveE pf lim = 
+        let sortQue = Informedica.GenSolver.Lib.Solver.sortQue
+        solve_ solveE sortQue lim pf //(printfn "%s") //|> memSolve

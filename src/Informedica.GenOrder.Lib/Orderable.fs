@@ -1112,28 +1112,28 @@ module Orderable =
         let sum =
             match rte, frq, tme with
             // Discontinuous timed
-            | Some _, Some frq, Some tme ->
+            | Some _, Some _, Some _ ->
                 [   
                     dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
-                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
-                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    //dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    //dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
                     dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
                     dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
                     dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate     |> RA.toVarUnt)) 
                 ] 
             // Discontinuous
-            | None, Some frq, None   ->
+            | None, Some _, None   ->
                 [   
                     dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
-                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
-                    dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
-                    dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
+                    //dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    //dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
+                    //dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
                 ] 
             // Continuous
             | Some _, None, None ->
                 [   
-                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
-                    dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate     |> RA.toVarUnt)) 
+                    //dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    //dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate |> RA.toVarUnt)) 
                 ] 
             | _ -> []
             |> List.append [ orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt)) ]
@@ -1149,7 +1149,7 @@ module Orderable =
                 [ dos_tot;     dos_tot_adj; adj ]
                 [ dos_qty;     dos_qty_adj; adj ]
                 [ dos_rte;     dos_rte_adj; adj ]
-                [ orb_qty;     dos_qty;     dos_cnt]
+                [ orb_qty;     dos_qty;     dos_cnt ]
             ] |> List.append eqs
         // Discontinuous
         | None, Some frq, None   ->
@@ -1158,6 +1158,7 @@ module Orderable =
                 [ dos_tot_adj; dos_qty_adj; frq ]
                 [ dos_tot;     dos_tot_adj; adj ]
                 [ dos_qty;     dos_qty_adj; adj ]
+                [ orb_qty;     dos_qty;     dos_cnt ]
             ] |> List.append eqs
         // Continuous
         | Some _, None, None ->
@@ -1169,17 +1170,18 @@ module Orderable =
         , sum
 
 
-    let fromEqs eqs  (ord: Orderable) =
+    let fromEqs eqs  (orb: Orderable) =
         let cmps = 
-            ord.Components
+            orb.Components
             |> List.map (CM.fromEqs eqs )
         {
-            ord with
-                OrderableQuantity = QT.fromVar eqs  ord.OrderableQuantity             
-                OrderQuantity = QT.fromVar eqs  ord.OrderQuantity
-                OrderCount = CT.fromVar eqs  ord.OrderCount
-                Dose = DS.fromVar eqs  ord.Dose
-                DoseAdjust = DA.fromVar eqs  ord.DoseAdjust
+            orb with
+                OrderableQuantity = QT.fromVar eqs  orb.OrderableQuantity             
+                OrderQuantity = QT.fromVar eqs  orb.OrderQuantity
+                OrderCount = CT.fromVar eqs  orb.OrderCount
+                DoseCount = CT.fromVar eqs orb.DoseCount
+                Dose = DS.fromVar eqs  orb.Dose
+                DoseAdjust = DA.fromVar eqs  orb.DoseAdjust
                 Components = cmps
         }
 

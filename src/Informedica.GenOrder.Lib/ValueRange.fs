@@ -14,7 +14,7 @@ module ValueRange =
                 |> List.map (ValueUnit.create un)
                 |> List.map ValueUnit.toUnit
 
-            print false vs None false None None false
+            print false vs None false [] None false
     
         let some =
             ValueUnit.create un
@@ -30,7 +30,7 @@ module ValueRange =
                     match min with
                     | MinIncl v -> v |> some, true
                     | MinExcl v -> v |> some, false  
-                print min minincl None None false
+                print min minincl [] None false
 
             let fMax max =
                 let max, maxincl = 
@@ -38,7 +38,7 @@ module ValueRange =
                     | MaxIncl v -> v |> some, true
                     | MaxExcl v -> v |> some ,false  
 
-                print None false None max maxincl
+                print None false [] max maxincl
 
             let fMinIncr (min, incr)  = 
                 let min, minincl = 
@@ -46,7 +46,7 @@ module ValueRange =
                     | MinIncl v -> v |> some, true
                     | MinExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> some
+                let incr = incr |> incrToValue |> Set.toList
         
                 print min minincl incr None false
 
@@ -56,7 +56,7 @@ module ValueRange =
                     | MaxIncl v -> v |> some, true
                     | MaxExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> some
+                let incr = incr |> incrToValue |> Set.toList
         
                 print None false incr max maxincl
 
@@ -71,11 +71,11 @@ module ValueRange =
                     | MaxIncl v -> v |> some, true
                     | MaxExcl v -> v |> some ,false  
 
-                print min minincl None max maxincl
+                print min minincl [] max maxincl
 
             applyRange fMin fMax fMinIncr fIncrMax fMinMax
 
-        let unr = print true [] None false None None false
+        let unr = print true [] None false [] None false
     
         vr |> apply unr fVs fRange 
 

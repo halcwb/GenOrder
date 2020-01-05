@@ -252,7 +252,7 @@ module Order =
         |> List.filter (String.isNullOrWhiteSpace >> not)
 
 
-    let hasUnitValue n m v o =
+    let getVariableUnit n m o =
         let dls = "."
 
         let n =
@@ -269,41 +269,99 @@ module Order =
         sum @ prod 
         |> List.collect id
         |> List.tryFind (VariableUnit.getName >> ((=) n))
+
+
+    let setVariableUnit o vru =
+
+        let prod, sum = o |> toEqs
+
+        sum @ prod 
+        |> List.collect id
+        |> List.map (fun x ->
+            if vru |> VariableUnit.getName = x.Variable.Name  then vru else x
+        )
+        |> List.singleton
+        |> fromEqs o
+
+
+    let hasUnitValue n m v o =
+        getVariableUnit n m o
         |> function 
         | Some vru -> 
             vru
             |> VariableUnit.containsUnitValue v
-        | None -> 
-            sprintf "could not find %A with mapping %A" n m
-            |> failwith
+        | None -> false
     
+    let contains n v o =
+        o
+        |> toEqs
+        |> fun (prod, sum) ->
+            let find =
+                List.tryFind (fun vru ->
+                    vru 
+                    |> VariableUnit.getName 
+                    |> ((=) n)
+                )
+
+            match prod @ sum |> List.collect id |> find with
+            | Some vru -> vru |> VariableUnit.containsUnitValue v
+            | None -> false
 
 
     let isEmpty n m o =
-        let dls = "."
-
-        let n =
-            match m with
-            | Mapping.Freq 
-            | Mapping.AdjustQty ->
-                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
-            | _ -> 
-                [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
-                |> NM.create
-
-        let prod, sum = o |> toEqs
-
-        sum @ prod 
-        |> List.collect id
-        |> List.tryFind (VariableUnit.getName >> ((=) n))
+        getVariableUnit n m o
         |> function 
         | Some vru -> 
             vru.Variable.Values
             |> ValueRange.isEmpty
+        | None -> false
+
+
+    let setVariableUnitValue n m p v o =
+        getVariableUnit n m o
+        |> function 
+        | Some vru -> 
+            match p with
+            | Solver.Props.MinIncl ->
+                vru 
+                |> VariableUnit.setMinIncl v
+            | Solver.Props.MaxIncl ->
+                vru 
+                |> VariableUnit.setMaxIncl v
+            | Solver.Props.Incr ->
+                vru 
+                |> VariableUnit.setIncr v
+            | Solver.Props.Vals ->
+                vru 
+                |> VariableUnit.setVals v
+            | _ -> 
+                sprintf "did not set props %A" p |> failwith
+            |> setVariableUnit o
         | None -> 
-            sprintf "could not find %A with mapping %A" n m
+            "could not set variable unit" 
             |> failwith
-        
+            
+    let solveUnits o =
+        // return eqs 
+        let toEql prod sum =
+
+            prod 
+            |> List.map Solver.productEq
+            |> List.append (sum |> List.map Solver.sumEq)
+
+        let prod, sum = o |> toEqs
+    
+        let eqs = toEql prod sum
+    
+        eqs
+        |> SV.solveUnits
+        |> List.map (fun e ->
+            match e with 
+            | Solver.ProductEquation (vru, vrus)
+            | Solver.SumEquation (vru, vrus) -> vru::vrus
+        )
+        |> fromEqs o
+
         
     /// Solve an `Order` *ord* with
     /// 
@@ -311,7 +369,7 @@ module Order =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
-    let solve solveE n m p vs o =
+    let solve solveE pf lim n m p vs o =
         // return eqs 
         let toEql prod sum =
 
@@ -336,8 +394,19 @@ module Order =
         
         eqs
 //        |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
-        |> SV.solve solveE n p vs
+        |> SV.solve solveE pf lim n p vs
         |> fromEqs o
+        |> fun o ->
+            o
+            |> toString
+            |> List.fold (fun acc x ->
+                let i, s = acc
+                i + 1, sprintf "%s\n%i\t%s" s i x
+            ) (1, "")
+            |> snd
+            |> pf
+
+            o
 
     module Dto =
         

@@ -14,6 +14,10 @@ module ValueUnit =
 
     module Units = ValueUnit.Units
 
+    let valueToBase u v =
+        ValueUnit.create u v
+        |> ValueUnit.toBase
+
     let unitToString = 
         ValueUnit.Units.toString Units.Dutch Units.Short
 
