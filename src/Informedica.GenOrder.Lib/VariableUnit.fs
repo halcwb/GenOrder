@@ -11,6 +11,7 @@ module VariableUnit =
     open WrappedString
     
     module Variable    = Informedica.GenSolver.Lib.Variable
+    module HashSet     = Informedica.GenSolver.Lib.HashSet
     module ValueRange  = Variable.ValueRange
     module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
     module Equation    = Informedica.GenSolver.Lib.Equation
@@ -19,6 +20,7 @@ module VariableUnit =
 
     type Variable = Variable.Variable
     type Unit = ValueUnit.Unit
+
 
     /// A `VariableUnit` is the combination of 
     /// an `Informedica.GenSolver.Lib.Variable` with
@@ -53,6 +55,11 @@ module VariableUnit =
             let var = Variable.create id n vlr        
             { Variable = var; Unit = un }
         | None -> createNew n un
+
+
+    let deepCopy vru =
+        { vru with Variable = vru.Variable |> Variable.deepCopy }
+
 
     /// Create a `VariableUnit` with
     /// `Variable` **var** and `Unit` **un**
@@ -169,6 +176,7 @@ module VariableUnit =
         let incr =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
+            |> HashSet.fromSeq
             |> ValueRange.createIncr id fail
 
         vru
@@ -186,7 +194,7 @@ module VariableUnit =
         let vs =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
-            |> Set.ofList
+            |> HashSet.ofList
 
         vru
         |> getVar
@@ -216,8 +224,9 @@ module VariableUnit =
         getVar
         >> Variable.getValueRange
         >> Variable.ValueRange.getValueSet
-        >> Set.toList
+        >> HashSet.toList
     
+
     // ToDo change this to valuerange contains!!
     let hasBaseValue v =
         getBaseValues
@@ -349,11 +358,12 @@ module VariableUnit =
             let bind = Option.bind
 
             let n    = [ dto.Name ] |> Name.create 
-            let vals = dto.Vals |> List.map toBase |> Set.ofList 
+            let vals = dto.Vals |> List.map toBase |> HashSet.ofList 
             let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
             let incr = 
                 dto.Incr
                 |> List.map toBase 
+                |> HashSet.ofList
                 |> ValueRange.createIncr (Some) (fun _ -> None)
 
             let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
@@ -399,7 +409,7 @@ module VariableUnit =
             dto.Vals <-
                 vr
                 |> ValueRange.getValueSet
-                |> Set.toList
+                |> HashSet.toList
                 |> List.map toUnit
             dto.Incr <-
                 vr
@@ -409,7 +419,7 @@ module VariableUnit =
                 | Some i -> 
                     i
                     |> ValueRange.incrToValue 
-                    |> Set.toList
+                    |> HashSet.toList
                     |> List.map toUnit
 
             dto.Min <- min

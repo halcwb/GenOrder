@@ -5,12 +5,14 @@ module ValueRange =
     open Informedica.GenUnits.Lib
     open Informedica.GenSolver.Lib.Variable.ValueRange
 
+    module HashSet = Informedica.GenSolver.Lib.HashSet
+
     /// Convert a `ValueRange` to a `string`.
     let toStringWithUnit un vr =
         let fVs vs = 
             let vs = 
                 vs 
-                |> Set.toList
+                |> HashSet.toList
                 |> List.map (ValueUnit.create un)
                 |> List.map ValueUnit.toUnit
 
@@ -46,7 +48,7 @@ module ValueRange =
                     | MinIncl v -> v |> some, true
                     | MinExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> Set.toList
+                let incr = incr |> incrToValue |> HashSet.toList
         
                 print min minincl incr None false
 
@@ -56,7 +58,7 @@ module ValueRange =
                     | MaxIncl v -> v |> some, true
                     | MaxExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> Set.toList
+                let incr = incr |> incrToValue |> HashSet.toList
         
                 print None false incr max maxincl
 

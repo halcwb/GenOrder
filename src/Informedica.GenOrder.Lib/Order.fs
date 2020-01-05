@@ -362,6 +362,17 @@ module Order =
         )
         |> fromEqs o
 
+
+    let deepCopy o =
+        o 
+        |> toEqs
+        |> (fun (p, s) ->
+            p
+            |> List.append s
+            |> List.map (List.map VariableUnit.deepCopy)
+        )
+        |> fromEqs o
+        
         
     /// Solve an `Order` *ord* with
     /// 

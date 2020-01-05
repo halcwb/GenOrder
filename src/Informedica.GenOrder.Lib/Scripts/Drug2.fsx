@@ -116,18 +116,13 @@ module Order =
                         for o in os do
                             if o |> Order.contains n v then
                                 o
+                                |> Order.deepCopy
                                 |> solve n v
                 ]     
-                |> List.map (fun o ->
-                    o
-                    |> smallest
-                    |> calc [o]
-                )
-                |> List.collect id
 
         o
         |> smallest
-        |> calc [o]
+        |> calc [ o ]
 
 
     let printPrescription sn (o : Order) =
@@ -1452,6 +1447,6 @@ let printScenarios v n sc =
     }
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios true "gentamicin"
+|> printScenarios false "gentamicin"
 
 
