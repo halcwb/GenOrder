@@ -11,7 +11,6 @@ module VariableUnit =
     open WrappedString
     
     module Variable    = Informedica.GenSolver.Lib.Variable
-    module HashSet     = Informedica.GenSolver.Lib.HashSet
     module ValueRange  = Variable.ValueRange
     module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
     module Equation    = Informedica.GenSolver.Lib.Equation
@@ -55,10 +54,6 @@ module VariableUnit =
             let var = Variable.create id n vlr        
             { Variable = var; Unit = un }
         | None -> createNew n un
-
-
-    let deepCopy vru =
-        { vru with Variable = vru.Variable |> Variable.deepCopy }
 
 
     /// Create a `VariableUnit` with
@@ -176,7 +171,7 @@ module VariableUnit =
         let incr =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
-            |> HashSet.fromSeq
+            |> Set.ofList
             |> ValueRange.createIncr id fail
 
         vru
@@ -194,7 +189,7 @@ module VariableUnit =
         let vs =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
-            |> HashSet.ofList
+            |> Set.ofList
 
         vru
         |> getVar
@@ -208,7 +203,7 @@ module VariableUnit =
 
 
     /// Get the string representation of a `VariableUnit` **vru**
-    let toString vru = 
+    let toString exact vru = 
         let ns = vru |> getName |> Variable.Name.toString
         let us = vru.Unit |> ValueUnit.unitToString
 
@@ -217,14 +212,14 @@ module VariableUnit =
             ns +
             (vru.Variable 
             |> Variable.getValueRange
-            |> ValueRange.toStringWithUnit vru.Unit) + " " + us
+            |> ValueRange.toStringWithUnit exact vru.Unit) + " " + us
 
 
     let getBaseValues =
         getVar
         >> Variable.getValueRange
         >> Variable.ValueRange.getValueSet
-        >> HashSet.toList
+        >> Set.toList
     
 
     // ToDo change this to valuerange contains!!
@@ -358,12 +353,12 @@ module VariableUnit =
             let bind = Option.bind
 
             let n    = [ dto.Name ] |> Name.create 
-            let vals = dto.Vals |> List.map toBase |> HashSet.ofList 
+            let vals = dto.Vals |> List.map toBase |> Set.ofList 
             let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
             let incr = 
                 dto.Incr
                 |> List.map toBase 
-                |> HashSet.ofList
+                |> Set.ofList
                 |> ValueRange.createIncr (Some) (fun _ -> None)
 
             let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
@@ -409,7 +404,7 @@ module VariableUnit =
             dto.Vals <-
                 vr
                 |> ValueRange.getValueSet
-                |> HashSet.toList
+                |> Set.toList
                 |> List.map toUnit
             dto.Incr <-
                 vr
@@ -419,7 +414,7 @@ module VariableUnit =
                 | Some i -> 
                     i
                     |> ValueRange.incrToValue 
-                    |> HashSet.toList
+                    |> Set.toList
                     |> List.map toUnit
 
             dto.Min <- min
@@ -476,7 +471,7 @@ module VariableUnit =
             |> Frequency
 
         /// Turn a `Frequency` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Frequency` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -527,7 +522,7 @@ module VariableUnit =
             |> Time
 
         /// Turn a `Time` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Time` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -576,7 +571,7 @@ module VariableUnit =
             createNew n un |> Count
 
         /// Turn a `Count` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Count` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -633,7 +628,7 @@ module VariableUnit =
             qty |> toVarUnt |> setName n |> Quantity
 
         /// Turn a `Quantity` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Quantity` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -697,7 +692,7 @@ module VariableUnit =
             tot |> toVarUnt |> setName n |> Total
 
         /// Turn a `Total` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Total` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -763,7 +758,7 @@ module VariableUnit =
             rte |> toVarUnt |> setName n |> Rate
 
         /// Turn a `Rate` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Rate` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -825,7 +820,7 @@ module VariableUnit =
             |> Concentration
 
         /// Turn a `Concentration` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `Concentration` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -891,7 +886,7 @@ module VariableUnit =
             qty |> toVarUnt |> setName n |> QuantityAdjust
 
         /// Turn a `QuantityAdjust` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `QuantityAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -959,7 +954,7 @@ module VariableUnit =
             tot |> toVarUnt |> setName n |> TotalAdjust
 
         /// Turn a `TotalAdjust` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `TotalAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt
@@ -1031,7 +1026,7 @@ module VariableUnit =
             |> RateAdjust
 
         /// Turn a `RateAdjust` to a string
-        let toString = toVarUnt >> toString
+        let toString = toVarUnt >> (toString false)
 
         /// Print a `RateAdjust` as a value unit string list
         let toValueUnitStringList = toValueUnitStringList toVarUnt

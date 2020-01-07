@@ -361,17 +361,6 @@ module Order =
             | Solver.SumEquation (vru, vrus) -> vru::vrus
         )
         |> fromEqs o
-
-
-    let deepCopy o =
-        o 
-        |> toEqs
-        |> (fun (p, s) ->
-            p
-            |> List.append s
-            |> List.map (List.map VariableUnit.deepCopy)
-        )
-        |> fromEqs o
         
         
     /// Solve an `Order` *ord* with
@@ -380,7 +369,7 @@ module Order =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
-    let solve solveE pf lim n m p vs o =
+    let solve log lim n m p vs o =
         // return eqs 
         let toEql prod sum =
 
@@ -404,8 +393,7 @@ module Order =
         let eqs = toEql prod sum
         
         eqs
-//        |> (fun eqs -> printfn "going to solve %i equations" (eqs |> List.length); eqs)
-        |> SV.solve solveE pf lim n p vs
+        |> SV.solve log lim n p vs
         |> fromEqs o
         |> fun o ->
             o
@@ -415,7 +403,7 @@ module Order =
                 i + 1, sprintf "%s\n%i\t%s" s i x
             ) (1, "")
             |> snd
-            |> pf
+            |> log
 
             o
 

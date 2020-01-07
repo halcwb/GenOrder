@@ -5,18 +5,17 @@ module ValueRange =
     open Informedica.GenUnits.Lib
     open Informedica.GenSolver.Lib.Variable.ValueRange
 
-    module HashSet = Informedica.GenSolver.Lib.HashSet
 
     /// Convert a `ValueRange` to a `string`.
-    let toStringWithUnit un vr =
+    let toStringWithUnit exact un vr =
         let fVs vs = 
             let vs = 
                 vs 
-                |> HashSet.toList
+                |> Set.toList
                 |> List.map (ValueUnit.create un)
                 |> List.map ValueUnit.toUnit
 
-            print false vs None false [] None false
+            print exact false vs None false [] None false
     
         let some =
             ValueUnit.create un
@@ -25,7 +24,7 @@ module ValueRange =
 
         let fRange =
             let print min minincl incr max maxincl = 
-                print false [] min minincl incr max maxincl
+                print exact false [] min minincl incr max maxincl
 
             let fMin min =
                 let min, minincl = 
@@ -48,7 +47,7 @@ module ValueRange =
                     | MinIncl v -> v |> some, true
                     | MinExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> HashSet.toList
+                let incr = incr |> incrToValue |> Set.toList
         
                 print min minincl incr None false
 
@@ -58,7 +57,7 @@ module ValueRange =
                     | MaxIncl v -> v |> some, true
                     | MaxExcl v -> v |> some ,false  
 
-                let incr = incr |> incrToValue |> HashSet.toList
+                let incr = incr |> incrToValue |> Set.toList
         
                 print None false incr max maxincl
 
@@ -77,7 +76,7 @@ module ValueRange =
 
             applyRange fMin fMax fMinIncr fIncrMax fMinMax
 
-        let unr = print true [] None false [] None false
+        let unr = print exact true [] None false [] None false
     
         vr |> apply unr fVs fRange 
 

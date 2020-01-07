@@ -262,15 +262,25 @@ module Solver =
             )
         )
 
+
+
+    let setVals lim n p vs eqs =
+        match vs with
+        | [] -> None
+        | _  ->
+            eqs
+            |> SV.setVariableValues lim n (p |> propToString) vs
+
+
     // helper function to prevent setting vs to 
     // empty list when vals have no unit, so tobase 
     // returns an empty list
-    let solveVals solveE sortQue lim pf n p vs eqs =
+    let solveVals sortQue log lim n p vs eqs =
         match vs with
         | [] -> eqs
         | _  ->
             eqs
-            |> SV.solve solveE sortQue lim pf n (p |> propToString) vs
+            |> SV.solve sortQue log true lim n (p |> propToString) vs
          
 
     let filterEqsWithUnits = 
@@ -285,26 +295,16 @@ module Solver =
 
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let solve_ solveE sortQue lim pf (N.Name n) p vs eqs =
+    let apply sortQue log lim (N.Name n) p vs eqs =
 
         eqs
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> solveVals solveE sortQue lim pf n p (vs |> toBase n eqs)
+        |> solveVals sortQue log lim n p (vs |> toBase n eqs)
         |> mapFromSolverEqs eqs
 
 
-    let memSolve f =
-        let cache = ref Map.empty
-        fun n p vs eqs ->
-            match (!cache).TryFind(n, p, vs, eqs) with
-            | Some r -> r
-            | None ->
-                let r = f n p vs eqs
-                cache := (!cache).Add((n, p, vs, eqs), r)
-                r
-
-    let solve solveE pf lim = 
+    let solve log lim = 
         let sortQue = Informedica.GenSolver.Lib.Solver.sortQue
-        solve_ solveE sortQue lim pf //(printfn "%s") //|> memSolve
+        apply sortQue log lim //(printfn "%s") //|> memSolve

@@ -177,7 +177,7 @@ module Orderable =
                 itm_dos_tot_adj 
                 itm_dos_rte_adj
             ] 
-            |> List.map VU.toString
+            |> List.map (VU.toString false)
 
         
         /// The following variables are used
@@ -608,7 +608,7 @@ module Orderable =
                 cmp_dos_tot_adj
                 cmp_dos_rte_adj
             ]
-            |> List.map VU.toString
+            |> List.map (VU.toString false)
             |> List.append (ii |> List.collect IT.toString )
 
 
@@ -1043,7 +1043,7 @@ module Orderable =
             dos_tot_adj
             dos_rte_adj
         ]
-        |> List.map VU.toString
+        |> List.map (VU.toString false)
         |> List.append (cc |> List.collect CM.toString )
         |> List.sort
 
@@ -1115,8 +1115,8 @@ module Orderable =
             | Some _, Some _, Some _ ->
                 [   
                     dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
-                    //dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
-                    //dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
                     dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
                     dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
                     dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate     |> RA.toVarUnt)) 
@@ -1125,15 +1125,15 @@ module Orderable =
             | None, Some _, None   ->
                 [   
                     dos_qty::(cc |> List.map (fun c -> c.Dose |> DS.getQuantity |> QT.toVarUnt)) 
-                    //dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
-                    //dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
-                    //dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
+                    dos_tot::(cc |> List.map (fun c -> c.Dose |> DS.getTotal |> TL.toVarUnt)) 
+                    dos_qty_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getQuantity |> QA.toVarUnt)) 
+                    dos_tot_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getTotal    |> TA.toVarUnt)) 
                 ] 
             // Continuous
             | Some _, None, None ->
                 [   
-                    //dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
-                    //dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate |> RA.toVarUnt)) 
+                    dos_rte::(cc |> List.map (fun c -> c.Dose |> DS.getRate |> RT.toVarUnt)) 
+                    dos_rte_adj::(cc |> List.map (fun c -> c.DoseAdjust |> DA.getRate |> RA.toVarUnt)) 
                 ] 
             | _ -> []
             |> List.append [ orb_qty::(cc |> List.map (fun c -> c.OrderableQuantity |> QT.toVarUnt)) ]
