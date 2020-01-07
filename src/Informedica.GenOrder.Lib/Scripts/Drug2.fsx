@@ -1430,7 +1430,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "gentamicin"
         Quantities = [ ]
-        Divisible = 2N 
+        Divisible = 1N 
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1510,22 +1510,3 @@ let printScenarios v n sc =
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
 |> printScenarios false "gentamicin"
-
-//1.paracetamol.Item.Dose.Total[1/720000, 1/480000, 1/360000, 1/240000, 1/180000, 1/120000] 
-
-[
-    for x in [3N/50N;  3N/25N;  6N/25N] do
-        for y in [1N/43200N;  1N/28800N;  1N/21600N] do 
-            y * x
-]
-|> Set.ofList
-|> fun s ->
-    [1N/720000N;  1N/480000N;  1N/360000N;  1N/240000N;  1N/180000N;  1N/120000N] 
-    |> Set.ofList
-    |> Set.isSuperset s
-
-
-[1;2]
-|> Set.ofList
-|> Set.isSubset ([1;2;3] |> Set.ofList)
-
