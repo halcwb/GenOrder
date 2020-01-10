@@ -45,15 +45,12 @@ module VariableUnit =
         
     /// Create a `VariableUnit` with preset values
     let create n vs min incr max un =
-        let succ = Some
-        let fail = Option.none
 
-        ValueRange.create succ fail vs min incr max
+        ValueRange.create false vs min incr max
         |> function
-        | Some vlr ->
+        | vlr ->
             let var = Variable.create id n vlr        
             { Variable = var; Unit = un }
-        | None -> createNew n un
 
 
     /// Create a `VariableUnit` with
@@ -152,37 +149,33 @@ module VariableUnit =
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange vru.Variable }
+                    |> Variable.setValueRange false vru.Variable }
 
 
     let setMinIncl =
-        setValue (ValueRange.createMin true) ValueRange.setMin
+        setValue (ValueRange.createMin true) (ValueRange.setMin false)
         
 
     let setMaxIncl =
-        setValue (ValueRange.createMax true) ValueRange.setMax
+        setValue (ValueRange.createMax true) (ValueRange.setMax false)
 
     let setIncr vs vru =
-        let fail = 
-            fun _ ->
-                sprintf "cannot create an increment from: %A" vs
-                |> failwith
 
         let incr =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
             |> Set.ofList
-            |> ValueRange.createIncr id fail
+            |> ValueRange.createIncr
 
         vru
         |> getVar
         |> Variable.getValueRange
-        |> ValueRange.setIncr incr
+        |> ValueRange.setIncr false incr
         |> fun vr ->
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange vru.Variable }
+                    |> Variable.setValueRange false vru.Variable }
 
 
     let setVals vs vru =
@@ -194,12 +187,12 @@ module VariableUnit =
         vru
         |> getVar
         |> Variable.getValueRange
-        |> ValueRange.setValues vs
+        |> ValueRange.setValues false vs
         |> fun vr ->
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange vru.Variable }
+                    |> Variable.setValueRange false vru.Variable }
 
 
     /// Get the string representation of a `VariableUnit` **vru**
@@ -219,13 +212,15 @@ module VariableUnit =
         getVar
         >> Variable.getValueRange
         >> Variable.ValueRange.getValueSet
-        >> Set.toList
+        >> function
+        | Some vs -> vs 
+        | None -> Set.empty
     
 
     // ToDo change this to valuerange contains!!
     let hasBaseValue v =
         getBaseValues
-        >> List.exists ((=) v)
+        >> Seq.exists ((=) v)
 
 
     let containsUnitValue v vru =
@@ -259,28 +254,32 @@ module VariableUnit =
         |> getVar
         |> Variable.getValueRange
         |> Variable.ValueRange.getValueSet
-        |> Seq.map (fun vs -> 
-            vs, x |> get |> getUnit
-        )
-        |> Seq.map (fun (v, u) ->
-            v
-            |> ValueUnit.create u
-            |> ValueUnit.toUnit
-            |> fun v ->
-                let vs =
-                    v
-                    |> BigRational.toFloat
-                    |> fun x ->
-                        match n with
-                        | Some n -> x |> Double.fixPrecision n
-                        | None   -> x
-                    |> string
+        |> function 
+        | Some vs ->
+            vs
+            |> Seq.map (fun vs -> 
+                vs, x |> get |> getUnit
+            )
+            |> Seq.map (fun (v, u) ->
+                v
+                |> ValueUnit.create u
+                |> ValueUnit.toUnit
+                |> fun v ->
+                    let vs =
+                        v
+                        |> BigRational.toFloat
+                        |> fun x ->
+                            match n with
+                            | Some n -> x |> Double.fixPrecision n
+                            | None   -> x
+                        |> string
 
-                u
-                |> ValueUnit.unitToString
-                |> String.removeTextBetweenBrackets
-                |> fun us -> v, sprintf "%s %s" vs us
-        )
+                    u
+                    |> ValueUnit.unitToString
+                    |> String.removeTextBetweenBrackets
+                    |> fun us -> v, sprintf "%s %s" vs us
+            )
+        | None -> Seq.empty
 
 
     let getUnits vu =
@@ -353,13 +352,25 @@ module VariableUnit =
             let bind = Option.bind
 
             let n    = [ dto.Name ] |> Name.create 
-            let vals = dto.Vals |> List.map toBase |> Set.ofList 
+            let vals = 
+                match dto.Vals with
+                | [] -> None
+                | _ ->
+                    dto.Vals
+                    |> List.map toBase 
+                    |> Set.ofList 
+                    |> Some
+
             let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
             let incr = 
                 dto.Incr
                 |> List.map toBase 
-                |> Set.ofList
-                |> ValueRange.createIncr (Some) (fun _ -> None)
+                |> function
+                | [] -> None
+                | incr -> 
+                    incr
+                    |> Set.ofList
+                    |> ValueRange.createIncr |>Some
 
             let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
 
@@ -404,8 +415,13 @@ module VariableUnit =
             dto.Vals <-
                 vr
                 |> ValueRange.getValueSet
-                |> Set.toList
-                |> List.map toUnit
+                |> function
+                | Some vs ->
+                    vs
+                    |> Set.toList
+                    |> List.map toUnit
+                | None -> []
+
             dto.Incr <-
                 vr
                 |> ValueRange.getIncr

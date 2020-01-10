@@ -92,6 +92,8 @@ module Order =
             | OrderableDoseAdjustRateAdjust -> "Orderable.DoseAdjust.RateAdjust"
             | AdjustQty -> "Adjust.Qty"
 
+
+
     /// Types and functions that
     /// model a start and stop date time
     /// of an `Order`
@@ -137,6 +139,7 @@ module Order =
     module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
 
     module Units = ValueUnit.Units
+    module Props = Informedica.GenSolver.Lib.Api.Props
 
     /// Models an order
     type Order = 
@@ -211,6 +214,19 @@ module Order =
         |> String.split "."
         |> List.take 2
         |> String.concat "."
+
+
+    let mapName n m o =   
+        let dls = "."
+
+        match m with
+        | Mapping.Freq 
+        | Mapping.AdjustQty ->
+            [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+        | _ -> 
+            [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
+            |> NM.create
+
 
     let getOrderable ord = (ord |> get).Orderable
 
@@ -308,38 +324,14 @@ module Order =
             | None -> false
 
 
-    let isEmpty n m o =
-        getVariableUnit n m o
-        |> function 
-        | Some vru -> 
-            vru.Variable.Values
-            |> ValueRange.isEmpty
-        | None -> false
+    //let isEmpty n m o =
+    //    getVariableUnit n m o
+    //    |> function 
+    //    | Some vru -> 
+    //        vru.Variable.Values
+    //        |> ValueRange.isEmpty
+    //    | None -> false
 
-
-    let setVariableUnitValue n m p v o =
-        getVariableUnit n m o
-        |> function 
-        | Some vru -> 
-            match p with
-            | Solver.Props.MinIncl ->
-                vru 
-                |> VariableUnit.setMinIncl v
-            | Solver.Props.MaxIncl ->
-                vru 
-                |> VariableUnit.setMaxIncl v
-            | Solver.Props.Incr ->
-                vru 
-                |> VariableUnit.setIncr v
-            | Solver.Props.Vals ->
-                vru 
-                |> VariableUnit.setVals v
-            | _ -> 
-                sprintf "did not set props %A" p |> failwith
-            |> setVariableUnit o
-        | None -> 
-            "could not set variable unit" 
-            |> failwith
             
     let solveUnits o =
         // return eqs 
@@ -369,7 +361,10 @@ module Order =
     /// * m: the mapping for the field of the order
     /// * p: the property of the variable to be set
     /// * vs: the values to be set
-    let solve log lim n m p vs o =
+    let solve log lim n m p o =
+        let n =
+            mapName n m o
+
         // return eqs 
         let toEql prod sum =
 
@@ -378,22 +373,12 @@ module Order =
             |> List.append (sum |> List.map Solver.sumEq)
 
 
-        let dls = "."
-        let n =
-            match m with
-            | Mapping.Freq 
-            | Mapping.AdjustQty ->
-                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
-            | _ -> 
-                [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
-                |> NM.create
-
         let prod, sum = o |> toEqs
         
         let eqs = toEql prod sum
         
         eqs
-        |> SV.solve log lim n p vs
+        |> SV.solve log lim n p
         |> fromEqs o
         |> fun o ->
             o
@@ -406,6 +391,34 @@ module Order =
             |> log
 
             o
+
+    let solveConstraints log cs o =
+        // return eqs 
+        let toEql prod sum =
+
+            prod 
+            |> List.map Solver.productEq
+            |> List.append (sum |> List.map Solver.sumEq)
+
+        let prod, sum = o |> toEqs
+    
+        let eqs = toEql prod sum
+    
+        eqs
+        |> SV.solveConstraints log cs
+        |> fromEqs o
+        |> fun o ->
+            o
+            |> toString
+            |> List.fold (fun acc x ->
+                let i, s = acc
+                i + 1, sprintf "%s\n%i\t%s" s i x
+            ) (1, "")
+            |> snd
+            |> log
+
+            o
+
 
     module Dto =
         

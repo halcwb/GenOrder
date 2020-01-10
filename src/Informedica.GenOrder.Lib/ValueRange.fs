@@ -74,7 +74,22 @@ module ValueRange =
 
                 print min minincl [] max maxincl
 
-            applyRange fMin fMax fMinIncr fIncrMax fMinMax
+            let fMinIncrMax (min, incr, max) =
+                let min, minincl = 
+                    match min with
+                    | MinIncl v -> v |> some, true
+                    | MinExcl v -> v |> some ,false  
+
+                let max, maxincl = 
+                    match max with
+                    | MaxIncl v -> v |> some, true
+                    | MaxExcl v -> v |> some ,false  
+
+                let incr = incr |> incrToValue |> Set.toList
+
+                print min minincl incr max maxincl
+
+            applyRange fMin fMax fMinIncr fIncrMax fMinMax fMinIncrMax
 
         let unr = print exact true [] None false [] None false
     

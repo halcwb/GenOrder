@@ -45,7 +45,7 @@ module Order =
     module DoseAdjust = VariableUnit.DoseAdjust
     module RateAdjust = VariableUnit.RateAdjust
     module Name = WrappedString.Name
-    module Props = Solver.Props
+    module Props = Informedica.GenSolver.Lib.Api.Props
     module Solver = Informedica.GenOrder.Lib.Solver
 
 
@@ -60,7 +60,7 @@ module Order =
             |> List.exists (fun vru ->
                 vru 
                 |> VariableUnit.getBaseValues
-                |> List.length > 1
+                |> Seq.length > 1
             )
             |> not
 
@@ -77,7 +77,7 @@ module Order =
                     |> List.map Solver.productEq
                     |> List.append (sum |> List.map Solver.sumEq)
     
-                |> Solver.solve log None n Props.Vals [v]
+                |> Solver.solve log None n (v |> Set.singleton |> Props.Vals)
                 |> Order.fromEqs o
                 |> Some
             with
@@ -98,7 +98,7 @@ module Order =
                 |> List.filter (fun vru ->
                     vru
                     |> VariableUnit.getBaseValues
-                    |> List.length > 1
+                    |> Seq.length > 1
                 )
             |> List.map (fun vru ->
                 vru.Variable.Name, vru |> VariableUnit.getUnitValues 
@@ -327,51 +327,60 @@ module DrugOrder =
                 |> fun (_, _, x) -> x
 
 
-        module Constraint =
+        module DrugConstraint =
 
             module Name = WrappedString.Name
             module Mapping = Order.Mapping
-            module Props = Solver.Props
+            module Props = Informedica.GenSolver.Lib.Api.Props
+            module Constraint = Informedica.GenSolver.Lib.Api.Constraint
 
             type Name = Name.Name
             type Mapping = Order.Mapping.Map
-            type Prop = Props.Prop
             type RouteShape = RouteShape.RouteShape
             type OrderType = OrderType.OrderType
             type Order = Order.Order
+            type Constraint = Informedica.GenSolver.Lib.Api.Constraint.Constraint
+            type Property = Props.Property
+            type Limit = Constraint.Limit
 
-            type Constraint =
+            type DrugConstraint =
                 {
-                    Name : Name
+                    Name : string
                     Mapping : Mapping
-                    Prop : Prop
-                    Values : BigRational list
-                    Limit : int option
+                    Property : Property
+                    Limit : Limit
                     RouteShape : RouteShape
                     OrderType : OrderType
                 }
 
-            let create n m p vs l rs ps = 
+            let create n m p l rs ps = 
                 {
                     Name = n
                     Mapping = m
-                    Prop = p
-                    Values = vs
+                    Property = p
                     Limit = l
                     RouteShape = rs
                     OrderType = ps
                 }
 
+            let mapToConstraint o (dc : DrugConstraint) = 
+                {
+                    Constraint.Name = 
+                        Order.mapName dc.Name dc.Mapping o
+                    Constraint.Property = dc.Property
+                    Constraint.Limit = dc.Limit
+                }
 
-            let toString (c : Constraint) =
-                sprintf "%A %A %A %A" c.Name c.Mapping c.Prop c.Values
+            let toString (c : DrugConstraint) =
+                sprintf "%A %A %A %A" c.Name c.Mapping c.Property
 
             let constraints n =
                 let dr =
                     [(1N/10N)..(1N/10N)..10N] 
                     |> List.append [11N..1N..100N]
                     |> List.append [105N..5N..1000N]
-                    |> List.sort
+                    |> Set.ofList
+
                 let c m p vs rs ps =
                     create n m p vs rs ps
                 // list of general orderable constraints
@@ -380,29 +389,29 @@ module DrugOrder =
                     // == Discontinuous ==
                     // give max 10 pieces each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [10N] None
+                      (Props.MaxIncl 10N) Constraint.NoLimit
                       RouteShape.OralSolid OrderType.Discontinuous
 
                     // == Rectal Solid ==
                     // == Discontinuous ==
                     // Give 1 piece each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [1N]  None
+                      (Props.MaxIncl 1N)  Constraint.NoLimit
                       RouteShape.RectalSolid OrderType.Discontinuous
 
                     // == Oral Fluid ==
                     // == Discontinuous ==
                     // give the total orderable quantity each time
                     c Mapping.OrderableDoseCount 
-                      Props.Vals [1N] None
+                      (1N |> Set.singleton |> Props.Vals) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Discontinuous
                     // give max 500 ml each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [500N] None
+                      (Props.MaxIncl 500N) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Discontinuous
                     // give max 10 ml/kg each time
                     c Mapping.OrderableDoseAdjustQtyAdjust 
-                      Props.MaxIncl [10N] None
+                      (Props.MaxIncl 10N) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Discontinuous
                     // give max 500 ml each time
 
@@ -410,86 +419,75 @@ module DrugOrder =
                     // == Timed ==
                     // Give max 500 ml each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [500N] None
+                      (Props.MaxIncl 500N) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Timed
                     // give max 10 ml/kg each time
                     c Mapping.OrderableDoseAdjustQtyAdjust 
-                      Props.MaxIncl [10N] None 
+                      (Props.MaxIncl 10N) Constraint.NoLimit 
                       RouteShape.OralFluid OrderType.Timed
 
                     // == Oral Fluid ==
                     // == Continuous ==
                     // Max dose rate is 200 ml/hour
                     c Mapping.OrderableDoseRate 
-                      Props.MaxIncl [200N] None
+                      (Props.MaxIncl 200N) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Continuous
                     // Max dose rate per kg is 5 ml/kg/hour
                     c Mapping.OrderableDoseRate 
-                      Props.MaxIncl [5N] None
+                      (Props.MaxIncl 5N) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Continuous
                     // Set dose rate values
                     c Mapping.OrderableDoseRate 
-                      Props.Vals dr None
+                      (Props.Vals dr) Constraint.NoLimit
                       RouteShape.OralFluid OrderType.Continuous
 
                     // == Intravenuous Fluid ==
                     // == Discontinuous ==
                     // Give max 1000 ml each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [1000N] None
+                      (Props.MaxIncl 1000N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Discontinuous
                     // Give max 20 ml/kg each time
                     c Mapping.OrderableDoseAdjustQtyAdjust 
-                      Props.MaxIncl [20N] None
+                      (Props.MaxIncl 20N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Discontinuous
 
                     // == Intravenuous Fluid ==
                     // == Timed ==
                     // Give max 1000 ml each time
                     c Mapping.OrderableDoseQty 
-                      Props.MaxIncl [1000N] None
+                      (Props.MaxIncl 1000N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Timed
                     // Give max 20 ml/kg each time
                     c Mapping.OrderableDoseAdjustQtyAdjust 
-                      Props.MaxIncl [20N] None
+                      (Props.MaxIncl 20N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Timed
                     // Select 1 possible value from dose rates
                     c Mapping.OrderableDoseRate 
-                      Props.Vals dr (Some 1)
+                      (Props.Vals dr) (Constraint.MaxLim 1)
                       RouteShape.IntravenousFluid OrderType.Timed
 
                     // == Intravenuous Fluid ==
                     // == Continuous ==
                     // Max dose rate is 200 ml/hour
                     c Mapping.OrderableDoseRate 
-                      Props.MaxIncl [200N] None
+                      (Props.MaxIncl 200N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Continuous
                     // Max dose rate per kg is 5 ml/kg/hour
                     c Mapping.OrderableDoseRate 
-                      Props.MaxIncl [5N] None
+                      (Props.MaxIncl 5N) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Continuous
                     // Set dose rate values
                     c Mapping.OrderableDoseRate 
-                      Props.Vals dr None
+                      (Props.Vals dr) Constraint.NoLimit
                       RouteShape.IntravenousFluid OrderType.Continuous
                 ]
 
-            /// get the order of applying constraints
-            /// 1. Min or Max
-            /// 2. Vals
-            /// 3. Incr
-            let orderMap (c : Constraint) =
-                match c.Prop with
-                | _ when c.Limit |> Option.isSome 
-                    -> System.Int32.MaxValue
-                | Props.Vals  -> c.Values |> List.length
-                | _ -> -1
 
 
             let apply cs (o : Order) =
                 let rs = RouteShape.map o.Route o.Orderable.Shape
                 let ot = o |> OrderType.map
-
 
                 let memPrint (timer: System.Diagnostics.Stopwatch) f =
                     let cache = ref Map.empty
@@ -500,7 +498,7 @@ module DrugOrder =
                         | None ->
                             let s =
                                 s
-                                |> sprintf "%i: %s" timer.Elapsed.Seconds
+                                |> sprintf "%f: %s" timer.Elapsed.TotalSeconds
                             let r = f s
                             cache := (!cache).Add(s, r)
                             ()
@@ -510,40 +508,28 @@ module DrugOrder =
                     memPrint timer (printfn "%s")
 
 
+                let propHasVals = function
+                | Props.Vals vs
+                | Props.Increment vs -> vs |> Set.isEmpty |> not
+                | _ -> true
+
+
                 let filter cs =
                     cs
                     |> List.filter(fun c ->
-                        c.Values |> List.length > 0 &&
+                        (c.Property |> propHasVals) &&
                         (c.RouteShape = RouteShape.Any || c.RouteShape = rs) &&
                         (c.OrderType =  OrderType.Any  || c.OrderType = ot)
                     )
 
-                cs
-                |> filter
-                |> List.sortBy orderMap
-                // apply the constraints in the most effective order
-                |> fun cs ->
-                    printfn "going to apply the following constraints in order:"
-                    cs
-                    |> List.iteri (fun i c ->
-                        c
-                        |> toString
-                        |> printfn "%i.\t%s" i 
-                    )
-                    cs
-                // calculate for each scenario the constraints
-                |> List.fold (fun acc c ->
-                    let i, o = acc
+                let cs = 
+                    cs 
+                    |> filter
+                    |> List.map (mapToConstraint o)
 
-                    c
-                    |> toString
-                    |> printfn "calc no %i\t%s" i
-
-                    let n = c.Name |> Name.toString
-
-                    i + 1, o |> Order.solve log c.Limit n c.Mapping c.Prop c.Values 
-                ) (0, o |> Order.solveUnits)
-                |> snd
+                o
+                |> Order.solveUnits
+                |> Order.solveConstraints log cs
                 |> fun o -> 
                     printfn "---- running scenarios for"
                     Order.calcScenarios log o
@@ -556,7 +542,8 @@ module DrugOrder =
         module ODto = Orderable.Dto
 
         module Mapping = Order.Mapping
-        module Props = Solver.Props
+        module Props = Informedica.GenSolver.Lib.Api.Props
+        module Constraint = Informedica.GenSolver.Lib.Api.Constraint
         module Name = WrappedString.Name
 
         type OrderType = OrderType.OrderType
@@ -595,7 +582,7 @@ module DrugOrder =
                 RateUnit : string
             }
 
-        type ConstrainedOrder = (Constraint.Constraint list * Order)
+        type ConstrainedOrder = (DrugConstraint.DrugConstraint list * Order)
 
         let (>|>) (cs, o) c = (c |> List.append cs, o)
 
@@ -768,112 +755,221 @@ module DrugOrder =
             dto.Adjust.Unit <- "kg[Weight]"
 
             let cstr m p vs rs ot = 
-                Constraint.create ([d.Name] |> Name.create) m p vs rs ot
+                DrugConstraint.create d.Name m p vs rs ot
 
             dto
             |> Order.Dto.fromDto
             |> fun o ->
                 // first add all general orderable constraints
-                let co = (Constraint.constraints o.Orderable.Name, o)
+                let co = (DrugConstraint.constraints (o.Orderable.Name |> Name.toString), o)
                 // adding orderable constraints
                 co 
                 >|> [ 
-                        // Set possible orderable quantities
+                        // ALL set possible orderable quantities
                         cstr Mapping.OrderableOrderableQty 
-                             Props.Vals d.Quantities None
-                             RouteShape.Any OrderType.Any
-                        // give max 1 piece from rectal solid 
+                            (d.Quantities |> Set.ofList |> Props.Vals) 
+                            Constraint.NoLimit
+                            RouteShape.Any OrderType.Any
+
+                        // RECTAL SOLID give max 1 piece from rectal solid 
                         cstr Mapping.OrderableDoseQty 
-                             Props.Vals [ 1N ] None
-                             RouteShape.RectalSolid OrderType.Discontinuous
-                        // give max 10 pieces from oral solid
+                            (1N |> Set.singleton |> Props.Vals) 
+                            Constraint.NoLimit
+                            RouteShape.RectalSolid OrderType.Discontinuous
+
+                        // ORAL SOLID give max 10 pieces from oral solid
                         cstr Mapping.OrderableDoseQty 
-                             Props.Vals [ 1N / d.Divisible.. 1N / d.Divisible ..10N ]
-                             None
-                             RouteShape.OralSolid OrderType.Discontinuous
-                        // give max 500 ml from fluid
-                        cstr Mapping.OrderableDoseQty 
-                             Props.Vals [ 1N / d.Divisible .. 1N /d.Divisible ..500N ]
-                             None
-                             RouteShape.OralFluid OrderType.Any
-                        cstr Mapping.OrderableDoseQty 
-                             Props.Vals [ 1N / d.Divisible .. 1N /d.Divisible ..500N ]
-                             None
-                             RouteShape.IntravenousFluid OrderType.Any
-                        // give max 500 ml from fluid
+                            ([ 1N / d.Divisible.. 1N / d.Divisible ..10N ]
+                             |> Set.ofList |> Props.Vals)
+                            Constraint.NoLimit
+                            RouteShape.OralSolid OrderType.Discontinuous
+
+                        // ORAL FLUID increment
                         cstr Mapping.ComponentOrderableQty 
-                            Props.Vals [ 1N / d.Divisible .. 1N /d.Divisible ..500N ]
-                            None
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
                             RouteShape.OralFluid OrderType.Any
+                        cstr Mapping.OrderableDoseQty 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.OralFluid OrderType.Discontinuous
+                        cstr Mapping.OrderableDoseQty 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.OralFluid OrderType.Timed
+                        cstr Mapping.OrderableDoseRate 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.OralFluid OrderType.Timed
+                        cstr Mapping.OrderableDoseRate 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.OralFluid OrderType.Continuous
+
+                        // INTRAVENUOUS FLUID increment
                         cstr Mapping.ComponentOrderableQty 
-                            Props.Vals [ 1N / d.Divisible .. 1N /d.Divisible ..500N ]
-                            None
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
                             RouteShape.IntravenousFluid OrderType.Any
+                        cstr Mapping.OrderableDoseQty 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.IntravenousFluid OrderType.Discontinuous
+                        cstr Mapping.OrderableDoseQty 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.IntravenousFluid OrderType.Timed
+                        cstr Mapping.OrderableDoseRate 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.IntravenousFluid OrderType.Timed
+                        cstr Mapping.OrderableDoseRate 
+                            ((1N/d.Divisible) |> Set.singleton 
+                                              |> Props.Increment)
+                            Constraint.NoLimit
+                            RouteShape.IntravenousFluid OrderType.Continuous
 
                     ]
             |> fun co ->
                 d.Products
                 |> Seq.fold (fun co p ->
-                    let n = [ p.Name ] |> Name.create
+                    let n = p.Name
                     // adding component constraints
                     let co =
                         co
                         >|> [ 
-                                Constraint.create n 
+                                // ALL set possible component quantities
+                                DrugConstraint.create n 
                                     Mapping.ComponentComponentQty 
-                                    Props.Vals p.Quantities None
+                                    (p.Quantities |> Set.ofList |> Props.Vals) 
+                                    Constraint.NoLimit
                                     RouteShape.Any OrderType.Any
                                 // give max 10 solid oral each time
-                                Constraint.create n 
-                                    Mapping.ComponentOrderableQty 
-                                    Props.Vals [ 1N / d.Divisible.. 1N / d.Divisible ..10N ] 
-                                    None
-                                    RouteShape.OralSolid OrderType.Discontinuous
+                                //DrugConstraint.create n 
+                                //    Mapping.ComponentOrderableQty 
+                                //    ([ 1N / d.Divisible.. 1N / d.Divisible ..10N ]
+                                //     |> Set.ofList |> Props.Vals)
+                                //    Constraint.NoLimit
+                                //    RouteShape.OralSolid OrderType.Discontinuous
                                 // give max 
-                                Constraint.create n 
+
+                                // ORAL FLUID
+                                DrugConstraint.create n 
                                     Mapping.ComponentOrderableQty 
-                                    Props.Vals [ 1N / d.Divisible .. 1N /d.Divisible ..250N ]
-                                    None
+                                    ([ 1N / d.Divisible.. 1N / d.Divisible ..250N ]
+                                     |> Set.ofList |> Props.Vals)
+                                    Constraint.NoLimit
                                     RouteShape.OralFluid OrderType.Any
-                                Constraint.create n 
+                                DrugConstraint.create n 
                                     Mapping.ComponentOrderableQty 
-                                    Props.Vals [ 1N ] 
-                                    None
+                                    ([ 1N / d.Divisible]
+                                     |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.OralFluid OrderType.Any
+                                DrugConstraint.create n 
+                                    Mapping.ComponentDoseQty 
+                                    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.OralFluid OrderType.Discontinuous
+                                DrugConstraint.create n 
+                                    Mapping.ComponentDoseQty 
+                                    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.OralFluid OrderType.Timed
+                                //DrugConstraint.create n 
+                                //    Mapping.ComponentDoseRate 
+                                //    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                //    Constraint.NoLimit
+                                //    RouteShape.OralFluid OrderType.Timed
+                                //DrugConstraint.create n 
+                                //    Mapping.ComponentDoseRate 
+                                //    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                //    Constraint.NoLimit
+                                //    RouteShape.OralFluid OrderType.Continuous
+
+                                // INRAVENOUS FLUID
+                                DrugConstraint.create n 
+                                    Mapping.ComponentOrderableQty 
+                                    ([ 1N / d.Divisible.. 1N / d.Divisible ..500N ]
+                                     |> Set.ofList |> Props.Vals)
+                                    Constraint.NoLimit
+                                    RouteShape.IntravenousFluid OrderType.Any
+                                DrugConstraint.create n 
+                                    Mapping.ComponentOrderableQty 
+                                    ([ 1N / d.Divisible ]
+                                     |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.IntravenousFluid OrderType.Any
+                                DrugConstraint.create n 
+                                    Mapping.ComponentDoseQty 
+                                    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.IntravenousFluid OrderType.Discontinuous
+                                DrugConstraint.create n 
+                                    Mapping.ComponentDoseQty 
+                                    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                    Constraint.NoLimit
+                                    RouteShape.IntravenousFluid OrderType.Timed
+                                //DrugConstraint.create n 
+                                //    Mapping.ComponentDoseRate 
+                                //    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                //    Constraint.NoLimit
+                                //    RouteShape.IntravenousFluid OrderType.Timed
+                                //DrugConstraint.create n 
+                                //    Mapping.ComponentDoseRate 
+                                //    ([ 1N / d.Divisible ] |> Set.ofList |> Props.Increment)
+                                //    Constraint.NoLimit
+                                //    RouteShape.IntravenousFluid OrderType.Continuous
+
+                                // RECTAL SOLID
+                                DrugConstraint.create n 
+                                    Mapping.ComponentOrderableQty 
+                                    (1N |> Set.singleton |> Props.Vals)  
+                                    Constraint.NoLimit
                                     RouteShape.RectalSolid OrderType.Discontinuous
+
+                                // SINGLE COMPONENT
                                 if d.Products |> List.length = 1 then
-                                    Constraint.create n
+                                    DrugConstraint.create n
                                         Mapping.ComponentOrderableConc
-                                        Props.Vals [1N]
-                                        None
+                                        (1N |> Set.singleton |> Props.Vals)  
+                                        Constraint.NoLimit
                                         RouteShape.Any OrderType.Any
                             ]
 
                     p.Substances 
                     |> Seq.fold (fun co s ->
-                        let n = [ s.Name ] |> Name.create
+                        let n = s.Name
                         // adding item constraints
                         co
                         >|> [ 
-                                Constraint.create n 
+                                // ALL set concentrations and quanties
+                                DrugConstraint.create n 
                                     Mapping.ItemComponentConc 
-                                    Props.Vals s.Concentrations 
-                                    None
+                                    (s.Concentrations |> Set.ofList |> Props.Vals) 
+                                    Constraint.NoLimit
                                     RouteShape.Any OrderType.Any
-                                Constraint.create n 
+                                DrugConstraint.create n 
                                     Mapping.ItemOrderableQty 
-                                    Props.Vals s.OrderableQuantities 
-                                    None
+                                    (s.OrderableQuantities |> Set.ofList |> Props.Vals) 
+                                    Constraint.NoLimit
                                     RouteShape.Any OrderType.Any
-                                Constraint.create n 
-                                    Mapping.ItemOrderableQty 
-                                    Props.Vals s.Concentrations  
-                                    None
-                                    RouteShape.OralSolid OrderType.Any 
-                                Constraint.create n 
-                                    Mapping.ItemOrderableQty 
-                                    Props.Vals s.Concentrations  
-                                    None
-                                    RouteShape.RectalSolid OrderType.Any 
+                                if d.Products |> List.length = 1 then
+                                    DrugConstraint.create n
+                                        Mapping.ItemOrderableConc
+                                        (s.Concentrations |> Set.ofList |> Props.Vals) 
+                                        Constraint.NoLimit
+                                        RouteShape.Any OrderType.Any
+                                    
                             ]
                     ) co
                 ) co
@@ -942,23 +1038,25 @@ module DrugOrder =
             }
 
         let setDoseLimits (dl : DoseLimits) (co : ConstrainedOrder) : ConstrainedOrder =
-            let sn = [ dl.SubstanceName ] |> Name.create
+            let sn = dl.SubstanceName
 
-            let cr m p l co =
-                match l with
-                | Some l -> 
+            let cr m c v co =
+                match v with
+                | Some v -> 
                     co
-                    >|> [ Constraint.create sn m p [ l ] None RouteShape.Any OrderType.Any ]
+                    >|> [ DrugConstraint.create sn m (c v) Constraint.NoLimit RouteShape.Any OrderType.Any ]
                 | None -> co
                     
             co
             >|> [ 
-                    Constraint.create ([dl.Name] |> Name.create) 
-                        Mapping.Freq Props.Vals 
-                        dl.Frequencies None RouteShape.Any OrderType.Discontinuous 
-                    Constraint.create ([dl.Name] |> Name.create) 
-                        Mapping.Freq Props.Vals 
-                        dl.Frequencies None RouteShape.Any OrderType.Timed 
+                    DrugConstraint.create dl.Name
+                        Mapping.Freq 
+                        (dl.Frequencies |> Set.ofList |> Props.Vals) 
+                        Constraint.NoLimit RouteShape.Any OrderType.Discontinuous 
+                    DrugConstraint.create dl.Name 
+                        Mapping.Freq  
+                        (dl.Frequencies |> Set.ofList |> Props.Vals)
+                        Constraint.NoLimit RouteShape.Any OrderType.Timed 
                 ]
             |> cr Mapping.ItemDoseQty Props.MaxIncl dl.MaxDoseQuantity
             |> cr Mapping.ItemDoseQty Props.MinIncl dl.MinDoseQuantity
@@ -976,16 +1074,22 @@ module DrugOrder =
         let setSolutionLimits (sl : SolutionLimits) 
                               (co : ConstrainedOrder) : ConstrainedOrder =
             let (_, o) = co
-            let set n m p l co =
-                let n = [ n ] |> Name.create
-                match l with
-                | Some l -> 
+            let set n m c v co =
+                match v with
+                | Some v -> 
                     co
-                    >|> [ Constraint.create n m p [ l ] None RouteShape.Any OrderType.Any ]
+                    >|> [ DrugConstraint.create n m (c v) Constraint.NoLimit RouteShape.Any OrderType.Any ]
                 | None -> co
 
             co
-            |> set sl.Name Mapping.OrderableDoseCount Props.Vals sl.DoseCount
+            >|> [
+                    if sl.DoseCount |> Option.isSome then
+                        DrugConstraint.create 
+                            sl.Name 
+                            Mapping.OrderableDoseCount 
+                            (sl.DoseCount |> Option.get |> Set.singleton |> Props.Vals) 
+                            Constraint.NoLimit RouteShape.Any OrderType.Any
+                ]
             |> set sl.Name Mapping.ItemOrderableConc Props.MinIncl sl.MinConcentration
             |> set sl.Name Mapping.ItemOrderableConc Props.MaxIncl sl.MaxConcentration
             |> set sl.Name Mapping.Time Props.MinIncl sl.MinTime
@@ -994,20 +1098,24 @@ module DrugOrder =
 
 
         let setAdjust n a (co : ConstrainedOrder) : ConstrainedOrder =
-            let (_, o) = co
-
             co
-            >|> [ Constraint.create ([n] |> Name.create) 
-                                    Mapping.AdjustQty Props.Vals [a] None
-                                    RouteShape.Any OrderType.Any ]
+            >|> [ 
+                    DrugConstraint.create 
+                        n 
+                        Mapping.AdjustQty 
+                        (a |> Set.singleton |> Props.Vals) 
+                        Constraint.NoLimit
+                        RouteShape.Any OrderType.Any 
+                ]
+
 
         let evaluate (co : ConstrainedOrder) =
             let (cs, o) = co
 
-            Constraint.apply cs o
+            DrugConstraint.apply cs o
 
 
-module Constraint = DrugOrder.Constraint
+module DrugConstraint = DrugOrder.DrugConstraint
 
 
 let printScenarios v n sc =
@@ -1430,7 +1538,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "gentamicin"
         Quantities = [ ]
-        Divisible = 1N 
+        Divisible = 10N 
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1486,7 +1594,7 @@ let printScenarios v n sc =
         OrderType = DrugOrder.OrderType.Timed
     }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "gentamicin" (800N / 1000N)
+|> DrugOrder.setAdjust "gentamicin" (800N/1000N)
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "gentamicin"
@@ -1502,11 +1610,18 @@ let printScenarios v n sc =
             Component = "gentamicin"
 //            MinConcentration = Some (1N)
             MaxConcentration = Some (2N)
-            DoseCount = Some (1N)
+            DoseCount = Some (2N)
             MinTime = (Some (10N/60N))
             MaxTime = (Some 1N)
 
     }
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios false "gentamicin"
+|> printScenarios true "gentamicin"
+
+
+
+
+ValueUnit.fromString "1/900000000 mcg[Mass]/kg[Weight]/min[Time]"
+|> ValueUnit.toUnit
+

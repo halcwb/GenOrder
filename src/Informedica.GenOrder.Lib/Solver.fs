@@ -14,6 +14,11 @@ module Solver =
     module VL = VR.ValueRange
     module EQ = Informedica.GenSolver.Lib.Equation
 
+    module Props = Informedica.GenSolver.Lib.Api.Props
+    module Constraint = Informedica.GenSolver.Lib.Api.Constraint
+
+    type Constraint = Constraint.Constraint
+
     type VariableUnit = VariableUnit.VariableUnit
     
     type Equation =
@@ -41,28 +46,6 @@ module Solver =
     [<Literal>]
     let maxexcl = "maxexcl"
 
-    module Props =
-
-        /// The properties that can be set
-        /// for a variable.
-        type Prop = 
-            | Vals
-            | MinIncl
-            | MinExcl
-            | Incr
-            | MaxIncl
-            | MaxExcl
-
-        /// Return a string for a property `Prop`
-        let propToString = function
-            | Vals -> vals
-            | MinIncl -> minincl
-            | MinExcl -> minexcl
-            | Incr -> incr
-            | MaxIncl -> maxincl
-            | MaxExcl -> maxexcl
-
-    open Props
 
     /// Create an `Equation` using a constructor **cr**
     /// a result `VariableUnit` **y** and a list of 
@@ -222,20 +205,22 @@ module Solver =
 
     /// Turn a set of values `vs` to base values 
     let toBase n eqs vs = 
+
         eqs 
         |> toVariableUnits
-        |> List.tryFindInList (VariableUnit.getName >> N.toString >> ((=) n))
+        |> List.tryFindInList (VariableUnit.getName >> ((=) n))
         |> function 
         | Some vru ->
             vru
             |> VariableUnit.getUnit
             |> fun u -> 
                 vs
-                |> List.map (ValueUnit.create u)
-                |> List.map ValueUnit.toBase
+                |> Set.map (ValueUnit.create u)
+                |> Set.map ValueUnit.toBase
+
         | None -> 
             printfn "could not find %A in toBase n eqs vs" n
-            []    
+            Set.empty
 
 
     let mapFromSolverEqs orig eqs =
@@ -264,23 +249,9 @@ module Solver =
 
 
 
-    let setVals lim n p vs eqs =
-        match vs with
-        | [] -> None
-        | _  ->
-            eqs
-            |> SV.setVariableValues lim n (p |> propToString) vs
-
-
-    // helper function to prevent setting vs to 
-    // empty list when vals have no unit, so tobase 
-    // returns an empty list
-    let solveVals sortQue log lim n p vs eqs =
-        match vs with
-        | [] -> eqs
-        | _  ->
-            eqs
-            |> SV.solve sortQue log true lim n (p |> propToString) vs
+    let setVals lim n p eqs =
+        eqs
+        |> SV.setVariableValues lim n p
          
 
     let filterEqsWithUnits = 
@@ -288,23 +259,87 @@ module Solver =
             match eq with
             | ProductEquation(y, xs) 
             | SumEquation (y, xs) ->
-                y::xs |> List.forall VariableUnit.hasUnit
-                
+                y::xs |> List.forall VariableUnit.hasUnit       
         )
-        
 
+
+    let propToBase n eqs = function
+    | Props.Vals vs -> 
+        vs 
+        |> toBase n eqs 
+        |> Props.Vals
+    | Props.Increment vs ->
+        vs 
+        |> toBase n eqs 
+        |> Props.Increment
+    | Props.MinIncl v ->
+        v
+        |> Set.singleton
+        |> toBase n eqs
+        |> Set.toSeq
+        |> Seq.head
+        |> Props.MinIncl
+    | Props.MinExcl v ->
+        v
+        |> Set.singleton
+        |> toBase n eqs
+        |> Set.toSeq
+        |> Seq.head
+        |> Props.MinExcl
+    | Props.MaxIncl v ->
+        v
+        |> Set.singleton
+        |> toBase n eqs
+        |> Set.toSeq
+        |> Seq.head
+        |> Props.MaxIncl
+    | Props.MaxExcl v ->
+        v
+        |> Set.singleton
+        |> toBase n eqs
+        |> Set.toSeq
+        |> Seq.head
+        |> Props.MaxExcl 
+
+
+        
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let apply sortQue log lim (N.Name n) p vs eqs =
+    let applySolve sortQue log exact lim n p eqs = 
+    
+        let toBase = propToBase n eqs
 
         eqs
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> solveVals sortQue log lim n p (vs |> toBase n eqs)
+        |> SV.solve sortQue log exact lim n (p |> toBase)
         |> mapFromSolverEqs eqs
 
 
     let solve log lim = 
         let sortQue = Informedica.GenSolver.Lib.Solver.sortQue
-        apply sortQue log lim //(printfn "%s") //|> memSolve
+        applySolve sortQue log true lim //(printfn "%s") //|> memSolve
+
+
+    let solveConstraints log (cs : Constraint list) eqs =
+
+        let cs =
+            cs 
+            |> List.map (fun c ->
+                {
+                    c with
+                        Property = 
+                            c.Property 
+                            |> propToBase c.Name eqs
+                }
+            )
+        
+        eqs
+        // use only eqs with all vrus have units
+        |> filterEqsWithUnits
+        |> mapToSolverEqs
+        |> SV.solveConstraints log true cs
+        |> mapFromSolverEqs eqs
+
+        
