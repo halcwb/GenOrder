@@ -276,6 +276,8 @@ module Order =
 // Creating a drug order
 module DrugOrder =
 
+        open Informedica.GenUtils.Lib
+
         module OrderType =
             type Order = Order.Order
             
@@ -385,6 +387,19 @@ module DrugOrder =
                     create n m p vs rs ps
                 // list of general orderable constraints
                 [
+                    // ALL
+                    c Mapping.AdjustQty
+                      (Props.MaxIncl 650N) Constraint.NoLimit
+                      RouteShape.Any OrderType.Any
+
+                    c Mapping.AdjustQty 
+                      (Props.MinIncl (250N/1000N)) Constraint.NoLimit
+                      RouteShape.Any OrderType.Any
+
+                    c Mapping.AdjustQty
+                      ((50N/1000N) |> Set.singleton |> Props.Increment) Constraint.NoLimit
+                      RouteShape.Any OrderType.Any
+
                     // == Oral Solid ==
                     // == Discontinuous ==
                     // give max 10 pieces each time
@@ -785,11 +800,6 @@ module DrugOrder =
                             RouteShape.OralSolid OrderType.Discontinuous
 
                         // ORAL FLUID increment
-                        cstr Mapping.ComponentOrderableQty 
-                            ((1N/d.Divisible) |> Set.singleton 
-                                              |> Props.Increment)
-                            Constraint.NoLimit
-                            RouteShape.OralFluid OrderType.Any
                         cstr Mapping.OrderableDoseQty 
                             ((1N/d.Divisible) |> Set.singleton 
                                               |> Props.Increment)
@@ -812,11 +822,6 @@ module DrugOrder =
                             RouteShape.OralFluid OrderType.Continuous
 
                         // INTRAVENUOUS FLUID increment
-                        cstr Mapping.ComponentOrderableQty 
-                            ((1N/d.Divisible) |> Set.singleton 
-                                              |> Props.Increment)
-                            Constraint.NoLimit
-                            RouteShape.IntravenousFluid OrderType.Any
                         cstr Mapping.OrderableDoseQty 
                             ((1N/d.Divisible) |> Set.singleton 
                                               |> Props.Increment)
@@ -1048,6 +1053,20 @@ module DrugOrder =
                 | None -> co
                     
             co
+            |> function
+            | (cs, o) ->
+                if dl.Rates |> List.isEmpty then (cs, o)
+                else
+                    let drc =
+                        DrugConstraint.create dl.Name 
+                            Mapping.OrderableDoseRate  
+                            (dl.Rates |> Set.ofList |> Props.Vals)
+                            Constraint.NoLimit RouteShape.Any OrderType.Continuous 
+                        
+                    cs 
+                    |> List.replace (fun c -> c.Mapping = Mapping.OrderableDoseRate &&
+                                              c.OrderType = OrderType.Continuous) drc
+                    , o
             >|> [ 
                     DrugConstraint.create dl.Name
                         Mapping.Freq 
@@ -1382,6 +1401,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "dopamin infusion"
         Quantities = [ 50N ]
+        Divisible = 10N
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1461,6 +1481,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "dopamin infusion"
         Quantities = [ 50N ]
+        Divisible = 10N
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1617,11 +1638,137 @@ let printScenarios v n sc =
     }
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios true "gentamicin"
+|> printScenarios false "gentamicin"
 
 
 
 
-ValueUnit.fromString "1/900000000 mcg[Mass]/kg[Weight]/min[Time]"
-|> ValueUnit.toUnit
+//ValueUnit.fromString "1/900000000 mcg[Mass]/kg[Weight]/min[Time]"
+//|> ValueUnit.toUnit
+
+
+/// Convert `n` to a multiple of `d`.
+/// Passes an `CannotDivideByZero` message
+/// to `fail` when `d` is zero.
+let toMultipleOf d n  =
+    let m = (n / d) |> BigRational.ToBigInt |> BigRational.FromBigInt
+    if m * d < n then (m + 1N) * d else m * d
+
+200N |> toMultipleOf 30N
+
+
+[ (250N/1000N)..(50N/1000N)..650N]
+|> List.length
+
+
+// Testing failure case gentamicin
+
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
+//1.gentamicin.Orderable.Dose.Rate[1/3600] 
+(1N/3600N) * (1N/160N)
+
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
+//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
+(1N/600N) * (1N/160N) <= (1N/1350000N)
+
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
+//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
+
+module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
+module MinMax = Informedica.GenSolver.Lib.Variable.ValueRange.MinMaxCalcultor
+module Equation = Informedica.GenSolver.Lib.Equation
+module Variable = Informedica.GenSolver.Lib.Variable
+
+MinMax.calcMinMax (*) 
+    (Some (1N/600N), true) 
+    (Some (20N/81N), true) 
+    (Some (1N/36000000N), true)
+    (Some (1N/600N), true)
+|> function
+| (min, max) -> ValueRange.create false None min None max
+|> fun expr ->
+    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
+    let max = (1N/1350000N)  |> ValueRange.createMax true |> Some
+    let y = ValueRange.create false None min None max
+    y ^<== expr
+
+//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] =
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] /
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] 
+
+MinMax.calcMinMax (/) 
+    (Some (1N/36000000N), true) 
+    (Some (1N/1350000N), true) 
+    (Some (1N/160N), true)
+    (Some (20N/81N), true)
+|> function
+| (min, max) -> ValueRange.create false None min None max
+|> fun expr ->
+    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
+    let max = (1N/600N)  |> ValueRange.createMax true |> Some
+    let incr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    let y = ValueRange.create false None min incr max
+    y ^<== expr
+
+
+
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
+//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
+
+[
+    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
+    let max = (1N/1350000N)  |> ValueRange.createMax true |> Some
+    ValueRange.create false None min None max
+    |> Variable.createSucc ("crate" |> Variable.Name.createExc)
+
+    let min = (1N/160N) |> ValueRange.createMin true |> Some
+    let max = (20N/81N)  |> ValueRange.createMax true |> Some
+    ValueRange.create false None min None max
+    |> Variable.createSucc ("conc" |> Variable.Name.createExc)
+
+    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
+    let max = (1N/600N)  |> ValueRange.createMax true |> Some
+    let incr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    ValueRange.create false None min incr max
+    |> Variable.createSucc ("orate" |> Variable.Name.createExc)
+
+]
+|> function
+| y::xs -> 
+    (y, xs) 
+    |> Equation.ProductEquation
+    |> Equation.solve false (printfn "%s")
+
+(2N/16875N)
+|> ValueRange.createMax true
+|> ValueRange.maxMultipleOf ((1N/36000000N) |> Set.singleton |> ValueRange.createIncr)
+
+(237N/2000000N)/(1N/36000000N)
+
+
+//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] =
+//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] /
+//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] 
+
+MinMax.calcMinMax (/) 
+    (Some (1N/36000000N), true) 
+    (Some (1N/1350000N), true) 
+    (Some (1N/160N), true)
+    (Some (20N/81N), true)
+|> function
+| (min, max) -> 
+    let ymin = (1N/36000000N) |> ValueRange.createMin true |> Some
+    let ymax = (1N/600N)  |> ValueRange.createMax true |> Some
+    let yincr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    let y = ValueRange.create false None ymin yincr ymax
+    
+    //ValueRange.create false None min yincr ymax
+
+    printfn "setting %A" (min |> Option.get)
+    y |> ValueRange.setMin false (min |> Option.get)
+
 

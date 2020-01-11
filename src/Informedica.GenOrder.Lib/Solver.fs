@@ -219,8 +219,8 @@ module Solver =
                 |> Set.map ValueUnit.toBase
 
         | None -> 
-            printfn "could not find %A in toBase n eqs vs" n
-            Set.empty
+            sprintf "could not find %A in toBase n eqs vs" n
+            |> failwith
 
 
     let mapFromSolverEqs orig eqs =
@@ -241,8 +241,8 @@ module Solver =
                         |> function 
                         | Some v -> v
                         | None -> 
-                            printfn "could not find %A" vru.Variable.Name
-                            vru.Variable
+                            sprintf "could not find %A" vru.Variable.Name
+                            |> failwith
                 }
             )
         )
