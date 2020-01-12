@@ -3,6 +3,7 @@
 
 #load "../../../.paket/load/netstandard2.1/main.group.fsx"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Utils.fs"
+#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Logger.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Variable.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Equation.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Solver.fs"
@@ -12,6 +13,7 @@
 #load "../DateTime.fs"
 #load "../WrappedString.fs"
 #load "../List.fs"
+#load "../Logger.fs"
 #load "../ValueUnit.fs"
 #load "../ValueRange.fs"
 #load "../VariableUnit.fs"
@@ -111,9 +113,9 @@ module Order =
                 |> List.sortBy (fun (_, vs) -> vs |> Seq.length)
                 |> List.tryHead
 
-            
+        // To do add logger    
         let rec calc os sc =
-
+            
             match sc with
             | None         -> 
                 os
@@ -345,6 +347,7 @@ module DrugOrder =
             type Constraint = Informedica.GenSolver.Lib.Constraint.Constraint
             type Property = Props.Property
             type Limit = Constraint.Limit
+            type Logger = Informedica.GenSolver.Lib.Logger.Logger
 
             type DrugConstraint =
                 {
@@ -505,23 +508,16 @@ module DrugOrder =
                 let rs = RouteShape.map o.Route o.Orderable.Shape
                 let ot = o |> OrderType.map
 
-                let memPrint (timer: System.Diagnostics.Stopwatch) f =
-                    let cache = ref Map.empty
-
-                    fun s ->
-                        match (!cache).TryFind(s) with
-                        | Some _ -> ()
-                        | None ->
-                            let s =
-                                s
-                                |> sprintf "%f: %s" timer.Elapsed.TotalSeconds
-                            let r = f s
-                            cache := (!cache).Add(s, r)
-                            ()
 
                 let log =
                     let timer = System.Diagnostics.Stopwatch.StartNew()
-                    memPrint timer (printfn "%s")
+                    
+                    {
+                        Logger.LogMessage = 
+                            fun level msg ->
+                                printfn "- %f" timer.Elapsed.TotalSeconds
+                                //printfn "received msg: %f" timer.Elapsed.TotalSeconds
+                    }
 
 
                 let propHasVals = function
@@ -1139,6 +1135,7 @@ module DrugConstraint = DrugOrder.DrugConstraint
 
 
 let printScenarios v n sc =
+    printfn "\n\n=== SCENARIOS ==="
     sc
     |> List.iteri (fun i o ->
         o
@@ -1640,139 +1637,5 @@ let printScenarios v n sc =
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
 |> printScenarios false "gentamicin"
-
-
-
-
-//ValueUnit.fromString "1/900000000 mcg[Mass]/kg[Weight]/min[Time]"
-//|> ValueUnit.toUnit
-
-
-/// Convert `n` to a multiple of `d`.
-/// Passes an `CannotDivideByZero` message
-/// to `fail` when `d` is zero.
-let toMultipleOf d n  =
-    let m = (n / d) |> BigRational.ToBigInt |> BigRational.FromBigInt
-    if m * d < n then (m + 1N) * d else m * d
-
-200N |> toMultipleOf 30N
-
-
-[ (250N/1000N)..(50N/1000N)..650N]
-|> List.length
-
-
-// Testing failure case gentamicin
-
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
-//1.gentamicin.Orderable.Dose.Rate[1/3600] 
-(1N/3600N) * (1N/160N)
-
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
-//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
-(1N/600N) * (1N/160N) <= (1N/1350000N)
-
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
-//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
-
-module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
-module Minimum = ValueRange.Minimum
-module Maximum = ValueRange.Maximum
-module Increment = ValueRange.Increment
-module MinMax = Informedica.GenSolver.Lib.Variable.ValueRange.MinMaxCalcultor
-module Equation = Informedica.GenSolver.Lib.Equation
-module Variable = Informedica.GenSolver.Lib.Variable
-
-MinMax.calcMinMax (*) 
-    (Some (1N/600N), true) 
-    (Some (20N/81N), true) 
-    (Some (1N/36000000N), true)
-    (Some (1N/600N), true)
-|> function
-| (min, max) -> ValueRange.create false None min None max
-|> fun expr ->
-    let min = (1N/36000000N) |> Minimum.createMin true |> Some
-    let max = (1N/1350000N)  |> Maximum.createMax true |> Some
-    let y = ValueRange.create false None min None max
-    y ^<== expr
-
-//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] =
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] /
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] 
-
-MinMax.calcMinMax (/) 
-    (Some (1N/36000000N), true) 
-    (Some (1N/1350000N), true) 
-    (Some (1N/160N), true)
-    (Some (20N/81N), true)
-|> function
-| (min, max) -> ValueRange.create false None min None max
-|> fun expr ->
-    let min = (1N/36000000N) |> Minimum.createMin true |> Some
-    let max = (1N/600N)  |> Maximum.createMax true |> Some
-    let incr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
-    let y = ValueRange.create false None min incr max
-    y ^<== expr
-
-
-
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] = 
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] * 
-//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
-
-[
-    let min = (1N/36000000N) |> Minimum.createMin true |> Some
-    let max = (1N/1350000N)  |> Maximum.createMax true |> Some
-    ValueRange.create false None min None max
-    |> Variable.createSucc ("crate" |> Variable.Name.createExc)
-
-    let min = (1N/160N) |> Minimum.createMin true |> Some
-    let max = (20N/81N)  |> Maximum.createMax true |> Some
-    ValueRange.create false None min None max
-    |> Variable.createSucc ("conc" |> Variable.Name.createExc)
-
-    let min = (1N/36000000N) |> Minimum.createMin true |> Some
-    let max = (1N/600N)  |> Maximum.createMax true |> Some
-    let incr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
-    ValueRange.create false None min incr max
-    |> Variable.createSucc ("orate" |> Variable.Name.createExc)
-
-]
-|> function
-| y::xs -> 
-    (y, xs) 
-    |> Equation.ProductEquation
-    |> Equation.solve false (printfn "%s")
-
-(2N/16875N)
-|> Maximum.createMax true
-|> ValueRange.maxMultipleOf ((1N/36000000N) |> Set.singleton |> Increment.createIncr)
-
-(237N/2000000N)/(1N/36000000N)
-
-
-//1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] =
-//1.gentamicin.Component.Dose.Rate[1/36000000N..1/1350000N] /
-//1.gentamicin.Component.Orderable.Conc[1/160N..20/81N] 
-
-MinMax.calcMinMax (/) 
-    (Some (1N/36000000N), true) 
-    (Some (1N/1350000N), true) 
-    (Some (1N/160N), true)
-    (Some (20N/81N), true)
-|> function
-| (min, max) -> 
-    let ymin = (1N/36000000N) |> Minimum.createMin true |> Some
-    let ymax = (1N/600N)  |> Maximum.createMax true |> Some
-    let yincr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
-    let y = ValueRange.create false None ymin yincr ymax
-    
-    //ValueRange.create false None min yincr ymax
-
-    printfn "setting %A" (min |> Option.get)
-    y |> ValueRange.setMin false (min |> Option.get)
 
 

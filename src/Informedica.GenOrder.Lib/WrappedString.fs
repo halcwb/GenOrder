@@ -21,7 +21,7 @@ module WrappedString =
         
         open Informedica.GenSolver.Lib
         
-        type Name = Types.Name.Name
+        type Name = Variable.Name.Name
         module Name = Variable.Name
 
         /// Create a `Name` from a list of strings that 

@@ -305,7 +305,7 @@ module Solver =
         
     // Solve a set of equations setting a property `p` with
     // name `n`, to a valueset `vs`.
-    let applySolve sortQue log exact lim n p eqs = 
+    let applySolve sortQue log lim n p eqs = 
     
         let toBase = propToBase n eqs
 
@@ -313,13 +313,13 @@ module Solver =
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> SV.solve sortQue log exact lim n (p |> toBase)
+        |> SV.solve sortQue log lim n (p |> toBase)
         |> mapFromSolverEqs eqs
 
 
     let solve log lim = 
         let sortQue = Informedica.GenSolver.Lib.Solver.sortQue
-        applySolve sortQue log true lim //(printfn "%s") //|> memSolve
+        applySolve sortQue log lim //(printfn "%s") //|> memSolve
 
 
     let solveConstraints log (cs : Constraint list) eqs =
@@ -339,7 +339,7 @@ module Solver =
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> SV.solveConstraints log true cs
+        |> SV.solveConstraints log cs
         |> mapFromSolverEqs eqs
 
         

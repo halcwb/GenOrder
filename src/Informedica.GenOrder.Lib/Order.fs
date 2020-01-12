@@ -120,7 +120,6 @@ module Order =
 
     open System
 
-    open Informedica.GenUtils.Lib.BCL
     open Informedica.GenUnits.Lib
     open WrappedString
 
@@ -378,14 +377,9 @@ module Order =
         |> Solver.solve log lim n p
         |> fromEqs o
         |> fun o ->
-            o
-            |> toString
-            |> List.fold (fun acc x ->
-                let i, s = acc
-                i + 1, sprintf "%s\n%i\t%s" s i x
-            ) (1, "")
-            |> snd
-            |> log
+            Logger.OrderSolved
+            |> Logger.createMessage o
+            |> Logger.logInfo log
 
             o
 
@@ -405,14 +399,9 @@ module Order =
         |> Solver.solveConstraints log cs
         |> fromEqs o
         |> fun o ->
-            o
-            |> toString
-            |> List.fold (fun acc x ->
-                let i, s = acc
-                i + 1, sprintf "%s\n%i\t%s" s i x
-            ) (1, "")
-            |> snd
-            |> log
+            Logger.OrderWithConstraintsSolved
+            |> Logger.createMessage o
+            |> Logger.logInfo log
 
             o
 
