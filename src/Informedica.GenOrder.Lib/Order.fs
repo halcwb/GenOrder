@@ -139,7 +139,7 @@ module Order =
     module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
 
     module Units = ValueUnit.Units
-    module Props = Informedica.GenSolver.Lib.Api.Props
+    module Props = Informedica.GenSolver.Lib.Props
 
     /// Models an order
     type Order = 

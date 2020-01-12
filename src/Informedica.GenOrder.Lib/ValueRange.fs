@@ -23,71 +23,41 @@ module ValueRange =
             >> Some
 
         let fRange =
-            let print min minincl incr max maxincl = 
-                print exact false [] min minincl incr max maxincl
+            let print min minincl incr max maxincl = print exact false [] min minincl incr max maxincl
 
             let fMin min =
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some, false  
-                print min minincl [] None false
+                let incl, min = min |> Minimum.minToBoolBigRational
+                print (some min) incl [] None false
 
             let fMax max =
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
+                let incl, max = max |> Maximum.maxToBoolBigRational
 
-                print None false [] max maxincl
+                print None false [] (some max) incl
 
             let fMinIncr (min, incr)  = 
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some ,false  
-
-                let incr = incr |> incrToValue |> Set.toList
-        
-                print min minincl incr None false
+                let incl, min = min |> Minimum.minToBoolBigRational
+                let incr = incr |> Increment.incrToValue |> Set.toList
+    
+                print (some min) incl incr None false
 
             let fIncrMax (incr, max)  = 
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
-
-                let incr = incr |> incrToValue |> Set.toList
-        
-                print None false incr max maxincl
+                let incl, max = max |> Maximum.maxToBoolBigRational
+                let incr = incr |> Increment.incrToValue |> Set.toList
+    
+                print None false incr (some max) incl
 
             let fMinMax (min, max) =
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some ,false  
+                let maxincl, min = min |> Minimum.minToBoolBigRational
+                let minincl, max = max |> Maximum.maxToBoolBigRational
 
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
-
-                print min minincl [] max maxincl
+                print (some min) minincl [] (some max) maxincl
 
             let fMinIncrMax (min, incr, max) =
-                let min, minincl = 
-                    match min with
-                    | MinIncl v -> v |> some, true
-                    | MinExcl v -> v |> some ,false  
+                let maxincl, min = min |> Minimum.minToBoolBigRational
+                let minincl, max = max |> Maximum.maxToBoolBigRational
+                let incr = incr |> Increment.incrToValue |> Set.toList
 
-                let max, maxincl = 
-                    match max with
-                    | MaxIncl v -> v |> some, true
-                    | MaxExcl v -> v |> some ,false  
-
-                let incr = incr |> incrToValue |> Set.toList
-
-                print min minincl incr max maxincl
+                print (some min) minincl incr (some max) maxincl
 
             applyRange fMin fMax fMinIncr fIncrMax fMinMax fMinIncrMax
 

@@ -12,9 +12,12 @@ module VariableUnit =
     
     module Variable    = Informedica.GenSolver.Lib.Variable
     module ValueRange  = Variable.ValueRange
-    module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
+    module Minimum = ValueRange.Minimum
+    module Maximum = ValueRange.Maximum
+    module Increment = ValueRange.Increment
     module Equation    = Informedica.GenSolver.Lib.Equation
-    module ValueRange  = Variable.ValueRange
+
+    module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
     module Units = ValueUnit.Units
 
     type Variable = Variable.Variable
@@ -153,11 +156,11 @@ module VariableUnit =
 
 
     let setMinIncl =
-        setValue (ValueRange.createMin true) (ValueRange.setMin false)
+        setValue (Minimum.createMin true) (ValueRange.setMin false)
         
 
     let setMaxIncl =
-        setValue (ValueRange.createMax true) (ValueRange.setMax false)
+        setValue (Maximum.createMax true) (ValueRange.setMax false)
 
     let setIncr vs vru =
 
@@ -165,7 +168,7 @@ module VariableUnit =
             vs
             |> List.map (fun v -> vru |> valueToBase v)
             |> Set.ofList
-            |> ValueRange.createIncr
+            |> Increment.createIncr
 
         vru
         |> getVar
@@ -361,7 +364,7 @@ module VariableUnit =
                     |> Set.ofList 
                     |> Some
 
-            let min  = dto.Min  |> map  (toBase >> ValueRange.createMin  dto.MinIncl)
+            let min  = dto.Min  |> map  (toBase >> Minimum.createMin  dto.MinIncl)
             let incr = 
                 dto.Incr
                 |> List.map toBase 
@@ -370,9 +373,9 @@ module VariableUnit =
                 | incr -> 
                     incr
                     |> Set.ofList
-                    |> ValueRange.createIncr |>Some
+                    |> Increment.createIncr |>Some
 
-            let max  = dto.Max  |> map  (toBase >> ValueRange.createMax  dto.MaxIncl)
+            let max  = dto.Max  |> map  (toBase >> Maximum.createMax  dto.MaxIncl)
 
             create n vals min incr max un
 
@@ -392,9 +395,9 @@ module VariableUnit =
                 |> function 
                 | Some m -> 
                     m 
-                    |> ValueRange.minToValue
+                    |> Minimum.minToValue
                     |> toUnit
-                    |> Some, m |> ValueRange.isMinIncl
+                    |> Some, m |> Minimum.isMinIncl
                 | None -> None, false
             let max, inclMax = 
                 vr 
@@ -402,10 +405,10 @@ module VariableUnit =
                 |> function 
                 | Some m -> 
                     m 
-                    |> ValueRange.maxToValue
+                    |> Maximum.maxToValue
                     |> toUnit
                     |> Some, 
-                    m |> ValueRange.isMaxIncl
+                    m |> Maximum.isMaxIncl
                 | None -> None, false
 
             dto.Name <- 
@@ -429,7 +432,7 @@ module VariableUnit =
                 | None -> []
                 | Some i -> 
                     i
-                    |> ValueRange.incrToValue 
+                    |> Increment.incrToValue 
                     |> Set.toList
                     |> List.map toUnit
 

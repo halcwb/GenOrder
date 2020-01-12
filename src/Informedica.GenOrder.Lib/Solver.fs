@@ -14,8 +14,8 @@ module Solver =
     module VL = VR.ValueRange
     module EQ = Informedica.GenSolver.Lib.Equation
 
-    module Props = Informedica.GenSolver.Lib.Api.Props
-    module Constraint = Informedica.GenSolver.Lib.Api.Constraint
+    module Props = Informedica.GenSolver.Lib.Props
+    module Constraint = Informedica.GenSolver.Lib.Constraint
 
     type Constraint = Constraint.Constraint
 

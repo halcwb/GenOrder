@@ -6,6 +6,7 @@
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Variable.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Equation.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Solver.fs"
+#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Constraint.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Api.fs"
 
 #load "../DateTime.fs"
@@ -45,7 +46,7 @@ module Order =
     module DoseAdjust = VariableUnit.DoseAdjust
     module RateAdjust = VariableUnit.RateAdjust
     module Name = WrappedString.Name
-    module Props = Informedica.GenSolver.Lib.Api.Props
+    module Props = Informedica.GenSolver.Lib.Props
     module Solver = Informedica.GenOrder.Lib.Solver
 
 
@@ -333,15 +334,15 @@ module DrugOrder =
 
             module Name = WrappedString.Name
             module Mapping = Order.Mapping
-            module Props = Informedica.GenSolver.Lib.Api.Props
-            module Constraint = Informedica.GenSolver.Lib.Api.Constraint
+            module Props = Informedica.GenSolver.Lib.Props
+            module Constraint = Informedica.GenSolver.Lib.Constraint
 
             type Name = Name.Name
             type Mapping = Order.Mapping.Map
             type RouteShape = RouteShape.RouteShape
             type OrderType = OrderType.OrderType
             type Order = Order.Order
-            type Constraint = Informedica.GenSolver.Lib.Api.Constraint.Constraint
+            type Constraint = Informedica.GenSolver.Lib.Constraint.Constraint
             type Property = Props.Property
             type Limit = Constraint.Limit
 
@@ -557,8 +558,8 @@ module DrugOrder =
         module ODto = Orderable.Dto
 
         module Mapping = Order.Mapping
-        module Props = Informedica.GenSolver.Lib.Api.Props
-        module Constraint = Informedica.GenSolver.Lib.Api.Constraint
+        module Props = Informedica.GenSolver.Lib.Props
+        module Constraint = Informedica.GenSolver.Lib.Constraint
         module Name = WrappedString.Name
 
         type OrderType = OrderType.OrderType
@@ -1678,6 +1679,9 @@ let toMultipleOf d n  =
 //1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
 
 module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
+module Minimum = ValueRange.Minimum
+module Maximum = ValueRange.Maximum
+module Increment = ValueRange.Increment
 module MinMax = Informedica.GenSolver.Lib.Variable.ValueRange.MinMaxCalcultor
 module Equation = Informedica.GenSolver.Lib.Equation
 module Variable = Informedica.GenSolver.Lib.Variable
@@ -1690,8 +1694,8 @@ MinMax.calcMinMax (*)
 |> function
 | (min, max) -> ValueRange.create false None min None max
 |> fun expr ->
-    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
-    let max = (1N/1350000N)  |> ValueRange.createMax true |> Some
+    let min = (1N/36000000N) |> Minimum.createMin true |> Some
+    let max = (1N/1350000N)  |> Maximum.createMax true |> Some
     let y = ValueRange.create false None min None max
     y ^<== expr
 
@@ -1707,9 +1711,9 @@ MinMax.calcMinMax (/)
 |> function
 | (min, max) -> ValueRange.create false None min None max
 |> fun expr ->
-    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
-    let max = (1N/600N)  |> ValueRange.createMax true |> Some
-    let incr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    let min = (1N/36000000N) |> Minimum.createMin true |> Some
+    let max = (1N/600N)  |> Maximum.createMax true |> Some
+    let incr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
     let y = ValueRange.create false None min incr max
     y ^<== expr
 
@@ -1720,19 +1724,19 @@ MinMax.calcMinMax (/)
 //1.gentamicin.Orderable.Dose.Rate[1/36000000N..[1/36000000]..1/600N] 
 
 [
-    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
-    let max = (1N/1350000N)  |> ValueRange.createMax true |> Some
+    let min = (1N/36000000N) |> Minimum.createMin true |> Some
+    let max = (1N/1350000N)  |> Maximum.createMax true |> Some
     ValueRange.create false None min None max
     |> Variable.createSucc ("crate" |> Variable.Name.createExc)
 
-    let min = (1N/160N) |> ValueRange.createMin true |> Some
-    let max = (20N/81N)  |> ValueRange.createMax true |> Some
+    let min = (1N/160N) |> Minimum.createMin true |> Some
+    let max = (20N/81N)  |> Maximum.createMax true |> Some
     ValueRange.create false None min None max
     |> Variable.createSucc ("conc" |> Variable.Name.createExc)
 
-    let min = (1N/36000000N) |> ValueRange.createMin true |> Some
-    let max = (1N/600N)  |> ValueRange.createMax true |> Some
-    let incr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    let min = (1N/36000000N) |> Minimum.createMin true |> Some
+    let max = (1N/600N)  |> Maximum.createMax true |> Some
+    let incr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
     ValueRange.create false None min incr max
     |> Variable.createSucc ("orate" |> Variable.Name.createExc)
 
@@ -1744,8 +1748,8 @@ MinMax.calcMinMax (/)
     |> Equation.solve false (printfn "%s")
 
 (2N/16875N)
-|> ValueRange.createMax true
-|> ValueRange.maxMultipleOf ((1N/36000000N) |> Set.singleton |> ValueRange.createIncr)
+|> Maximum.createMax true
+|> ValueRange.maxMultipleOf ((1N/36000000N) |> Set.singleton |> Increment.createIncr)
 
 (237N/2000000N)/(1N/36000000N)
 
@@ -1761,9 +1765,9 @@ MinMax.calcMinMax (/)
     (Some (20N/81N), true)
 |> function
 | (min, max) -> 
-    let ymin = (1N/36000000N) |> ValueRange.createMin true |> Some
-    let ymax = (1N/600N)  |> ValueRange.createMax true |> Some
-    let yincr = (1N/36000000N) |> Set.singleton |> ValueRange.createIncr |> Some
+    let ymin = (1N/36000000N) |> Minimum.createMin true |> Some
+    let ymax = (1N/600N)  |> Maximum.createMax true |> Some
+    let yincr = (1N/36000000N) |> Set.singleton |> Increment.createIncr |> Some
     let y = ValueRange.create false None ymin yincr ymax
     
     //ValueRange.create false None min yincr ymax
