@@ -293,14 +293,14 @@ module VariableUnit =
     /// Helper functions for `Informedica.GenSolver.Variable.Name` type
     module Name =
      
-        module N = Informedica.GenSolver.Lib.Variable.Name
+        module Name = Informedica.GenSolver.Lib.Variable.Name
 
-        type Name = N.Name
+        type Name = Name.Name
 
         /// Create a `Name` from a list of strings that 
-        let create ns = ns |> String.concat "." |> N.createExc
+        let create ns = ns |> String.concat "." |> Name.createExc
 
-        let toString = N.toString
+        let toString = Name.toString
 
 
     let calcUnit op (vru1, vru2) =

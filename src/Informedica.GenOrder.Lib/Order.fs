@@ -124,38 +124,35 @@ module Order =
     open Informedica.GenUnits.Lib
     open WrappedString
 
-    module LT = Literals
-    module ID = Id
-    module EQ = Informedica.GenSolver.Lib.Equation
-    module OB = Orderable
-    module PR = Prescription
-    module DT = StartStop
-    module SV = Solver
-    module VU = VariableUnit
-    module NM = Name
-    module QT = VU.Quantity
-    module FR = VU.Frequency
-    module TM = VU.Time
     module ValueRange = Informedica.GenSolver.Lib.Variable.ValueRange
-
-    module Units = ValueUnit.Units
+    module Equation = Informedica.GenSolver.Lib.Equation
     module Props = Informedica.GenSolver.Lib.Props
+    module Quantity = VariableUnit.Quantity
+    module Frequency = VariableUnit.Frequency
+    module Time = VariableUnit.Time
+    module Units = ValueUnit.Units
+
+    type Id = Id.Id
+    type Quantity = Quantity.Quantity
+    type Orderable = Orderable.Orderable
+    type Prescription = Prescription.Prescription
+    type StartStop = StartStop.StartStop
 
     /// Models an order
     type Order = 
         {
             /// The id of an order
-            Id: ID.Id
+            Id: Id
             /// Used to adjust doses
-            Adjust: QT.Quantity
+            Adjust: Quantity
             /// That what can be ordered
-            Orderable: OB.Orderable
+            Orderable: Orderable
             /// How the orderable is prescribed
-            Prescription: PR.Prescription
+            Prescription: Prescription
             /// The route of administration of the order
             Route: string // Route.T
             /// The start stop date of the order
-            StartStop: DT.StartStop
+            StartStop: StartStop
         }
 
 
@@ -197,11 +194,11 @@ module Order =
     /// * str_prs: a function that takes in a list of strings that will generate the names and returns a `Prescription`
     /// * route: the route of administration
     let createNew id n shape str_prs route = 
-        let orb = OB.createNew id n shape
-        let nm  = orb |> OB.getName
-        let adj = QT.quantity [ id |> Id.toString; n |> NM.toString; Literals.adjust ] ValueUnit.NoUnit
-        let prs = [id |> ID.toString; nm |> NM.toString] |> str_prs
-        let sts = DateTime.Now  |> DT.Start
+        let orb = Orderable.createNew id n shape
+        let nm  = orb |> Orderable.getName
+        let adj = Quantity.quantity [ id |> Id.toString; n |> Name.toString; Literals.adjust ] ValueUnit.NoUnit
+        let prs = [id |> Id.toString; nm |> Name.toString] |> str_prs
+        let sts = DateTime.Now  |> StartStop.Start
 
         create id adj orb prs route sts
 
@@ -209,8 +206,8 @@ module Order =
 
     let getName ord = 
         ord 
-        |> (getAdjust >> QT.toVarUnt >> VU.getName)
-        |> NM.toString
+        |> (getAdjust >> Quantity.toVarUnt >> VariableUnit.getName)
+        |> Name.toString
         |> String.split "."
         |> List.take 2
         |> String.concat "."
@@ -222,10 +219,10 @@ module Order =
         match m with
         | Mapping.Freq 
         | Mapping.AdjustQty ->
-            [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+            [ (o |> getName) + dls + (m |> Mapping.map)] |> Name.create
         | _ -> 
             [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
-            |> NM.create
+            |> Name.create
 
 
     let getOrderable ord = (ord |> get).Orderable
@@ -234,20 +231,20 @@ module Order =
     /// a list of `VariableUnit` lists
     let toEqs (ord: Order) =
         let orb = ord.Orderable
-        let adj = ord.Adjust |> QT.toVarUnt
-        let frq, tme = ord.Prescription |> PR.toEqs
+        let adj = ord.Adjust |> Quantity.toVarUnt
+        let frq, tme = ord.Prescription |> Prescription.toEqs
         let hasRate = 
-            ord.Prescription |> PR.isContinuous || 
-            ord.Prescription |> PR.isTimed
+            ord.Prescription |> Prescription.isContinuous || 
+            ord.Prescription |> Prescription.isTimed
         
-        orb |> OB.toEqs hasRate adj frq tme
+        orb |> Orderable.toEqs hasRate adj frq tme
 
     /// Map a list of `VariableUnit` lists
     /// to an `Order` *ord*
     let fromEqs ord eqs =        
-        let orb = ord.Orderable |> OB.fromEqs eqs
-        let adj = ord.Adjust    |> QT.fromVar eqs
-        let prs = ord.Prescription |> PR.fromEqs eqs
+        let orb = ord.Orderable |> Orderable.fromEqs eqs
+        let adj = ord.Adjust    |> Quantity.fromVar eqs
+        let prs = ord.Prescription |> Prescription.fromEqs eqs
 
         {
             ord with
@@ -261,9 +258,9 @@ module Order =
     /// representing variable name, valuerange 
     /// and unit group
     let toString (ord: Order) =
-        [ LT.adjust; ord.Adjust |> QT.toString ]
-        |> List.append (OB.Literals.orderable::(ord.Orderable |> OB.toString))
-        |> List.append ("Prescription"::(ord.Prescription |> PR.toString))
+        [ Literals.adjust; ord.Adjust |> Quantity.toString ]
+        |> List.append (Orderable.Literals.orderable::(ord.Orderable |> Orderable.toString))
+        |> List.append ("Prescription"::(ord.Prescription |> Prescription.toString))
         |> List.append ("Route"::[(ord.Route)])
         |> List.filter (String.isNullOrWhiteSpace >> not)
 
@@ -275,10 +272,10 @@ module Order =
             match m with
             | Mapping.Freq 
             | Mapping.AdjustQty ->
-                [ (o |> getName) + dls + (m |> Mapping.map)] |> NM.create
+                [ (o |> getName) + dls + (m |> Mapping.map)] |> Name.create
             | _ -> 
                 [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
-                |> NM.create
+                |> Name.create
 
         let prod, sum = o |> toEqs
 
@@ -346,7 +343,7 @@ module Order =
         let eqs = toEql prod sum
     
         eqs
-        |> SV.solveUnits
+        |> Solver.solveUnits
         |> List.map (fun e ->
             match e with 
             | Solver.ProductEquation (vru, vrus)
@@ -378,7 +375,7 @@ module Order =
         let eqs = toEql prod sum
         
         eqs
-        |> SV.solve log lim n p
+        |> Solver.solve log lim n p
         |> fromEqs o
         |> fun o ->
             o
@@ -405,7 +402,7 @@ module Order =
         let eqs = toEql prod sum
     
         eqs
-        |> SV.solveConstraints log cs
+        |> Solver.solveConstraints log cs
         |> fromEqs o
         |> fun o ->
             o
@@ -425,7 +422,7 @@ module Order =
         type Dto (id , n, shape) =
             member val Id = id with get, set
             member val Adjust = VariableUnit.Dto.dto () with get, set
-            member val Orderable = OB.Dto.dto id n shape with get, set
+            member val Orderable = Orderable.Dto.dto id n shape with get, set
             member val Prescription = Prescription.Dto.dto n with get, set
             member val Route = "" with get, set
             member val Start = DateTime.now () with get, set
@@ -433,30 +430,30 @@ module Order =
 
         let fromDto (dto : Dto) =
             let id = dto.Id |> Id.create
-            let adj_qty = dto.Adjust |> QT.fromDto
-            let orb = dto.Orderable |> OB.Dto.fromDto
+            let adj_qty = dto.Adjust |> Quantity.fromDto
+            let orb = dto.Orderable |> Orderable.Dto.fromDto
             let prs = dto.Prescription |> Prescription.Dto.fromDto
             let sts =
                 match dto.Stop with
-                | Some dt -> (dto.Start, dt) |> DT.StartStop
-                | None -> dto.Start |> DT.Start
+                | Some dt -> (dto.Start, dt) |> StartStop.StartStop
+                | None -> dto.Start |> StartStop.Start
 
             create id adj_qty orb prs dto.Route sts
 
 
         let toDto (ord : Order) =
             let id = ord.Id |> Id.toString
-            let n = ord.Orderable.Name |> NM.toString
+            let n = ord.Orderable.Name |> Name.toString
             let dto = Dto (id, n, ord.Orderable.Shape)
 
-            dto.Adjust <- ord.Adjust |> QT.toDto
-            dto.Orderable <- ord.Orderable |> OB.Dto.toDto
+            dto.Adjust <- ord.Adjust |> Quantity.toDto
+            dto.Orderable <- ord.Orderable |> Orderable.Dto.toDto
             dto.Prescription <- ord.Prescription |> Prescription.Dto.toDto
             dto.Route <- ord.Route
             let (start, stop) =
                 match ord.StartStop with
-                | DT.Start dt -> (dt, None)
-                | DT.StartStop(start, stop) -> (start, stop |> Some) 
+                | StartStop.Start dt -> (dt, None)
+                | StartStop.StartStop(start, stop) -> (start, stop |> Some) 
             dto.Start <- start
             dto.Stop <- stop
             

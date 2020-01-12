@@ -21,15 +21,14 @@ module WrappedString =
         
         open Informedica.GenSolver.Lib
         
-        module N = Variable.Name
-
-        type Name = N.Name
+        type Name = Types.Name.Name
+        module Name = Variable.Name
 
         /// Create a `Name` from a list of strings that 
-        let create ns = ns |> String.concat "." |> N.createExc
+        let create ns = ns |> String.concat "." |> Name.createExc
 
-        let lift f = fun (N.Name s) -> s |> f |> N.Name
+        let lift f = fun n -> n |> Name.toString |> f |> Name.createExc
 
-        let toString = N.toString
+        let toString  = Name.toString
 
 
