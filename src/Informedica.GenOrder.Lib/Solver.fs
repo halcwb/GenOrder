@@ -72,8 +72,11 @@ module Solver =
         ) []
 
     
-    let replaceUnit n u eqs =
-        printfn "replacing units for %A with: %s" n (u |> ValueUnit.unitToString)
+    let replaceUnit log n u eqs =
+        Logger.SolverReplacingUnits
+        |> Logger.createMessage (n, u)
+        |> Logger.logInfo log
+
         let repl c vru vrus =
             if vru |> VariableUnit.getName = n then
                 (vru |> VariableUnit.setUnit u, vrus)
@@ -98,7 +101,7 @@ module Solver =
 
     /// calculate the units for all vrus in
     /// all eqs
-    let solveUnits eqs =
+    let solveUnits log eqs =
         let hasUnit = VariableUnit.hasUnit
         let noUnit = hasUnit >> not
 
@@ -122,7 +125,7 @@ module Solver =
                             // start from scratch
                             h::tail 
                             |> List.append acc
-                            |> replaceUnit y.Variable.Name y.Unit
+                            |> replaceUnit log y.Variable.Name y.Unit
                             |> solve []
 
                         else
@@ -156,7 +159,7 @@ module Solver =
                             // start from scratch
                             h::tail 
                             |> List.append acc
-                            |> replaceUnit (n |> Option.get) (u |> Option.get)
+                            |> replaceUnit log (n |> Option.get) (u |> Option.get)
                             |> solve []
 
                     else
@@ -187,7 +190,7 @@ module Solver =
                         |> (fun eqs ->
                             ns 
                             |> List.fold (fun acc n ->
-                                acc |> replaceUnit n x.Unit
+                                acc |> replaceUnit log n x.Unit
                             ) eqs
                         )
                         |> solve []

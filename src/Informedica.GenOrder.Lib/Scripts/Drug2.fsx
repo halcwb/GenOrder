@@ -36,8 +36,8 @@ module Order =
     
     open Order
     open Informedica.GenUtils.Lib.BCL
-    open Informedica.GenSolver.Lib
 
+    module Variable = Informedica.GenSolver.Lib.Variable
     module ValueRange = Variable.ValueRange
     module Frequency = VariableUnit.Frequency
     module Time = VariableUnit.Time
@@ -47,26 +47,12 @@ module Order =
     module Dose = VariableUnit.Dose
     module DoseAdjust = VariableUnit.DoseAdjust
     module RateAdjust = VariableUnit.RateAdjust
+    module Concentration = VariableUnit.Concentration
     module Name = WrappedString.Name
     module Props = Informedica.GenSolver.Lib.Props
     module Solver = Informedica.GenOrder.Lib.Solver
 
-
-    let validScenario (o: Order) =
-        o
-        |> Order.toEqs
-        |> function
-        | (vrus1, vrus2) ->
-            vrus1
-            |> List.append vrus2
-            |> List.collect id
-            |> List.exists (fun vru ->
-                vru 
-                |> VariableUnit.getBaseValues
-                |> Seq.length > 1
-            )
-            |> not
-
+    type Component = Orderable.Component.Component
 
     let calcScenarios log (o : Order) =
 
@@ -120,16 +106,22 @@ module Order =
             | None         -> 
                 os
             | Some (n, vs) ->
-                (vs |> Seq.map BigRational.toString |> String.concat ",")
-                |> printfn "scenario: %A, with %A" n 
+                let msg = 
+                    (vs |> Seq.map BigRational.toString |> String.concat ",")
+                    |> sprintf "scenario: %A, with %A" n
+
+                Logger.Scenario
+                |> Logger.createMessage msg
+                |> Logger.logInfo log
+
                 [
                     for v in vs do
                         for o in os do
                             if o |> Order.contains n v then
-                                o
-                                |> Order.toString
-                                |> String.concat "\n"
-                                |> printfn "setting: %Ato\n%s" v
+                                Logger.ScenerioValue
+                                |> Logger.createMessage (o, v)
+                                |> Logger.logInfo log
+
                                 let o =
                                     o
                                     |> solve n v
@@ -155,7 +147,35 @@ module Order =
     let printPrescription sn (o : Order) =
         let on = o.Orderable.Name |> Name.toString
 
-        let printItmDose get unt o =
+        let printItemConc (c : Component) =
+            c.Items
+            |> Seq.collect (fun i ->
+                i.ComponentConcentration
+                |> Concentration.toValueUnitStringList None
+                |> Seq.map (fun (_, s) ->
+                    i.Name
+                    |> Name.toString
+                    |> sprintf "%s %s" s
+                )
+            )
+            |> String.concat " + "
+
+
+        let printCmpQuantity o =
+            o.Orderable.Components
+            |> Seq.map (fun c ->
+                c.OrderableQuantity
+                |> Quantity.toValueUnitStringList None
+                |> Seq.map (fun (_, q) ->
+                    c 
+                    |> printItemConc
+                    |> sprintf "%s %s (%s)" q (c.Name |> Name.toString)
+                )
+                |> String.concat ""
+            ) |> String.concat " + "
+
+
+        let printItem get unt o =
             o.Orderable.Components
             |> Seq.collect (fun c ->
                 c.Items
@@ -191,18 +211,25 @@ module Order =
 
             let dq =
                 o
-                |> printItmDose 
+                |> printItem 
                     (fun i -> i.Dose |> Dose.get |> (fun (dq, _, _) -> dq))
                     (VariableUnit.Quantity.toValueUnitStringList None)
 
             let dt =
                 o
-                |> printItmDose 
+                |> printItem 
                     (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
                     (VariableUnit.TotalAdjust.toValueUnitStringList None)
 
+            let p =
+                sprintf "%s %s %s = (%s)" (o.Orderable.Name |> Name.toString) fr dq dt
 
-            sprintf "%s %s %s = (%s)" (o.Orderable.Name |> Name.toString) fr dq dt
+            let d =
+                o
+                |> printCmpQuantity
+                |> sprintf "%s" 
+
+            p, d
 
         | Prescription.Continuous ->
             // infusion rate
@@ -221,19 +248,26 @@ module Order =
                 |> Seq.map snd
                 |> String.concat ""
 
-            let dq =
+            let it =
                 o
-                |> printItmDose
+                |> printItem
                     (fun i -> i.OrderableQuantity)
                     (Quantity.toValueUnitStringList None)
 
             let dr =
                 o
-                |> printItmDose 
+                |> printItem 
                     (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, _, dr) -> dr))
                     (VariableUnit.RateAdjust.toValueUnitStringList (Some 2))
+            let p =
+                sprintf "%s %s in %s %s = %s" on it oq rt dr
 
-            sprintf "%s %s in %s %s = %s" on dq oq rt dr
+            let d =
+                o
+                |> printCmpQuantity
+                |> sprintf "%s" 
+            
+            p, d
 
         | Prescription.Timed (fr, tme) ->
 
@@ -244,36 +278,50 @@ module Order =
                 |> Seq.map snd
                 |> String.concat ";"
 
-            let dq =
-                o
-                |> printItmDose 
-                    (fun i -> i.Dose |> Dose.get |> (fun (dq, _, _) -> dq))
-                    (VariableUnit.Quantity.toValueUnitStringList None)
-
-            let oq =
-                o.Orderable.OrderableQuantity
-                |> Quantity.toValueUnitStringList None
+            let tme =
+                tme
+                |> Time.toValueUnitStringList (Some 2)
                 |> Seq.map snd
                 |> String.concat ""
 
+            let dq =
+                o
+                |> printItem 
+                    (fun i -> i.Dose |> Dose.get |> (fun (dq, _, _) -> dq))
+                    (VariableUnit.Quantity.toValueUnitStringList None)
+
+            let od =
+                o.Orderable.Dose
+                |> Dose.get
+                |> fun (q, _, _) ->
+                    q
+                    |> Quantity.toValueUnitStringList None
+                    |> Seq.map snd
+                    |> String.concat ""
 
             let dt =
                 o
-                |> printItmDose 
+                |> printItem 
                     (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
                     (VariableUnit.TotalAdjust.toValueUnitStringList None)
 
-            //if oq = "1.8 ml" then 
-            //    printfn "Oops:\n%A" o
+            let p =
+                sprintf "%s %s %s = (%s) in %s in %s %s"  
+                    (o.Orderable.Name |> Name.toString) fr dq dt od tme o.Route
+            let d =
+                o
+                |> printCmpQuantity
+                |> sprintf "%s" 
 
-            sprintf "%s %s %s = (%s) in %s" 
-                (o.Orderable.Name |> Name.toString) fr dq dt oq
+            (p, d)
 
 
         | Prescription.Process ->
-            o.Orderable.Name
-            |> Name.toString
-            |> sprintf "%s"  
+            let p =
+                o.Orderable.Name
+                |> Name.toString
+                |> sprintf "%s"  
+            p, ""
 
 
 // Creating a drug order
@@ -540,10 +588,9 @@ module DrugOrder =
                     |> List.map (mapToConstraint o)
 
                 o
-                |> Order.solveUnits
+                |> Order.solveUnits log
                 |> Order.solveConstraints log cs
                 |> fun o -> 
-                    printfn "---- running scenarios for"
                     Order.calcScenarios log o
 
 
@@ -1139,8 +1186,11 @@ let printScenarios v n sc =
     sc
     |> List.iteri (fun i o ->
         o
-        |> Order.printPrescription [n]
-        |> printfn "%i\t%s" (i + 1)
+        |> Order.printPrescription n
+        |> fun (p, d) ->
+            printfn "%i\t%s" (i + 1) p
+            printfn "  \t%s" d
+        
 
         if v then
             o
@@ -1195,7 +1245,7 @@ let printScenarios v n sc =
 |> DrugOrder.setAdjust "paracetamol" 10N
 //|> Order.printPrescriptions "paracetamol"
 |> DrugOrder.evaluate
-|> printScenarios false "paracetamol"
+|> printScenarios false ["paracetamol"]
 //|> List.iter (fun o ->
 //    o
 //    |> Order.toString
@@ -1269,11 +1319,7 @@ let printScenarios v n sc =
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
 //|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["sulfamethoxazol"; "trimethoprim"]
-    |> printfn "%i\t%s" (i + 1)
-)
+|> printScenarios false ["sulfamethoxazol"; "trimethoprim"]
 
 
 
@@ -1323,7 +1369,7 @@ let printScenarios v n sc =
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
 //|> List.length
-|> printScenarios false "paracetamol"
+|> printScenarios false ["paracetamol"]
 
 
 
@@ -1383,12 +1429,7 @@ let printScenarios v n sc =
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
 //|> List.length
-|> List.iteri (fun i o ->
-    o
-    |> Order.printPrescription ["sulfamethoxazol"; "trimethoprim"]
-    |> printfn "%i\t%s" (i + 1)
-)
-
+|> printScenarios false ["sulfamethoxazol"; "trimethoprim"]
 
 
 
@@ -1399,7 +1440,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "dopamin infusion"
         Quantities = [ 50N ]
-        Divisible = 10N
+        Divisible = 2N
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -1467,7 +1508,7 @@ let printScenarios v n sc =
 //|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios false "dopamin"
+|> printScenarios false ["dopamin"]
 
 
 
@@ -1547,7 +1588,7 @@ let printScenarios v n sc =
 //|> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios false "dopamin"
+|> printScenarios false ["dopamin"]
 
 
 
@@ -1630,12 +1671,12 @@ let printScenarios v n sc =
 //            MinConcentration = Some (1N)
             MaxConcentration = Some (2N)
             DoseCount = Some (2N)
-            MinTime = (Some (10N/60N))
+            MinTime = (Some (1N/2N))
             MaxTime = (Some 1N)
 
     }
 |> DrugOrder.evaluate
 //|> Order.calcScenarios2
-|> printScenarios false "gentamicin"
+|> printScenarios false ["gentamicin"]
 
 

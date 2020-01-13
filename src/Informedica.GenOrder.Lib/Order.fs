@@ -329,7 +329,7 @@ module Order =
     //    | None -> false
 
             
-    let solveUnits o =
+    let solveUnits log o =
         // return eqs 
         let toEql prod sum =
 
@@ -342,7 +342,7 @@ module Order =
         let eqs = toEql prod sum
     
         eqs
-        |> Solver.solveUnits
+        |> Solver.solveUnits log
         |> List.map (fun e ->
             match e with 
             | Solver.ProductEquation (vru, vrus)
