@@ -128,6 +128,10 @@ module Order =
     module Props = Informedica.GenSolver.Lib.Props
     module Quantity = VariableUnit.Quantity
     module Frequency = VariableUnit.Frequency
+    module Concentration = VariableUnit.Concentration
+    module Rate = VariableUnit.Rate
+    module Dose = VariableUnit.Dose
+    module DoseAdjust = VariableUnit.DoseAdjust
     module Time = VariableUnit.Time
     module Units = ValueUnit.Units
 
@@ -136,6 +140,8 @@ module Order =
     type Orderable = Orderable.Orderable
     type Prescription = Prescription.Prescription
     type StartStop = StartStop.StartStop
+
+    type Component = Orderable.Component.Component
 
     /// Models an order
     type Order = 
@@ -404,6 +410,282 @@ module Order =
             |> Logger.logInfo log
 
             o
+
+
+
+    let calcScenarios log (o : Order) =
+
+        let solve n v o =
+            try 
+                o
+                |> toEqs
+                |> function 
+                | (prod, sum) ->
+                    prod 
+                    |> List.map Solver.productEq
+                    |> List.append (sum |> List.map Solver.sumEq)
+
+                |> Solver.solve log None n (v |> Set.singleton |> Props.Vals)
+                |> fromEqs o
+                |> Some
+            with
+            | e -> 
+                e.ToString()
+                |> sprintf "could not solve %A: %A\n%s" v n 
+                |> failwith
+                None
+
+        let smallest o =
+            o
+            |> toEqs
+            |> function
+            | (vrus1, vrus2) ->
+                vrus1
+                |> List.append vrus2
+                |> List.collect id
+                |> List.filter (fun vru ->
+                    vru
+                    |> VariableUnit.getBaseValues
+                    |> Seq.length > 1
+                )
+            |> List.map (fun vru ->
+                vru.Variable.Name, vru |> VariableUnit.getUnitValues 
+            )
+            |> function 
+            | [] -> None
+            | xs ->
+                xs
+                |> List.sortBy (fun (_, vs) -> vs |> Seq.length)
+                |> List.tryHead
+
+        // To do add logger    
+        let rec calc os sc =
+        
+            match sc with
+            | None         -> 
+                os
+            | Some (n, vs) ->
+                let msg = 
+                    (vs |> Seq.map BigRational.toString |> String.concat ",")
+                    |> sprintf "scenario: %A, with %A" n
+
+                Logger.Scenario
+                |> Logger.createMessage msg
+                |> Logger.logInfo log
+
+                [
+                    for v in vs do
+                        for o in os do
+                            if o |> contains n v then
+                                Logger.ScenerioValue
+                                |> Logger.createMessage (o, v)
+                                |> Logger.logInfo log
+
+                                let o =
+                                    o
+                                    |> solve n v
+
+                                if o |> Option.isSome then 
+                                    o
+                                    |> Option.get
+
+                ]     
+                |> List.map (fun o ->
+                    o
+                    |> smallest
+                    |> calc [o]
+                )
+                |> List.collect id
+                |> List.distinct
+
+        o
+        |> smallest
+        |> calc [ o ]
+
+
+    let printPrescription sn (o : Order) =
+        let on = o.Orderable.Name |> Name.toString
+
+        let printItemConc (c : Component) =
+            c.Items
+            |> Seq.collect (fun i ->
+                i.ComponentConcentration
+                |> Concentration.toValueUnitStringList None
+                |> Seq.map (fun (_, s) ->
+                    i.Name
+                    |> Name.toString
+                    |> sprintf "%s %s" s
+                )
+            )
+            |> String.concat " + "
+
+
+        let printCmpQuantity o =
+            o.Orderable.Components
+            |> Seq.map (fun c ->
+                c.OrderableQuantity
+                |> Quantity.toValueUnitStringList None
+                |> Seq.map (fun (_, q) ->
+                    c 
+                    |> printItemConc
+                    |> sprintf "%s %s (%s)" q (c.Name |> Name.toString)
+                )
+                |> String.concat ""
+            ) |> String.concat " + "
+
+        let printOrderableDoseQuantity o =
+            o.Orderable.Dose
+            |> Dose.get
+            |> fun (qt, _, _) ->
+                qt
+                |> Quantity.toValueUnitStringList None
+                |> Seq.map snd
+                |> String.concat ""
+
+        let printItem get unt o =
+            o.Orderable.Components
+            |> Seq.collect (fun c ->
+                c.Items
+                |> Seq.collect (fun i ->
+                    let n = i.Name |> Name.toString
+                    if sn |> Seq.exists ((=) n) then
+                        i
+                        |> get
+                        |> unt 
+                        |> Seq.map snd
+                        |> fun xs ->
+                            if on |> String.startsWith n then
+                                xs 
+                                |>Seq.map (sprintf "%s")
+                            else
+                                xs 
+                                |> Seq.map (sprintf "%s %s" n)
+
+                    else Seq.empty
+                )
+            )
+            |> String.concat " + "
+
+
+        match o.Prescription with
+        | Prescription.Discontinuous fr ->
+            // frequencies
+            let fr =
+                fr
+                |> Frequency.toValueUnitStringList None
+                |> Seq.map snd
+                |> String.concat ";"
+
+            let dq =
+                o
+                |> printItem 
+                    (fun i -> i.Dose |> Dose.get |> (fun (dq, _, _) -> dq))
+                    (VariableUnit.Quantity.toValueUnitStringList None)
+
+            let dt =
+                o
+                |> printItem 
+                    (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
+                    (VariableUnit.TotalAdjust.toValueUnitStringList None)
+
+            let p =
+                sprintf "%s %s %s = (%s)" (o.Orderable.Name |> Name.toString) fr dq dt
+
+            let a =  
+                o 
+                |> printOrderableDoseQuantity
+                |> sprintf "%s %s" fr
+            let d = o |> printCmpQuantity |> sprintf "%s" 
+
+            p, a, d
+
+        | Prescription.Continuous ->
+            // infusion rate
+            let rt =
+                o.Orderable.Dose
+                |> Dose.get 
+                |> fun (_, _, dr) ->
+                    dr
+                    |> Rate.toValueUnitStringList None
+                    |> Seq.map snd
+                    |> String.concat ""
+
+            let oq =
+                o.Orderable.OrderableQuantity
+                |> Quantity.toValueUnitStringList None
+                |> Seq.map snd
+                |> String.concat ""
+
+            let it =
+                o
+                |> printItem
+                    (fun i -> i.OrderableQuantity)
+                    (Quantity.toValueUnitStringList None)
+
+            let dr =
+                o
+                |> printItem 
+                    (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, _, dr) -> dr))
+                    (VariableUnit.RateAdjust.toValueUnitStringList (Some 2))
+            let p =
+                sprintf "%s %s" (sn |> String.concat " + ") dr
+            let a =
+                sprintf "%s %s in %s, %s" (sn |> String.concat " + ") it oq rt
+
+            let d =
+                o
+                |> printCmpQuantity
+                |> sprintf "%s" 
+        
+            p, a, d
+
+        | Prescription.Timed (fr, tme) ->
+
+            // frequencies
+            let fr =
+                fr
+                |> Frequency.toValueUnitStringList None
+                |> Seq.map snd
+                |> String.concat ";"
+
+            let tme =
+                tme
+                |> Time.toValueUnitStringList (Some 2)
+                |> Seq.map snd
+                |> String.concat ""
+
+            let dq =
+                o
+                |> printItem 
+                    (fun i -> i.Dose |> Dose.get |> (fun (dq, _, _) -> dq))
+                    (VariableUnit.Quantity.toValueUnitStringList None)
+
+            let dt =
+                o
+                |> printItem 
+                    (fun i -> i.DoseAdjust |> DoseAdjust.get |> (fun (_, dt, _) -> dt))
+                    (VariableUnit.TotalAdjust.toValueUnitStringList None)
+
+            let p =
+                sprintf "%s %s %s = (%s) %s"  
+                    (o.Orderable.Name |> Name.toString) fr dq dt o.Route
+            let d =
+                o
+                |> printCmpQuantity
+                |> sprintf "%s" 
+
+            let a =  
+                sprintf "%s %s in %s" fr (o |> printOrderableDoseQuantity) tme
+
+            p, a, d
+
+
+        | Prescription.Process ->
+            let p =
+                o.Orderable.Name
+                |> Name.toString
+                |> sprintf "%s"  
+            p, "", ""
 
 
     module Dto =
