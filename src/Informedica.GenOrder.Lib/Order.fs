@@ -8,6 +8,9 @@ module Order =
 
     open Informedica.GenUtils.Lib.BCL
 
+    open Informedica.GenSolver.Lib.Types
+    open Types
+
     /// Contains literals used
     /// to generate `Variable` names
     module Literals =
@@ -20,45 +23,9 @@ module Order =
     /// to an `Order`
     module Mapping =
 
-        type Map =
-            | Freq
-            | Time
-            | ItemComponentQty
-            | ItemOrderableQty
-            | ItemComponentConc
-            | ItemOrderableConc
-            | ItemDoseQty
-            | ItemDoseTotal
-            | ItemDoseRate
-            | ItemDoseAdjustQtyAdjust
-            | ItemDoseAdjustTotalAdjust
-            | ItemDoseAdjustRateAdjust
-            | ComponentComponentQty
-            | ComponentOrderableQty
-            | ComponentOrderableCount
-            | ComponentOrderCount
-            | ComponentOrderableConc
-            | ComponentDoseQty
-            | ComponentDoseTotal
-            | ComponentDoseRate
-            | ComponentDoseAdjustQtyAdjust
-            | ComponentDoseAdjustTotalAdjust
-            | ComponentDoseAdjustRateAdjust
-            | OrderableOrderableQty
-            | OrderableOrderQty
-            | OrderableOrderCount
-            | OrderableDoseCount
-            | OrderableDoseQty
-            | OrderableDoseTotal
-            | OrderableDoseRate
-            | OrderableDoseAdjustQtyAdjust
-            | OrderableDoseAdjustTotalAdjust
-            | OrderableDoseAdjustRateAdjust
-            | AdjustQty
-
         let map = function
-            | Freq -> "Freq"
-            | Time -> "Time"
+            | PresFreq -> "Freq"
+            | PresTime -> "Time"
             | ItemComponentQty -> "Item.Component.Qty"
             | ItemOrderableQty -> "Item.Orderable.Qty"
             | ItemComponentConc -> "Item.Component.Conc"
@@ -90,7 +57,7 @@ module Order =
             | OrderableDoseAdjustQtyAdjust -> "Orderable.DoseAdjust.QtyAdjust"
             | OrderableDoseAdjustTotalAdjust -> "Orderable.DoseAdjust.TotalAdjust"
             | OrderableDoseAdjustRateAdjust -> "Orderable.DoseAdjust.RateAdjust"
-            | AdjustQty -> "Adjust.Qty"
+            | OrderAdjustQty -> "Adjust.Qty"
 
 
 
@@ -99,13 +66,6 @@ module Order =
     /// of an `Order`
     module StartStop =
         
-        open System
-
-        /// There is always a `Start` or
-        /// both a `StartStop`
-        type StartStop =
-            | Start of DateTime
-            | StartStop of DateTime * DateTime
 
         let toString stst =
             match stst with
@@ -134,31 +94,6 @@ module Order =
     module DoseAdjust = VariableUnit.DoseAdjust
     module Time = VariableUnit.Time
     module Units = ValueUnit.Units
-
-    type Id = Id.Id
-    type Quantity = Quantity.Quantity
-    type Orderable = Orderable.Orderable
-    type Prescription = Prescription.Prescription
-    type StartStop = StartStop.StartStop
-
-    type Component = Orderable.Component.Component
-
-    /// Models an order
-    type Order = 
-        {
-            /// The id of an order
-            Id: Id
-            /// Used to adjust doses
-            Adjust: Quantity
-            /// That what can be ordered
-            Orderable: Orderable
-            /// How the orderable is prescribed
-            Prescription: Prescription
-            /// The route of administration of the order
-            Route: string // Route.T
-            /// The start stop date of the order
-            StartStop: StartStop
-        }
 
 
     /// Apply `f` to `Order` `ord`
@@ -222,8 +157,8 @@ module Order =
         let dls = "."
 
         match m with
-        | Mapping.Freq 
-        | Mapping.AdjustQty ->
+        | PresFreq 
+        | OrderAdjustQty ->
             [ (o |> getName) + dls + (m |> Mapping.map)] |> Name.create
         | _ -> 
             [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
@@ -275,8 +210,8 @@ module Order =
 
         let n =
             match m with
-            | Mapping.Freq 
-            | Mapping.AdjustQty ->
+            | PresFreq 
+            | OrderAdjustQty ->
                 [ (o |> getName) + dls + (m |> Mapping.map)] |> Name.create
             | _ -> 
                 [ (o.Id |> Id.toString) + dls + n + dls + (m |> Mapping.map)] 
@@ -351,8 +286,8 @@ module Order =
         |> Solver.solveUnits log
         |> List.map (fun e ->
             match e with 
-            | Solver.ProductEquation (vru, vrus)
-            | Solver.SumEquation (vru, vrus) -> vru::vrus
+            | OrderProductEquation (vru, vrus)
+            | OrderSumEquation     (vru, vrus) -> vru::vrus
         )
         |> fromEqs o
         
@@ -383,9 +318,9 @@ module Order =
         |> Solver.solve log lim n p
         |> fromEqs o
         |> fun o ->
-            Logger.OrderSolved
-            |> Logger.createMessage o
-            |> Logger.logInfo log
+            o
+            |> Logging.OrderSolved
+            |> Logging.logInfo log
 
             o
 
@@ -405,9 +340,9 @@ module Order =
         |> Solver.solveConstraints log cs
         |> fromEqs o
         |> fun o ->
-            Logger.OrderWithConstraintsSolved
-            |> Logger.createMessage o
-            |> Logger.logInfo log
+            (o, cs)
+            |> Logging.OrderConstraintsSolved
+            |> Logging.logInfo log
 
             o
 
@@ -425,7 +360,7 @@ module Order =
                     |> List.map Solver.productEq
                     |> List.append (sum |> List.map Solver.sumEq)
 
-                |> Solver.solve log None n (v |> Set.singleton |> Props.Vals)
+                |> Solver.solve log None n (v |> Set.singleton |> ValsProp)
                 |> fromEqs o
                 |> Some
             with
@@ -469,17 +404,17 @@ module Order =
                     (vs |> Seq.map BigRational.toString |> String.concat ",")
                     |> sprintf "scenario: %A, with %A" n
 
-                Logger.Scenario
-                |> Logger.createMessage msg
-                |> Logger.logInfo log
+                msg
+                |> Logging.OrderScenario
+                |> Logging.logInfo log
 
                 [
                     for v in vs do
                         for o in os do
                             if o |> contains n v then
-                                Logger.ScenerioValue
-                                |> Logger.createMessage (o, v)
-                                |> Logger.logInfo log
+                                (o, n, v)
+                                |> Logging.OrderScenerioWithNameValue
+                                |> Logging.logInfo log
 
                                 let o =
                                     o
@@ -653,6 +588,15 @@ module Order =
                 |> Time.toValueUnitStringList (Some 2)
                 |> Seq.map snd
                 |> String.concat ""
+            // infusion rate
+            let rt =
+                o.Orderable.Dose
+                |> Dose.get 
+                |> fun (_, _, dr) ->
+                    dr
+                    |> Rate.toValueUnitStringList None
+                    |> Seq.map snd
+                    |> String.concat ""
 
             let dq =
                 o
@@ -675,7 +619,7 @@ module Order =
                 |> sprintf "%s" 
 
             let a =  
-                sprintf "%s %s in %s" fr (o |> printOrderableDoseQuantity) tme
+                sprintf "%s %s in %s, %s" fr (o |> printOrderableDoseQuantity) tme rt
 
             p, a, d
 

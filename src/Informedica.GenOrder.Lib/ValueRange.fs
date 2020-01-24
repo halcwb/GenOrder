@@ -36,13 +36,13 @@ module ValueRange =
 
             let fMinIncr (min, incr)  = 
                 let incl, min = min |> Minimum.minToBoolBigRational
-                let incr = incr |> Increment.incrToValue |> Set.toList
+                let incr = incr |> Increment.incrToBigRationalSet |> Set.toList
     
                 print (some min) incl incr None false
 
             let fIncrMax (incr, max)  = 
                 let incl, max = max |> Maximum.maxToBoolBigRational
-                let incr = incr |> Increment.incrToValue |> Set.toList
+                let incr = incr |> Increment.incrToBigRationalSet |> Set.toList
     
                 print None false incr (some max) incl
 
@@ -55,7 +55,7 @@ module ValueRange =
             let fMinIncrMax (min, incr, max) =
                 let maxincl, min = min |> Minimum.minToBoolBigRational
                 let minincl, max = max |> Maximum.maxToBoolBigRational
-                let incr = incr |> Increment.incrToValue |> Set.toList
+                let incr = incr |> Increment.incrToBigRationalSet |> Set.toList
 
                 print (some min) minincl incr (some max) maxincl
 

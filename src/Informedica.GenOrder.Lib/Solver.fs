@@ -7,30 +7,21 @@ module Solver =
 
     open Informedica.GenUtils.Lib
     open Informedica.GenUnits.Lib
-
-    module N = Informedica.GenSolver.Lib.Variable.Name
-    module SV = Informedica.GenSolver.Lib.Api
-    module VR = Informedica.GenSolver.Lib.Variable
-    module VL = VR.ValueRange
-    module EQ = Informedica.GenSolver.Lib.Equation
-
-    module Props = Informedica.GenSolver.Lib.Props
-    module Constraint = Informedica.GenSolver.Lib.Constraint
-
-    type Constraint = Constraint.Constraint
-
-    type VariableUnit = VariableUnit.VariableUnit
+    open Informedica.GenSolver.Lib
     
-    type Equation =
-        | ProductEquation of VariableUnit * VariableUnit list
-        | SumEquation of VariableUnit * VariableUnit list
+    open Types
+
+    module Name = Variable.Name
+    module Api = Api
+    module ValueRange = Variable.ValueRange
+
 
     let productEq = function
-    | h::tail -> (h, tail) |> ProductEquation
+    | h::tail -> (h, tail) |> OrderProductEquation
     | _ -> "not a valid product equation" |> failwith
 
     let sumEq = function
-    | h::tail -> (h, tail) |> SumEquation
+    | h::tail -> (h, tail) |> OrderSumEquation
     | _ -> "not a valid sum equation" |> failwith
     
     [<Literal>]
@@ -56,26 +47,26 @@ module Solver =
 
     /// Create a `ProdEquation` from `VariableUnit`s
     let toProdEq succ fail y xs = 
-        toEq (EQ.createProductEq succ fail) y xs
+        toEq (Equation.createProductEq succ fail) y xs
 
     /// Create a `SumEquation` from `VariableUnit`s
     let toSumEq succ fail y xs =
-        toEq (EQ.createSumEq succ fail) y xs
+        toEq (Equation.createSumEq succ fail) y xs
 
     let mapToSolverEqs =
         List.fold (fun acc eq ->
             match eq with 
-            | ProductEquation (y, xs) -> toProdEq id (string >> exn >> raise) y xs
-            | SumEquation (y, xs)     -> toSumEq id  (string >> exn >> raise) y xs
+            | OrderProductEquation (y, xs) -> toProdEq id (string >> exn >> raise) y xs
+            | OrderSumEquation     (y, xs) -> toSumEq id  (string >> exn >> raise) y xs
             |> List.singleton
             |> List.append acc
         ) []
 
     
     let replaceUnit log n u eqs =
-        Logger.SolverReplacingUnits
-        |> Logger.createMessage (n, u)
-        |> Logger.logInfo log
+        (n, u)
+        |> Logging.SolverReplaceUnit
+        |> Logging.logInfo log
 
         let repl c vru vrus =
             if vru |> VariableUnit.getName = n then
@@ -84,7 +75,9 @@ module Solver =
                 vru,
                 vrus
                 |> List.map (fun vru ->
-                    if vru |> VariableUnit.getName = n then vru |> VariableUnit.setUnit u
+                    if vru |> VariableUnit.getName = n then 
+                        vru 
+                        |> VariableUnit.setUnit u
                     else vru
                 )
             |> c
@@ -92,10 +85,10 @@ module Solver =
         eqs
         |> List.map (fun e ->
             match e with
-            | SumEquation (vru, vrus) ->
-                repl SumEquation vru vrus
-            | ProductEquation (vru, vrus) ->
-                repl ProductEquation vru vrus
+            | OrderSumEquation (vru, vrus) ->
+                repl OrderSumEquation vru vrus
+            | OrderProductEquation (vru, vrus) ->
+                repl OrderProductEquation vru vrus
         )
 
 
@@ -111,7 +104,7 @@ module Solver =
             | []      -> acc
             | h::tail ->
                 match h with
-                | ProductEquation (y, xs) ->
+                | OrderProductEquation (y, xs) ->
                     if y::xs  |> List.hasExactlyOne noUnit then
                         if y |> noUnit then
                             let y =
@@ -121,7 +114,7 @@ module Solver =
                                         |> List.map VariableUnit.getUnit
                                         |> List.reduce (ValueUnit.calcUnit (*))
                                 }
-                            let h = (y, xs) |> ProductEquation
+                            let h = (y, xs) |> OrderProductEquation
                             // start from scratch
                             h::tail 
                             |> List.append acc
@@ -133,7 +126,8 @@ module Solver =
                                 // actually y = x
                                 if xs |> List.length = 1 then
                                     let x = xs.Head
-                                    [ x |> VariableUnit.setUnit y.Unit ], Some x.Variable.Name, Some y.Unit
+                                    [ x |> VariableUnit.setUnit y.Unit ], 
+                                    Some x.Variable.Name, Some y.Unit
                                 // y = x1 * x2 ... so 
                                 // the x without a unit = y / multiple of all xs with units, i.e. (x1 * x2 .. ) 
                                 else
@@ -148,14 +142,15 @@ module Solver =
                                                         |> List.filter hasUnit
                                                         |> List.map VariableUnit.getUnit
                                                         |> List.reduce (ValueUnit.calcUnit (*))
-                                                        |> ValueUnit.calcUnit (/) (y |> VariableUnit.getUnit)
+                                                        |> ValueUnit.calcUnit (/) 
+                                                            (y |> VariableUnit.getUnit)
                                                 }
                                             (x::xs', (Some x.Variable.Name), (Some x.Unit))
                                         else 
                                             (x::xs', n, u)
                                     ) ([], None, None)
 
-                            let h = (y, xs) |> ProductEquation
+                            let h = (y, xs) |> OrderProductEquation
                             // start from scratch
                             h::tail 
                             |> List.append acc
@@ -165,7 +160,7 @@ module Solver =
                     else
                         solve (h::acc) tail
                 
-                | SumEquation (y, xs) ->
+                | OrderSumEquation (y, xs) ->
                     if y::xs |> List.forall hasUnit ||
                        y::xs |> List.forall noUnit then 
                         solve (h::acc) tail
@@ -181,8 +176,9 @@ module Solver =
                             y::xs 
                             |> List.find hasUnit
                         // start from scratch
-                        ({ y with Unit = x.Unit }, xs |> List.map (VariableUnit.setUnit x.Unit))
-                        |> SumEquation
+                        ({ y with Unit = x.Unit }, 
+                         xs |> List.map (VariableUnit.setUnit x.Unit))
+                        |> OrderSumEquation
                         |> List.singleton
                         |> List.append tail
                         |> List.append acc
@@ -201,8 +197,8 @@ module Solver =
     let toVariableUnits =
         List.map (fun eq ->
             match eq with
-            | ProductEquation (y, xs) 
-            | SumEquation     (y, xs) -> y::xs
+            | OrderProductEquation (y, xs) 
+            | OrderSumEquation     (y, xs) -> y::xs
         )
 
 
@@ -230,7 +226,7 @@ module Solver =
         let vrusl = orig |> toVariableUnits
         let vars = 
             eqs
-            |> List.collect EQ.toVars 
+            |> List.collect Equation.toVars 
             |> List.distinct
 
         vrusl
@@ -254,55 +250,34 @@ module Solver =
 
     let setVals lim n p eqs =
         eqs
-        |> SV.setVariableValues lim n p
+        |> Api.setVariableValues lim n p
          
 
     let filterEqsWithUnits = 
         List.filter (fun eq ->
             match eq with
-            | ProductEquation(y, xs) 
-            | SumEquation (y, xs) ->
+            | OrderProductEquation (y, xs) 
+            | OrderSumEquation     (y, xs) ->
                 y::xs |> List.forall VariableUnit.hasUnit       
         )
 
 
-    let propToBase n eqs = function
-    | Props.Vals vs -> 
-        vs 
-        |> toBase n eqs 
-        |> Props.Vals
-    | Props.Increment vs ->
-        vs 
-        |> toBase n eqs 
-        |> Props.Increment
-    | Props.MinIncl v ->
-        v
-        |> Set.singleton
-        |> toBase n eqs
-        |> Set.toSeq
-        |> Seq.head
-        |> Props.MinIncl
-    | Props.MinExcl v ->
-        v
-        |> Set.singleton
-        |> toBase n eqs
-        |> Set.toSeq
-        |> Seq.head
-        |> Props.MinExcl
-    | Props.MaxIncl v ->
-        v
-        |> Set.singleton
-        |> toBase n eqs
-        |> Set.toSeq
-        |> Seq.head
-        |> Props.MaxIncl
-    | Props.MaxExcl v ->
-        v
-        |> Set.singleton
-        |> toBase n eqs
-        |> Set.toSeq
-        |> Seq.head
-        |> Props.MaxExcl 
+    let propToBase n eqs p = 
+        let setToBase c vs = vs |> toBase n eqs |> c
+        let valToBase c v = 
+            v
+            |> Set.singleton
+            |> toBase n eqs
+            |> Seq.head 
+            |> c
+
+        match p with
+        | ValsProp vs   -> vs |> setToBase ValsProp
+        | IncrProp vs   -> vs |> setToBase IncrProp
+        | MinInclProp v -> v  |> valToBase MinInclProp
+        | MinExclProp v -> v  |> valToBase MinExclProp
+        | MaxInclProp v -> v  |> valToBase MaxInclProp
+        | MaxExclProp v -> v  |> valToBase MaxExclProp
 
 
         
@@ -316,7 +291,7 @@ module Solver =
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> SV.solve sortQue log lim n (p |> toBase)
+        |> Api.solve sortQue log lim n (p |> toBase)
         |> mapFromSolverEqs eqs
 
 
@@ -342,7 +317,7 @@ module Solver =
         // use only eqs with all vrus have units
         |> filterEqsWithUnits
         |> mapToSolverEqs
-        |> SV.solveConstraints log cs
+        |> Api.solveConstraints log cs
         |> mapFromSolverEqs eqs
 
         

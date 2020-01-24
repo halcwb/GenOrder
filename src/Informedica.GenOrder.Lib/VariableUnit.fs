@@ -8,6 +8,9 @@ module VariableUnit =
     open Informedica.GenUtils.Lib
     open Informedica.GenUtils.Lib.BCL
     open Informedica.GenUnits.Lib
+
+    open Informedica.GenSolver.Lib.Types
+    open Types
     open WrappedString
     
     module Variable    = Informedica.GenSolver.Lib.Variable
@@ -20,23 +23,8 @@ module VariableUnit =
     module VariableDto = Informedica.GenSolver.Lib.Variable.Dto
     module Units = ValueUnit.Units
 
-    type Variable = Variable.Variable
     type Unit = ValueUnit.Unit
 
-
-    /// A `VariableUnit` is the combination of 
-    /// an `Informedica.GenSolver.Lib.Variable` with
-    /// an `Informedica.GenUnits.Lib.Unit`
-    /// The `Variable` stores the base values according
-    /// to the `Unit`
-    type VariableUnit =
-        {
-            /// Stores the values/range
-            Variable:  Variable
-            /// Stores the unit group
-            Unit: Unit
-        }  
-             
 
     /// Create a new `VariableUnit` with
     /// `Name` **nm** and `Unit` **un**
@@ -49,7 +37,7 @@ module VariableUnit =
     /// Create a `VariableUnit` with preset values
     let create n vs min incr max un =
 
-        ValueRange.create false vs min incr max
+        ValueRange.create vs min incr max
         |> function
         | vlr ->
             let var = Variable.create id n vlr        
@@ -128,7 +116,7 @@ module VariableUnit =
         { vru with
             Variable = vru.Variable |> Variable.setName nm }   
            
-    let setUnit u vru =
+    let setUnit u vru : VariableUnit =
         { vru with Unit = u }
 
     let valueToBase v vru =
@@ -152,15 +140,15 @@ module VariableUnit =
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange false vru.Variable }
+                    |> Variable.setValueRange vru.Variable }
 
 
     let setMinIncl =
-        setValue (Minimum.createMin true) (ValueRange.setMin false)
+        setValue (Minimum.createMin true) ValueRange.setMin
         
 
     let setMaxIncl =
-        setValue (Maximum.createMax true) (ValueRange.setMax false)
+        setValue (Maximum.createMax true) ValueRange.setMax
 
     let setIncr vs vru =
 
@@ -173,12 +161,12 @@ module VariableUnit =
         vru
         |> getVar
         |> Variable.getValueRange
-        |> ValueRange.setIncr false incr
+        |> ValueRange.setIncr incr
         |> fun vr ->
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange false vru.Variable }
+                    |> Variable.setValueRange vru.Variable }
 
 
     let setVals vs vru =
@@ -190,12 +178,12 @@ module VariableUnit =
         vru
         |> getVar
         |> Variable.getValueRange
-        |> ValueRange.setValues false vs
+        |> ValueRange.setValues vs
         |> fun vr ->
             { vru with 
                 Variable = 
                     vr 
-                    |> Variable.setValueRange false vru.Variable }
+                    |> Variable.setValueRange vru.Variable }
 
 
     /// Get the string representation of a `VariableUnit` **vru**
@@ -295,7 +283,6 @@ module VariableUnit =
      
         module Name = Informedica.GenSolver.Lib.Variable.Name
 
-        type Name = Name.Name
 
         /// Create a `Name` from a list of strings that 
         let create ns = ns |> String.concat "." |> Name.createExc
@@ -310,12 +297,31 @@ module VariableUnit =
         ValueUnit.calcUnit op u1 u2
         |> createNew ("result" |> Variable.Name.createExc)
 
-    type VariableUnit with
+    type VariableUnitCalc =
+         | Mult 
+         | Div
+         | Add 
+         | Subtr with
+        
+        static member (?<-) (op, vru1, vru2) =
+            match op with
+            | Mult  -> calcUnit (*) (vru1, vru2)
+            | Div   -> calcUnit (/) (vru1, vru2)
+            | Add   -> calcUnit (+) (vru1, vru2)
+            | Subtr -> calcUnit (-) (vru1, vru2)
 
-        static member (*) (vru1, vru2) = calcUnit (*) (vru1, vru2)
-        static member (/) (vru1, vru2) = calcUnit (/) (vru1, vru2)
-        static member (+) (vru1, vru2) = calcUnit (+) (vru1, vru2)
-        static member (-) (vru1, vru2) = calcUnit (-) (vru1, vru2)
+
+    module Operators =
+        
+        let inline (^*) vru1 vru2 = (?<-) Mult vru1 vru2
+
+        let inline (^/) vru1 vru2 = (?<-) Mult vru1 vru2
+
+        let inline (^+) vru1 vru2 = (?<-) Mult vru1 vru2
+
+        let inline (^-) vru1 vru2 = (?<-) Mult vru1 vru2
+
+
 
     /// Type and functions to handle the `Dto` 
     /// data transfer type for a `VariableUnit`
@@ -379,7 +385,7 @@ module VariableUnit =
 
             create n vals min incr max un
 
-        let toDto vu =
+        let toDto (vu : VariableUnit) =
             let toUnit = 
                 ValueUnit.create vu.Unit
                 >> ValueUnit.toUnit
@@ -395,7 +401,7 @@ module VariableUnit =
                 |> function 
                 | Some m -> 
                     m 
-                    |> Minimum.minToValue
+                    |> Minimum.minToBigRational
                     |> toUnit
                     |> Some, m |> Minimum.isMinIncl
                 | None -> None, false
@@ -405,7 +411,7 @@ module VariableUnit =
                 |> function 
                 | Some m -> 
                     m 
-                    |> Maximum.maxToValue
+                    |> Maximum.maxToBigRational
                     |> toUnit
                     |> Some, 
                     m |> Maximum.isMaxIncl
@@ -432,7 +438,7 @@ module VariableUnit =
                 | None -> []
                 | Some i -> 
                     i
-                    |> Increment.incrToValue 
+                    |> Increment.incrToBigRationalSet 
                     |> Set.toList
                     |> List.map toUnit
 
@@ -449,9 +455,6 @@ module VariableUnit =
 
         /// String representation of the type
         let name = "Freq"
-
-        /// Type that represents a frequency
-        type Frequency = Frequency of VariableUnit
 
         /// Turn `Frequency` in a `VariableUnit`
         let toVarUnt (Frequency freq) = freq
@@ -506,9 +509,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "Time"
 
-        /// Type that represents a time
-        type Time = Time of VariableUnit
-
         /// Turn `Time` in a `VariableUnit`
         let toVarUnt (Time time) = time
 
@@ -557,8 +557,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "Count" 
 
-        /// Type that represents a count
-        type Count = Count of VariableUnit
 
         /// Turn `Count` in a `VariableUnit`
         let toVarUnt (Count qty) = qty
@@ -605,8 +603,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "Qty" 
 
-        /// Type that represents a quantity
-        type Quantity = Quantity of VariableUnit
 
         /// Turn `Quantity` in a `VariableUnit`
         let toVarUnt (Quantity qty) = qty
@@ -664,8 +660,6 @@ module VariableUnit =
         /// String representation of the type of the type
         let name = "Total" 
 
-        /// Type that represents a total
-        type Total = Total of VariableUnit
 
         /// Turn `Total` in a `VariableUnit`
         let toVarUnt (Total tot) = tot
@@ -729,8 +723,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "Rate" 
 
-        /// Type that represents a rate
-        type Rate = Rate of VariableUnit
 
         /// Turn `Rate` in a `VariableUnit`
         let toVarUnt (Rate rate) = rate
@@ -795,8 +787,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "Conc" 
 
-        /// Type that represents a concentration
-        type Concentration = Concentration of VariableUnit
 
         /// Turn `Concentration` in a `VariableUnit`
         let toVarUnt (Concentration conc) = conc
@@ -856,8 +846,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "QtyAdjust"
 
-        /// Type that represents a adjusted quantity
-        type QuantityAdjust = QuantityAdjust of VariableUnit
 
         /// Turn `QuantityAdjust` in a `VariableUnit`
         let toVarUnt (QuantityAdjust qty) = qty
@@ -922,8 +910,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "TotalAdjust" 
 
-        /// Type that represents a adjusted total
-        type TotalAdjust = TotalAdjust of VariableUnit
 
         /// Turn `TotalAdjust` in a `VariableUnit`
         let toVarUnt (TotalAdjust tot) = tot
@@ -991,8 +977,6 @@ module VariableUnit =
         /// String representation of the type
         let name = "RateAdjust" 
 
-        /// Type that represents a adjusted rate
-        type RateAdjust = RateAdjust of VariableUnit
 
         /// Turn `RateAdjust` in a `VariableUnit`
         let toVarUnt (RateAdjust rate) = rate
@@ -1064,8 +1048,6 @@ module VariableUnit =
         module TL = Total
         module RT = Rate
 
-        /// Type that represents a dose quantity, total and rate
-        type Dose = Dose of QT.Quantity * TL.Total * RT.Rate
 
         /// Create a `Dose` 
         let create qty tot rte = (qty, tot, rte) |> Dose
@@ -1088,16 +1070,16 @@ module VariableUnit =
             >> (fun (q, t, r) -> q |> Dto.toDto, t |> Dto.toDto, r |> Dto.toDto)
 
         let fromDto (q, t, r) =
-            (q |> Dto.fromDto |> QT.Quantity ,
-             t |> Dto.fromDto |> TL.Total ,
-             r |> Dto.fromDto |> RT.Rate) |> Dose
+            (q |> Dto.fromDto |> Quantity ,
+             t |> Dto.fromDto |> Total ,
+             r |> Dto.fromDto |> Rate) |> Dose
 
         /// Set a `Dose` with a quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
         let fromVar eqs (Dose(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.Quantity eqs qty
-            let tot = fromVar TL.toVarUnt TL.Total    eqs tot
-            let rte = fromVar RT.toVarUnt RT.Rate     eqs rte
+            let qty = fromVar QT.toVarUnt Quantity eqs qty
+            let tot = fromVar TL.toVarUnt Total    eqs tot
+            let rte = fromVar RT.toVarUnt Rate     eqs rte
             (qty, tot, rte) |> Dose
 
         /// Create a `Dose` with name **n**
@@ -1146,8 +1128,6 @@ module VariableUnit =
         module TL = TotalAdjust
         module RT = RateAdjust
 
-        /// Type that represents an adjusted dose quantity, total and rate
-        type DoseAdjust = DoseAdjust of QT.QuantityAdjust * TL.TotalAdjust * RT.RateAdjust
 
         /// Create a `DoseAdjust` 
         let create qty tot rte = (qty, tot, rte) |> DoseAdjust
@@ -1169,16 +1149,16 @@ module VariableUnit =
             >> (fun (q, t, r) -> q |> Dto.toDto, t |> Dto.toDto, r |> Dto.toDto)
 
         let fromDto (q, t, r) =
-            (q |> Dto.fromDto |> QT.QuantityAdjust ,
-             t |> Dto.fromDto |> TL.TotalAdjust ,
-             r |> Dto.fromDto |> RT.RateAdjust) |> DoseAdjust
+            (q |> Dto.fromDto |> QuantityAdjust ,
+             t |> Dto.fromDto |> TotalAdjust ,
+             r |> Dto.fromDto |> RateAdjust) |> DoseAdjust
 
         /// Set a `DoseAdjust` with an adjusted quantity, total and rate `Variable` 
         /// in a list of `Variable` lists
         let fromVar eqs (DoseAdjust(qty, tot, rte)) = 
-            let qty = fromVar QT.toVarUnt QT.QuantityAdjust eqs qty
-            let tot = fromVar TL.toVarUnt TL.TotalAdjust    eqs tot
-            let rte = fromVar RT.toVarUnt RT.RateAdjust     eqs rte
+            let qty = fromVar QT.toVarUnt QuantityAdjust eqs qty
+            let tot = fromVar TL.toVarUnt TotalAdjust    eqs tot
+            let rte = fromVar RT.toVarUnt RateAdjust     eqs rte
             (qty, tot, rte) |> DoseAdjust
 
         /// Create a `DoseAdjust` with name **n**

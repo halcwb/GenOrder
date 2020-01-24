@@ -19,7 +19,7 @@ module ValueUnit =
         |> ValueUnit.toBase
 
     let unitToString = 
-        ValueUnit.Units.toString Units.Dutch Units.Short
+        ValueUnit.Units.toString Units.English Units.Short
 
     let unitFromString s =
         if s |> String.isNullOrWhiteSpace then None

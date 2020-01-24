@@ -4,11 +4,11 @@
 /// value primitives
 module WrappedString =
 
+    open Types
+
     /// Type and functions that 
     /// deal with an identifier
     module Id = 
-
-        type Id = Id of string
 
         let create s = s |> Id
 
@@ -20,8 +20,8 @@ module WrappedString =
     module Name =
         
         open Informedica.GenSolver.Lib
+        open Informedica.GenSolver.Lib.Types
         
-        type Name = Variable.Name.Name
         module Name = Variable.Name
 
         /// Create a `Name` from a list of strings that 

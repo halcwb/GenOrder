@@ -1,19 +1,23 @@
 ﻿
+
 #I __SOURCE_DIRECTORY__
 
 #load "../../../.paket/load/netstandard2.1/main.group.fsx"
+#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Types.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Utils.fs"
-#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Logger.fs"
+#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Logging.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Variable.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Equation.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Solver.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Constraint.fs"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Api.fs"
+#load "../../../../GenSolver/src/Informedica.GenSolver.Lib/SolverLogging.fs"
 
+#load "../Types.fs"
 #load "../DateTime.fs"
-#load "../WrappedString.fs"
 #load "../List.fs"
-#load "../Logger.fs"
+#load "../Logging.fs"
+#load "../WrappedString.fs"
 #load "../ValueUnit.fs"
 #load "../ValueRange.fs"
 #load "../VariableUnit.fs"
@@ -23,35 +27,168 @@
 #load "../Order.fs"
 #load "../DrugOrder.fs"
 
+
 #time
 
+open System
+open System.Diagnostics
 open MathNet.Numerics
 
 open Informedica.GenUnits.Lib
 open Informedica.GenOrder.Lib
 
+open Types
+
 module Units = ValueUnit.Units
 module DrugConstraint = DrugOrder.DrugConstraint
+module Quantity = VariableUnit.Quantity
+
+module SolverLogging = Informedica.GenSolver.Lib.SolverLogging
+
+type Logger = Informedica.GenSolver.Lib.Types.Logging.Logger
+type SolverMessage = Informedica.GenSolver.Lib.Types.Logging.Message
+type OrderMessage = Informedica.GenOrder.Lib.Types.Logging.Message
 
 
-let printScenarios v n sc =
-    printfn "\n\n=== SCENARIOS ==="
+type Agent<'Msg> = MailboxProcessor<'Msg>
+type IMessage = Informedica.GenSolver.Lib.Types.Logging.IMessage
+type Level = Informedica.GenSolver.Lib.Types.Logging.Level
+
+
+let printOrderMsg = function
+| Logging.SolverReplaceUnit (n, u) -> ""
+| Logging.OrderSolved o -> ""
+| Logging.OrderConstraintsSolved (o, cs) -> ""
+| Logging.OrderScenario s -> ""
+| Logging.OrderScenerioWithNameValue (o, n, br) -> ""
+
+
+let printMsg (msg : IMessage) = 
+    match msg with
+    | :? SolverMessage as m -> 
+        m 
+        |> SolverLogging.printMsg
+    | :? OrderMessage  as m ->
+        match m with
+        | Logging.OrderConstraintsSolved (o, cs) ->
+            o
+            |> Order.toString
+            |> String.concat "\n"
+            |> sprintf "=== Order constraints solved ===\n%s"
+        | _ -> sprintf ""
+    | _ -> 
+        sprintf ""
+
+
+type Message =  
+    | Start
+    | Received of  (Level * IMessage)
+    | Report
+
+
+type OrderLogger =
+    {
+        Start : unit -> unit
+        Logger: Logger
+        Report: unit -> unit
+    }
+
+
+let logger  =
+
+    let loggerAgent : Agent<Message> = 
+        Agent.Start <| fun inbox ->
+            let msgs = ResizeArray<(float * Level * IMessage)>()
+
+            let rec loop (timer : Stopwatch) msgs =
+                async {
+                    let! msg = inbox.Receive ()
+
+                    match msg with
+                    | Start -> 
+                        let timer = Stopwatch.StartNew()
+                        return! 
+                            ResizeArray<(float * Level * IMessage)>()
+                            |> loop timer
+
+                    | Received (l, m) -> 
+                        msgs.Add(timer.Elapsed.TotalSeconds, l, m)
+                        return! loop timer msgs
+
+                    | Report ->
+                        printfn "=== Start Report ===\n"
+                        msgs 
+                        |> Seq.length
+                        |> printfn "Total messages received: %i"
+                        
+                        msgs 
+                        |> Seq.iteri (fun i (t, l, m) ->
+                            m
+                            |> printMsg
+                            |> function 
+                            | s when s |> String.IsNullOrEmpty -> ()
+                            | s -> printfn "%i. %f: %A\n%s" i t l s
+                        )
+                        printfn "\n"
+                        
+                        let timer = Stopwatch.StartNew()
+                        return! 
+                            ResizeArray<(float * Level * IMessage)>()
+                            |> loop timer 
+                }
+            
+            let timer = Stopwatch.StartNew()
+            loop timer msgs
+        
+    {
+        Start = 
+            fun () ->
+                Start
+                |> loggerAgent.Post
+        Logger = {
+            Log =
+                fun level msg ->
+                    (level, msg)
+                    |> Received
+                    |> loggerAgent.Post 
+        } 
+        Report = 
+            fun _ ->
+                Report
+                |> loggerAgent.Post        
+    }
+
+
+let printScenarios v n (sc : Order list) =
+    let w =
+        match sc with 
+        | h::_ -> 
+            h.Adjust
+            |> Quantity.toValueUnitStringList None
+            |> Seq.map snd
+            |> Seq.head
+        | _ -> ""
+
+    printfn "\n\n=== SCENARIOS for Weight: %s ===" w
     sc
     |> List.iteri (fun i o ->
         o
         |> Order.printPrescription n
         |> fun (p, a, d) ->
-            printfn "%i\tvoorschrift:\t%s" (i + 1) p
-            printfn "  \ttoediening:\t\t%s" a
-            printfn "  \tbereiding:\t\t%s" d
+            printfn "%i\tprescription:\t%s" (i + 1) p
+            printfn "  \tdispensing:\t\t%s" a
+            printfn "  \tpreparation:\t%s" d
         
         if v then
             o
             |> Order.toString
             |> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
+
+            printfn "\n"
     )
 
 
+logger.Start ()
 
 // Paracetamol supp
 {
@@ -83,28 +220,27 @@ let printScenarios v n sc =
         TimeUnit = "day"
         Shape = "supp"
         Route = "rect"
-        OrderType = DrugOrder.OrderType.Discontinuous
+        OrderType = DiscontinuousOrder
 }
 |> DrugOrder.create
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "paracetamol"
-            Frequencies = [ 2N .. 4N ]
+            Frequencies = [ 2N..4N ]
             SubstanceName = "paracetamol"
             MaxDoseQuantity = Some 1000N
             MaxDoseTotal = Some 4000N
+            MinDoseTotalAdjust = Some 40N
             MaxDoseTotalAdjust = Some 90N
     }
-|> DrugOrder.setAdjust "paracetamol" 10N
-|> DrugOrder.evaluate
+|> DrugOrder.setAdjust "paracetamol" 20N
+|> DrugOrder.evaluate logger.Logger
 |> printScenarios false ["paracetamol"]
-//|> List.iter (fun o ->
-//    o
-//    |> Order.toString
-//    |> List.iteri (fun i s -> printfn "%i\t%s" (i + 1) s)
-//)
+
+logger.Report ()
 
 
+logger.Start ()
 
 // Drug with multiple items
 // cotrimoxazol for infection
@@ -146,7 +282,7 @@ let printScenarios v n sc =
         TimeUnit = "day"
         Shape = "tablet"
         Route = "or"
-        OrderType = DrugOrder.OrderType.Discontinuous
+        OrderType = DiscontinuousOrder
 }
 |> DrugOrder.create
 // setting dose limits for infection
@@ -168,11 +304,12 @@ let printScenarios v n sc =
             MaxDoseTotal = Some 320N
             MaxDoseTotalAdjust = Some 6N
     }
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 //|> Order.calcScenarios2
 |> printScenarios false ["sulfamethoxazol"; "trimethoprim"]
 
 
+logger.Start ()
 
 // Paracetamol drink
 {
@@ -203,21 +340,21 @@ let printScenarios v n sc =
         TimeUnit = "day"
         Shape = "drink"
         Route = "or"
-        OrderType = DrugOrder.OrderType.Discontinuous
+        OrderType = DiscontinuousOrder
 }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "paracetamol" 20N
+|> DrugOrder.setAdjust "paracetamol" 8N
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "paracetamol"
-            Frequencies = [ 2N .. 4N ]
+            Frequencies = [ 2N ]
             SubstanceName = "paracetamol"
             MaxDoseQuantity = Some 1000N
             MaxDoseTotal = Some 4000N
-            MinDoseTotalAdjust = Some 60N
+            MinDoseTotalAdjust = Some 40N
             MaxDoseTotalAdjust = Some 90N
     }
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 //|> List.length
 |> printScenarios false ["paracetamol"]
 
@@ -263,7 +400,7 @@ let printScenarios v n sc =
         TimeUnit = "day"
         Shape = "drink"
         Route = "or"
-        OrderType = DrugOrder.OrderType.Discontinuous
+        OrderType = DiscontinuousOrder
 }
 |> DrugOrder.create
 // setting dose limits for infection
@@ -276,7 +413,7 @@ let printScenarios v n sc =
             MaxDoseTotalAdjust = Some 30N
     }
 |> DrugOrder.setAdjust "cotrimoxazol" 10N
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 //|> List.length
 |> printScenarios false ["sulfamethoxazol"; "trimethoprim"]
 
@@ -342,10 +479,10 @@ let printScenarios v n sc =
 
                 }
             ]
-        OrderType = DrugOrder.OrderType.Continuous
+        OrderType = ContinuousOrder
 }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "dopamin infusion" 10N
+|> DrugOrder.setAdjust "dopamin infusion" 3N
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "dopamin infusion"
@@ -353,7 +490,7 @@ let printScenarios v n sc =
             MinDoseRateAdjust = Some 2N
             MaxDoseRateAdjust = Some 20N
     }
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 //|> Order.calcScenarios2
 |> printScenarios false ["dopamin"]
 
@@ -367,7 +504,7 @@ let printScenarios v n sc =
         Id = "1"
         Name = "dopamin infusion"
         Quantities = [ 50N ]
-        Divisible = 10N
+        Divisible = 1N
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -419,7 +556,7 @@ let printScenarios v n sc =
 
                 }
             ]
-        OrderType = DrugOrder.OrderType.Continuous
+        OrderType = ContinuousOrder
 }
 |> DrugOrder.create
 |> DrugOrder.setDoseLimits
@@ -431,18 +568,19 @@ let printScenarios v n sc =
             MaxDoseRateAdjust = Some 20N
     }
 |> DrugOrder.setAdjust "dopamin infusion" 10N
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 |> printScenarios false ["dopamin"]
 
+let noLogger : Logger = { Log = fun _ -> ignore }
 
-
+logger.Start ()
 // gentamicin
 {
     DrugOrder.drugOrder with
         Id = "1"
         Name = "gentamicin"
         Quantities = [ ]
-        Divisible = 10N 
+        Divisible = 1N 
         Unit = "ml"
         TimeUnit = "day"
         Shape = "infusion fluid"
@@ -495,17 +633,17 @@ let printScenarios v n sc =
                 }
 
             ]
-        OrderType = DrugOrder.OrderType.Timed
+        OrderType = TimedOrder
     }
 |> DrugOrder.create
-|> DrugOrder.setAdjust "gentamicin" (800N/1000N)
+|> DrugOrder.setAdjust "gentamicin" (4N)
 |> DrugOrder.setDoseLimits
     {   DrugOrder.doseLimits with
             Name = "gentamicin"
             SubstanceName = "gentamicin"
             Frequencies = [ 1N ]
-            MinDoseTotalAdjust = Some (5N * (9N/10N))
-            MaxDoseTotalAdjust = Some (5N * (10N/9N))
+            MinDoseTotalAdjust = Some (4N)
+            MaxDoseTotalAdjust = Some (6N)
     }
 |> DrugOrder.setSolutionLimits 
     {
@@ -514,12 +652,13 @@ let printScenarios v n sc =
             Component = "gentamicin"
 //            MinConcentration = Some (1N)
             MaxConcentration = Some (2N)
-            DoseCount = Some (2N)
-            MinTime = (Some (1N/2N))
-            MaxTime = (Some 1N)
+            DoseCount = Some (1N)
+//            MinTime = (Some (1N/2N))
+            MaxTime = (Some (1N/2N))
 
     }
-|> DrugOrder.evaluate
+|> DrugOrder.evaluate logger.Logger
 |> printScenarios false ["gentamicin"]
 
+logger.Report ()
 

@@ -7,8 +7,13 @@
 module Orderable =
 
     open Informedica.GenUnits.Lib
+    open Informedica.GenSolver.Lib
     open WrappedString
     
+    open Types
+
+    type Name = Types.Name 
+
     /// Contains string constants
     /// to create `Variable` names
     module Literals =
@@ -38,35 +43,6 @@ module Orderable =
         module Dose = VariableUnit.Dose
         module DoseAdjust = VariableUnit.DoseAdjust
 
-        type Id = Id.Id
-        type Name = Name.Name
-        type Quantity = Quantity.Quantity
-        type Concentration = Concentration.Concentration
-        type Total = Total.Total
-        type Rate = Rate.Rate
-        type Dose = Dose.Dose
-        type DoseAdjust = DoseAdjust.DoseAdjust
-
-        /// Models an `Item` in a `Component`
-        type Item = 
-            {
-                /// The id of the Order
-                OrderId: Id
-                /// The name of the item
-                Name: Name
-                /// The quantity of an `Item` in a `Component`
-                ComponentQuantity: Quantity 
-                /// The quantity of an `Item` in an `Orderable`
-                OrderableQuantity: Quantity
-                /// The `Item` concentration in a `Component`
-                ComponentConcentration: Concentration 
-                /// The  `Item` concentration in an `Orderable`
-                OrderableConcentration: Concentration 
-                /// The `Item` `Dose`, i.e. quanity, total and rate of `Item` administered
-                Dose: Dose
-                // The `Item` `DoseAdjust`,  i.e. adjusted quanity, total and rate of `Item` administered
-                DoseAdjust: DoseAdjust
-            }
         
         /// Create an item with
         ///
@@ -454,43 +430,6 @@ module Orderable =
         module Dose = VariableUnit.Dose
         module DoseAdjust = VariableUnit.DoseAdjust
 
-        type Id = Id.Id
-        type Name = Name.Name
-        type Quantity = Quantity.Quantity
-        type Count = Count.Count
-        type Concentration = Concentration.Concentration
-        type Dose = Dose.Dose
-        type DoseAdjust = DoseAdjust.DoseAdjust
-        type Item = Item.Item
-
-        /// Models in a `Component` in and `Orderable`
-        type Component = 
-            {
-                /// The id of a `Component`
-                OrderId: Id
-                /// The name of a `Component`
-                Name: Name
-                /// The quantity of a `Component`
-                ComponentQuantity: Quantity
-                /// The quantity of a `Component` in an `Orderable`
-                OrderableQuantity: Quantity
-                /// The count of a `Component` in an `Orderable`
-                OrderableCount: Count
-                /// The quantity of a `Component` in an `Order`
-                OrderQuantity: Quantity
-                /// The count of a `Component` in an `Order`
-                OrderCount: Count
-                /// The concentration of a `Component` in an `Orderable`
-                OrderableConcentration: Concentration
-                // The `Component` `Dose`,  
-                /// i.e. quanity, total and rate of `Component` administered
-                Dose: Dose
-                // The `Component` `DoseAdjust`,  
-                /// i.e. adjusted quanity, total and rate of `Component` administered
-                DoseAdjust: DoseAdjust
-                /// The `Item`s in a `Component`
-                Items: Item list
-            }
         
         /// Create a component with
         ///
@@ -895,38 +834,6 @@ module Orderable =
     module TotalAdjust = VariableUnit.TotalAdjust
     module RateAdjust = VariableUnit.RateAdjust
 
-    type Id = Id.Id
-    type Name = Name.Name
-    type Quantity = Quantity.Quantity
-    type Count = Count.Count
-    type Dose = Dose.Dose
-    type DoseAdjust = DoseAdjust.DoseAdjust
-    type Component = Component.Component
-
-    /// Models an `Orderable` 
-    type Orderable = 
-        {
-            /// The order id of 
-            OrderId: Id
-            /// The name of the orderable
-            Name: Name
-            // The shape of an orderable
-            Shape : string
-            /// The quantity of an orderable
-            OrderableQuantity: Quantity
-            /// The quantity of an orderable in an order
-            OrderQuantity: Quantity
-            /// The orderable count in an order
-            OrderCount: Count
-            // The count of doses in an orderable quantity
-            DoseCount: Count
-            /// The dose of an orderable
-            Dose: Dose
-            /// The adjusted dose of an orderable
-            DoseAdjust: DoseAdjust
-            /// The list of components in an orderable
-            Components: Component list
-        }
         
     /// Create an `Orderable` with
     ///
