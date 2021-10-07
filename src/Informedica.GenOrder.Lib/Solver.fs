@@ -14,6 +14,7 @@ module Solver =
     module Name = Variable.Name
     module Api = Api
     module ValueRange = Variable.ValueRange
+    module Logging = Informedica.GenOrder.Lib.Logging
 
 
     let productEq = function
@@ -65,7 +66,7 @@ module Solver =
     
     let replaceUnit log n u eqs =
         (n, u)
-        |> Logging.SolverReplaceUnit
+        |> Events.SolverReplaceUnit
         |> Logging.logInfo log
 
         let repl c vru vrus =

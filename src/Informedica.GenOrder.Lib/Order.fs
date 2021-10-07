@@ -11,6 +11,8 @@ module Order =
     open Informedica.GenSolver.Lib.Types
     open Types
 
+    module Logging = Informedica.GenOrder.Lib.Logging
+
     /// Contains literals used
     /// to generate `Variable` names
     module Literals =
@@ -319,7 +321,7 @@ module Order =
         |> fromEqs o
         |> fun o ->
             o
-            |> Logging.OrderSolved
+            |> Events.OrderSolved
             |> Logging.logInfo log
 
             o
@@ -341,7 +343,7 @@ module Order =
         |> fromEqs o
         |> fun o ->
             (o, cs)
-            |> Logging.OrderConstraintsSolved
+            |> Events.OrderConstraintsSolved
             |> Logging.logInfo log
 
             o
@@ -405,7 +407,7 @@ module Order =
                     |> sprintf "scenario: %A, with %A" n
 
                 msg
-                |> Logging.OrderScenario
+                |> Events.OrderScenario
                 |> Logging.logInfo log
 
                 [
@@ -413,7 +415,7 @@ module Order =
                         for o in os do
                             if o |> contains n v then
                                 (o, n, v)
-                                |> Logging.OrderScenerioWithNameValue
+                                |> Events.OrderScenerioWithNameValue
                                 |> Logging.logInfo log
 
                                 let o =

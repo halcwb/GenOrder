@@ -333,14 +333,22 @@ module Types =
         }
 
 
-    module Logging =
+    module Events =
 
-        open Informedica.GenSolver.Lib.Types.Logging
-
-        type Message =
+        type Event =
             | SolverReplaceUnit of (Name * Unit)
             | OrderSolved of Order
             | OrderConstraintsSolved of Order * Constraint list
             | OrderScenario of string
             | OrderScenerioWithNameValue of Order * Name * BigRational
+
+
+
+    module Logging =
+
+        open Informedica.GenSolver.Lib.Types.Logging
+
+        type Message =
+            | OrderException of string
+            | OrderMessage of Events.Event
             interface IMessage

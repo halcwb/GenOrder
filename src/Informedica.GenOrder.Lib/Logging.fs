@@ -1,8 +1,10 @@
 ﻿namespace Informedica.GenOrder.Lib
 
+open System
 
 module Logging =
 
+    open Types
     open Informedica.GenSolver.Lib.Types.Logging
 
 
@@ -10,12 +12,33 @@ module Logging =
     module LoggingType = Informedica.GenSolver.Lib.Types.Logging
     
 
-    let logInfo logger msg    = SolverLogging.logMessage Informative logger msg
+    let private log level (logger : Logger) msg  =
+        msg
+        |> Logging.OrderMessage
+        |> fun m ->
+            {
+                TimeStamp = DateTime.Now
+                Level = level
+                Message = m
+            }
+            |> logger.Log 
 
 
-    let logWarning logger msg = SolverLogging.logMessage Warning logger msg
+    let logInfo = log Informative 
 
 
-    let logError logger msg   = SolverLogging.logMessage Error logger msg
+    let logWarning = log Warning 
+
+
+    let logError (logger: Logger) exc =
+        exc
+        |> Logging.OrderException
+        |> fun m ->
+            {
+                TimeStamp = DateTime.Now
+                Level = Error
+                Message = m
+            }
+            |> logger.Log
 
             

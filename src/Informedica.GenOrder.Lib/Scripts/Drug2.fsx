@@ -1,6 +1,7 @@
 ﻿
 
-#I __SOURCE_DIRECTORY__
+//#I __SOURCE_DIRECTORY__
+#I "C:\Development\Informedica\libs\GenOrder\src\Informedica.GenOrder.Lib\Scripts"
 
 #load "../../../.paket/load/netstandard2.1/main.group.fsx"
 #load "../../../../GenSolver/src/Informedica.GenSolver.Lib/Types.fs"
@@ -46,7 +47,7 @@ module Quantity = VariableUnit.Quantity
 module SolverLogging = Informedica.GenSolver.Lib.SolverLogging
 
 type Logger = Informedica.GenSolver.Lib.Types.Logging.Logger
-type SolverMessage = Informedica.GenSolver.Lib.Types.Logging.Message
+type SolverMessage = Informedica.GenSolver.Lib.Types.Logging.SolverMessage
 type OrderMessage = Informedica.GenOrder.Lib.Types.Logging.Message
 
 
@@ -55,12 +56,21 @@ type IMessage = Informedica.GenSolver.Lib.Types.Logging.IMessage
 type Level = Informedica.GenSolver.Lib.Types.Logging.Level
 
 
-let printOrderMsg = function
-| Logging.SolverReplaceUnit (n, u) -> ""
-| Logging.OrderSolved o -> ""
-| Logging.OrderConstraintsSolved (o, cs) -> ""
-| Logging.OrderScenario s -> ""
-| Logging.OrderScenerioWithNameValue (o, n, br) -> ""
+let printOrderMsg msg = 
+    match msg with 
+    | Logging.OrderMessage m ->
+        match m with
+        | Events.SolverReplaceUnit (n, u) -> ""
+        | Events.OrderSolved o -> ""
+        | Events.OrderConstraintsSolved (o, cs) -> 
+            o
+            |> Order.toString
+            |> String.concat "\n"
+            |> sprintf "=== Order constraints solved ===\n%s"
+
+        | Events.OrderScenario s -> ""
+        | Events.OrderScenerioWithNameValue (o, n, br) -> ""
+    | Logging.OrderException s -> s
 
 
 let printMsg (msg : IMessage) = 
@@ -68,87 +78,80 @@ let printMsg (msg : IMessage) =
     | :? SolverMessage as m -> 
         m 
         |> SolverLogging.printMsg
-    | :? OrderMessage  as m ->
-        match m with
-        | Logging.OrderConstraintsSolved (o, cs) ->
-            o
-            |> Order.toString
-            |> String.concat "\n"
-            |> sprintf "=== Order constraints solved ===\n%s"
-        | _ -> sprintf ""
+    | :? OrderMessage  as m -> m |> printOrderMsg
     | _ -> 
         sprintf ""
 
 
 type Message =  
-    | Start
-    | Received of  (Level * IMessage)
+    | Start of Level
+    | Received of Informedica.GenSolver.Lib.Types.Logging.Message
     | Report
 
 
 type OrderLogger =
     {
-        Start : unit -> unit
+        Start : Level -> unit
         Logger: Logger
         Report: unit -> unit
     }
 
 
-let logger  =
+let logger =
 
     let loggerAgent : Agent<Message> = 
         Agent.Start <| fun inbox ->
-            let msgs = ResizeArray<(float * Level * IMessage)>()
+            let msgs = ResizeArray<(float * Informedica.GenSolver.Lib.Types.Logging.Message)>()
 
-            let rec loop (timer : Stopwatch) msgs =
+            let rec loop (timer : Stopwatch) level msgs =
                 async {
                     let! msg = inbox.Receive ()
 
                     match msg with
-                    | Start -> 
+                    | Start level -> 
                         let timer = Stopwatch.StartNew()
                         return! 
-                            ResizeArray<(float * Level * IMessage)>()
-                            |> loop timer
+                            ResizeArray<(float * Informedica.GenSolver.Lib.Types.Logging.Message)>()
+                            |> loop timer level
 
-                    | Received (l, m) -> 
-                        msgs.Add(timer.Elapsed.TotalSeconds, l, m)
-                        return! loop timer msgs
+                    | Received m -> 
+                        if m.Level = level then
+                            msgs.Add(timer.Elapsed.TotalSeconds, m)
+                        return! loop timer level msgs
 
                     | Report ->
                         printfn "=== Start Report ===\n"
                         msgs 
                         |> Seq.length
-                        |> printfn "Total messages received: %i"
+                        |> printfn "Total messages received: %i\n"
                         
                         msgs 
-                        |> Seq.iteri (fun i (t, l, m) ->
-                            m
+                        |> Seq.iteri (fun i (t, m) ->
+                            m.Message
                             |> printMsg
                             |> function 
                             | s when s |> String.IsNullOrEmpty -> ()
-                            | s -> printfn "%i. %f: %A\n%s" i t l s
+                            | s -> printfn "\n%i. %f: %A\n%s" i t m.Level s
                         )
                         printfn "\n"
                         
                         let timer = Stopwatch.StartNew()
-                        return! 
-                            ResizeArray<(float * Level * IMessage)>()
-                            |> loop timer 
+                        return! loop timer level msgs
                 }
             
             let timer = Stopwatch.StartNew()
-            loop timer msgs
+            loop timer Level.Error msgs
         
     {
         Start = 
-            fun () ->
-                Start
+            fun level ->
+                level
+                |> Start
                 |> loggerAgent.Post
         Logger = {
             Log =
-                fun level msg ->
-                    (level, msg)
+                fun msg ->
+                    msg
                     |> Received
                     |> loggerAgent.Post 
         } 
@@ -188,8 +191,7 @@ let printScenarios v n (sc : Order list) =
     )
 
 
-logger.Start ()
-
+logger.Start Level.Informative
 // Paracetamol supp
 {
     DrugOrder.drugOrder with
@@ -233,14 +235,14 @@ logger.Start ()
             MinDoseTotalAdjust = Some 40N
             MaxDoseTotalAdjust = Some 90N
     }
-|> DrugOrder.setAdjust "paracetamol" 20N
+|> DrugOrder.setAdjust "paracetamol" 2N
 |> DrugOrder.evaluate logger.Logger
 |> printScenarios false ["paracetamol"]
 
 logger.Report ()
 
 
-logger.Start ()
+logger.Start Level.Informative
 
 // Drug with multiple items
 // cotrimoxazol for infection
@@ -309,7 +311,7 @@ logger.Start ()
 |> printScenarios false ["sulfamethoxazol"; "trimethoprim"]
 
 
-logger.Start ()
+logger.Start Level.Informative
 
 // Paracetamol drink
 {
@@ -571,9 +573,10 @@ logger.Start ()
 |> DrugOrder.evaluate logger.Logger
 |> printScenarios false ["dopamin"]
 
-let noLogger : Logger = { Log = fun _ -> ignore }
+let noLogger : Logger = { Log = ignore }
 
-logger.Start ()
+logger.Start Level.Informative
+
 // gentamicin
 {
     DrugOrder.drugOrder with
